@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Diagnóstico — Maderería La Jardín</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #111;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ── Slides ── */
+    .slide {
+      display: none;
+      height: 100dvh;
+      padding: 48px 28px 100px;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
+    }
+    .slide.active { display: flex; }
+
+    /* SLIDE 1 */
+    .s1 { background: #fff; color: #111; }
+    .s1 .tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 28px;
+    }
+    .s1 h1 {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 16px;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+    .meta strong { color: #111; }
+    .desc {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.7;
+      border-left: 3px solid #111;
+      padding-left: 16px;
+    }
+
+    /* SLIDE 2 */
+    .s2 { background: #111; color: #fff; justify-content: flex-start; padding-top: 52px; }
+    .s2 .mod-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 32px;
+    }
+    .questions { display: flex; flex-direction: column; gap: 28px; }
+    .q { display: flex; gap: 16px; align-items: flex-start; }
+    .q-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2a2a2a;
+      line-height: 1;
+      min-width: 28px;
+    }
+    .q-body h3 {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .opt {
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.15s;
+      touch-action: manipulation;
+    }
+    .opt.selected { border-color: #fff; color: #fff; background: #222; }
+
+    /* SLIDE 3 */
+    .s3 { background: #f5f5f5; color: #111; }
+    .s3 .mod-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 32px;
+    }
+    .results { display: flex; flex-direction: column; gap: 0; }
+    .rrow {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid #ddd;
+      align-items: flex-start;
+    }
+    .rrow:last-child { border: none; }
+    .arr { font-size: 18px; color: #bbb; padding-top: 2px; }
+    .rrow p { font-size: 15px; line-height: 1.5; color: #222; }
+    .rrow small { display: block; font-size: 12px; color: #888; margin-top: 4px; line-height: 1.5; }
+
+    /* ── Footer brand ── */
+    .brand {
+      position: absolute;
+      bottom: 88px;
+      left: 28px;
+      font-size: 11px;
+      color: #bbb;
+    }
+    .s2 .brand { color: #333; }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      background: #fff;
+      border-top: 1px solid #e4e4e4;
+      z-index: 99;
+    }
+    .nav button {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 18px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #111;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .nav button:first-child { border-right: 1px solid #e4e4e4; color: #999; }
+    .nav .dots-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 20px;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #ddd; }
+    .dot.active { background: #111; }
+  </style>
+</head>
+<body>
+
+  <!-- SLIDE 1 -->
+  <div class="slide s1 active">
+    <div class="tag">Maderería La Jardín — Diagnóstico Interno</div>
+    <h1>3 preguntas para activar la campaña</h1>
+    <div class="meta">
+      <strong>Para:</strong>   <span>Dueño / Jefe</span>
+      <strong>De:</strong>     <span>Operaciones Digitales</span>
+      <strong>Asunto:</strong> <span>Datos reales para Facebook Ads</span>
+    </div>
+    <p class="desc">
+      La campaña está lista. Los anuncios están listos.<br><br>
+      Necesitamos 3 números del negocio para que cada peso
+      invertido en publicidad regrese en ventas reales.
+    </p>
+    <div class="brand">3516 Ave Nogal · Col. Ciudad Jardín · Tijuana, B.C.</div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide s2">
+    <div class="mod-label">Módulo 2 — Las 3 preguntas</div>
+    <div class="questions">
+
+      <div class="q">
+        <div class="q-num">1</div>
+        <div class="q-body">
+          <h3>¿Cuánto gasta en promedio un cliente?</h3>
+          <div class="options">
+            <div class="opt" onclick="sel(this)">Menos de $500</div>
+            <div class="opt" onclick="sel(this)">$500 – $1,500</div>
+            <div class="opt" onclick="sel(this)">$1,500 – $5,000</div>
+            <div class="opt" onclick="sel(this)">Más de $5,000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-num">2</div>
+        <div class="q-body">
+          <h3>De 10 que preguntan, ¿cuántos compran?</h3>
+          <div class="options">
+            <div class="opt" onclick="sel(this)">1 de 10</div>
+            <div class="opt" onclick="sel(this)">2 – 3 de 10</div>
+            <div class="opt" onclick="sel(this)">4 – 5 de 10</div>
+            <div class="opt" onclick="sel(this)">Más de 5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-num">3</div>
+        <div class="q-body">
+          <h3>¿Cuál es el producto que más veces se vende?</h3>
+          <div class="options">
+            <div class="opt" onclick="sel(this)">Triplay</div>
+            <div class="opt" onclick="sel(this)">Tablón / madera</div>
+            <div class="opt" onclick="sel(this)">Molduras</div>
+            <div class="opt" onclick="sel(this)">Mezcla pareja</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="brand">3516 Ave Nogal · Col. Ciudad Jardín · Tijuana, B.C.</div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide s3">
+    <div class="mod-label">Módulo 3 — Qué hacemos con sus respuestas</div>
+    <div class="results">
+      <div class="rrow">
+        <div class="arr">→</div>
+        <p>Calculamos el CPL máximo real del negocio.
+          <small>Si el ticket es $1,500 y cierra 2 de 10, sabemos exactamente cuánto gastar por lead.</small>
+        </p>
+      </div>
+      <div class="rrow">
+        <div class="arr">→</div>
+        <p>Ajustamos el presupuesto en Facebook Ads.
+          <small>Hoy: $300 MXN/día. Con sus números confirmamos si subir, mantener o redirigir.</small>
+        </p>
+      </div>
+      <div class="rrow">
+        <div class="arr">→</div>
+        <p>Elegimos qué producto anunciamos primero.
+          <small>El que más vende — para cerrar ventas desde la primera semana.</small>
+        </p>
+      </div>
+    </div>
+    <div class="brand">3516 Ave Nogal · Col. Ciudad Jardín · Tijuana, B.C.</div>
+  </div>
+
+  <!-- Navegación -->
+  <div class="nav">
+    <button onclick="go(-1)">← Atrás</button>
+    <div class="dots-wrap">
+      <div class="dot active" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+    </div>
+    <button onclick="go(1)">Siguiente →</button>
+  </div>
+
+  <script>
+    let cur = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots   = document.querySelectorAll('.dot');
+
+    function go(dir) {
+      slides[cur].classList.remove('active');
+      dots[cur].classList.remove('active');
+      cur = Math.max(0, Math.min(slides.length - 1, cur + dir));
+      slides[cur].classList.add('active');
+      dots[cur].classList.add('active');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+    });
+
+    function sel(el) {
+      el.closest('.options').querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+  </script>
+</body>
+</html>
