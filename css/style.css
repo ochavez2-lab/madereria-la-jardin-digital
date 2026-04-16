@@ -1,0 +1,223 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #ffffff;
+  --surface: #f7f7f7;
+  --border:  #e4e4e4;
+  --text:    #111111;
+  --muted:   #888888;
+  --accent:  #1a1a1a;
+  --green:   #1e6b1e;
+  --red:     #b52a2a;
+  --yellow:  #c47200;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  height: 48px;
+}
+
+.brand {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+nav { display: flex; }
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0 14px;
+  height: 48px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Layout ── */
+main {
+  padding: 28px 24px;
+  max-width: 1000px;
+}
+
+.panel       { display: none; }
+.panel.active{ display: block; }
+
+h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+/* ── Form ── */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+input, select {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  flex: 1;
+  min-width: 130px;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent);
+}
+
+button[type="submit"] {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+button[type="submit"]:hover { background: #333; }
+
+/* ── Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td      { background: var(--surface); }
+
+.del-btn {
+  background: none;
+  border: none;
+  color: var(--border);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.12s;
+}
+
+.del-btn:hover { color: var(--red); }
+
+/* ── Status badges ── */
+.ok   { color: var(--green); font-weight: 500; }
+.warn { color: var(--yellow); font-weight: 500; }
+.bad  { color: var(--red);   font-weight: 500; }
+
+/* ── Alert ── */
+.alert {
+  padding: 9px 14px;
+  border-radius: 3px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border-left: 3px solid var(--yellow);
+  background: #fff8e8;
+  color: var(--yellow);
+}
+
+.hidden { display: none; }
+
+/* ── KPI cards ── */
+.kpi-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.kpi {
+  padding: 14px 18px;
+  background: var(--surface);
+  border-radius: 4px;
+  min-width: 130px;
+  flex: 1;
+}
+
+.kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.kpi-value.bad { color: var(--red); }
+.kpi-value.ok  { color: var(--green); }
+
+/* ── Resumen category list ── */
+.cat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.cat-row:last-child { border-bottom: none; }
+
+.empty-state {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 12px 0;
+}
