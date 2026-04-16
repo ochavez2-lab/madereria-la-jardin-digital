@@ -1,6 +1,15 @@
 # PRESENTACIÓN DIAGNÓSTICO — 3 Módulos
-# Para: Dueño / Jefe de Maderería La Jardín
-# Entregado por: Operaciones Digitales
+
+Para:        Dueño / Jefe — Maderería La Jardín
+De:          Operaciones Digitales
+Fecha:       __ / __ / 2026
+Asunto:      3 preguntas para activar la campaña correctamente
+
+Descripción: Este documento es una herramienta interna de diagnóstico.
+             Necesitamos que el dueño responda 3 preguntas sobre el negocio
+             para que la publicidad en Facebook trabaje con números reales —
+             no estimados. Con sus respuestas configuramos la campaña,
+             definimos el presupuesto y elegimos qué producto anunciar primero.
 
 ---
 
