@@ -1,39 +1,48 @@
-# 💰 CONTROL FINANCIERO: Maderería La Jardín
+# CONTROL FINANCIERO — Maderería La Jardín
 
-### 🎯 META DE EFICIENCIA
-El objetivo es eliminar el "gasto hormiga" diario ($50-$100 MXN) para que las herramientas premium (Claude, Gemini, SaleAds) se paguen solas. 
-*Ahorro diario sugerido: $4 USD (~$70 MXN).*
-
----
-
-### 🛠️ COSTOS FIJOS (Suscripciones)
-| Herramienta | Costo Estimado | Estado |
-| :--- | :--- | :--- |
-| **Claude.ai** | $20 USD | Activo |
-| **Gemini.ai** | $20 USD | Activo |
-| **SaleAds.ia** | $-- USD | Activo |
-| **TOTAL MES** | **~$120 USD** | **Meta: Cubrir con ahorro** |
+### META DE EFICIENCIA
+Gastos hormiga ≤ $130 MXN/día → genera $70 MXN de ahorro diario → cubre stack IA al mes.
 
 ---
 
-### 📝 REGISTRO DIARIO (Bitácora rápida)
-*Edita este apartado cada vez que hagas un gasto en el Oxxo o Periférico:*
+### COSTOS FIJOS (Stack IA)
+| Herramienta      | Costo       | Rol                        |
+| :---             | :---        | :---                       |
+| Claude.ai        | $20 USD     | Copy, estrategia, ops      |
+| SaleAds.ia       | TBD         | Pauta Meta Ads             |
+| **TOTAL MES**    | **~$100 USD** | Meta: cubierto con ahorro |
 
+> Gemini eliminado del stack. Claude asume copy + estrategia completos.
+
+---
+
+### PARÁMETROS FACEBOOK ADS
+| Métrica          | Valor       |
+| :---             | :---        |
+| Presupuesto      | $300 MXN/día |
+| CPL objetivo     | $5 MXN      |
+| Variaciones      | 10 por ciclo |
+| Público          | Tijuana / Rosarito |
+
+---
+
+### LÓGICA AHORRO → STACK IA
+```
+$130 MXN límite diario (≤ esto = día con ahorro)
+× 30 días
+= $2,100 MXN/mes ≈ $120 USD → cubre herramientas
+```
+
+---
+
+### REGISTRO DIARIO
 **FECHA: [ __ / __ / 2026 ]**
 
-#### 🛑 Gastos Informales / Hormiga (Oxxo, Mandados, Varios)
-* [ ] $__________ - Concepto: ____________________
-* [ ] $__________ - Concepto: ____________________
-* [ ] $__________ - Concepto: ____________________
+Gastos hormiga:
+* $__________ — Concepto: ____________________
+* $__________ — Concepto: ____________________
 
-#### 🏗️ Operación y Marketing
-* **Inversión Ads:** $__________ MXN
-* **Ventas del día:** $__________ MXN
-* **Leads nuevos:** __________
-
-#### 💡 Notas del día:
-*(¿Hubo algún imprevisto en la Colonia Ciudad Jardín o en el trayecto?)*
-> 
-
----
-*Instrucción: Cada $50 MXN ahorrados hoy son inversión para el marketing de mañana.*
+Operación:
+* Inversión Ads: $__________ MXN
+* Leads: __________
+* CPL real: $__________

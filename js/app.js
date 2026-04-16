@@ -1,6 +1,8 @@
 'use strict';
 
-const LIMITE_DIARIO = 200; // MXN — alerta gastos hormiga
+const LIMITE_DIARIO       = 130;  // MXN — $200 base − $70 ahorro diario meta
+const META_AHORRO_MENSUAL = 2100; // MXN — cubre $120 USD stack IA (~$70/día × 30)
+const CPL_META            = 5;    // MXN — métrica maestra Facebook Ads
 
 // ── Storage ─────────────────────────────────────────────────────────────────
 const DB = {
@@ -81,10 +83,9 @@ function renderGastos() {
     </div>
   `;
 
-  alertEl.className = totalHoy > LIMITE_DIARIO
-    ? 'alert'
-    : 'alert hidden';
-  alertEl.textContent = `Límite diario superado — hoy: ${fmt(totalHoy)} / límite: ${fmt(LIMITE_DIARIO)}`;
+  const ahorroHoy = Math.max(0, LIMITE_DIARIO - totalHoy);
+  alertEl.className = totalHoy > LIMITE_DIARIO ? 'alert' : 'alert hidden';
+  alertEl.textContent = `Límite superado — hoy: ${fmt(totalHoy)} / meta: ${fmt(LIMITE_DIARIO)} (sin ahorro para stack IA hoy)`;
 }
 
 window.delGasto = id => {
@@ -179,11 +180,33 @@ function renderResumen() {
       </div>
       <div class="kpi">
         <div class="kpi-label">CPL promedio</div>
-        <div class="kpi-value ${cplProm > 0 && cplProm > 150 ? 'bad' : cplProm > 0 ? 'ok' : ''}">
+        <div class="kpi-value ${cplProm > 0 && cplProm > CPL_META ? 'bad' : cplProm > 0 ? 'ok' : ''}">
           ${cplProm > 0 ? fmt(cplProm) : '—'}
         </div>
       </div>
     </div>
+
+    ${(() => {
+      const diasMes    = DB.get('gastos').filter(g => g.fecha.startsWith(mesKey()));
+      const porDia     = {};
+      diasMes.forEach(g => { porDia[g.fecha] = (porDia[g.fecha] || 0) + g.monto; });
+      const diasOk     = Object.values(porDia).filter(t => t <= LIMITE_DIARIO).length;
+      const ahorroAcum = diasOk * 70;
+      const pct        = Math.min(100, Math.round(ahorroAcum / META_AHORRO_MENSUAL * 100));
+      return `
+        <div style="margin-bottom:32px;max-width:500px">
+          <h2 style="margin-bottom:10px">Ahorro para stack IA</h2>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span>${fmt(ahorroAcum)} ahorrados</span>
+            <span style="color:var(--muted)">meta: ${fmt(META_AHORRO_MENSUAL)}</span>
+          </div>
+          <div style="background:var(--border);border-radius:2px;height:6px">
+            <div style="background:${pct >= 100 ? 'var(--green)' : 'var(--accent)'};width:${pct}%;height:6px;border-radius:2px;transition:width 0.3s"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${diasOk} días bajo límite de ${fmt(LIMITE_DIARIO)} — ${pct}% completado</div>
+        </div>
+      `;
+    })()}
 
     <h2 style="margin-bottom:12px">Por categoría</h2>
     <div style="max-width:380px">
