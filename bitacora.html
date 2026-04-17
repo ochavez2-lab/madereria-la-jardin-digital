@@ -3,188 +3,247 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>Bitácora — La Jardín</title>
+<title>Mi Tiempo — La Jardín</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#fff;--surface:#f7f7f7;--border:#e4e4e4;--text:#111;--muted:#888;--accent:#111;--green:#1e6b1e;--red:#b52a2a}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111;font-size:14px;min-height:100dvh}
+
+/* Etiquetas / colores */
+:root{
+  --verde:   #2e7d32; --verde-bg:   #e8f5e9;
+  --azul:    #1565c0; --azul-bg:    #e3f2fd;
+  --naranja: #e65100; --naranja-bg: #fff3e0;
+  --morado:  #6a1b9a; --morado-bg:  #f3e5f5;
+  --rojo:    #b71c1c; --rojo-bg:    #ffebee;
+  --gris:    #424242; --gris-bg:    #f5f5f5;
+}
 
 /* Header */
-header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10}
-header h1{font-size:14px;font-weight:600}
-.fecha-hoy{font-size:12px;color:var(--muted)}
+header{background:#fff;border-bottom:1px solid #e0e0e0;padding:14px 16px;position:sticky;top:0;z-index:20}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+header h1{font-size:15px;font-weight:700}
+.fecha{font-size:12px;color:#888}
 
-/* Input area */
-.input-area{padding:16px;border-bottom:1px solid var(--border);background:var(--surface)}
-.input-row{display:flex;gap:8px;align-items:flex-end}
-textarea{flex:1;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;height:60px;background:var(--bg);color:var(--text);outline:none;line-height:1.5}
-textarea:focus{border-color:var(--accent)}
-.btn-log{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:0 18px;height:60px;font-size:20px;cursor:pointer;flex-shrink:0;touch-action:manipulation}
+/* Day tabs */
+.day-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.day-tabs::-webkit-scrollbar{display:none}
+.day-tab{border:none;border-radius:20px;padding:5px 14px;font-size:12px;white-space:nowrap;cursor:pointer;background:#f0f0f0;color:#666;touch-action:manipulation;font-family:inherit;transition:all .15s}
+.day-tab.active{background:#111;color:#fff}
 
-/* Categorías rápidas */
-.cats{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.cat{border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted);cursor:pointer;background:var(--bg);touch-action:manipulation;transition:all .12s}
-.cat.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* Form */
+.form-card{margin:12px 16px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.form-card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:12px}
+.time-row{display:flex;gap:8px;margin-bottom:12px}
+.time-input{flex:1;display:flex;flex-direction:column;gap:4px}
+.time-input label{font-size:11px;color:#888}
+.time-input input{border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font-size:14px;font-family:inherit;outline:none;width:100%}
+.time-input input:focus{border-color:#111}
+.desc-input{width:100%;border:1px solid #e0e0e0;border-radius:6px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;height:56px;outline:none;margin-bottom:12px}
+.desc-input:focus{border-color:#111}
 
-/* Filtro días */
-.filter-bar{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none}
-.filter-bar::-webkit-scrollbar{display:none}
-.day-btn{border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;white-space:nowrap;cursor:pointer;background:var(--bg);color:var(--muted);touch-action:manipulation}
-.day-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* Etiquetas selector */
+.etiquetas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.etq{border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation;font-family:inherit;transition:all .15s;opacity:.5}
+.etq.active{opacity:1;transform:scale(1.05)}
+.etq.venta   {background:var(--verde-bg);  color:var(--verde)}
+.etq.facebook{background:var(--azul-bg);   color:var(--azul)}
+.etq.gasto   {background:var(--naranja-bg);color:var(--naranja)}
+.etq.admin   {background:var(--morado-bg); color:var(--morado)}
+.etq.problema{background:var(--rojo-bg);   color:var(--rojo)}
+.etq.general {background:#eeeeee;          color:var(--gris)}
 
-/* Entradas */
-.entries{padding:12px 16px;display:flex;flex-direction:column;gap:8px;padding-bottom:80px}
-.entry{background:var(--surface);border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-start}
-.entry-time{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;padding-top:2px;min-width:44px}
-.entry-body{flex:1}
-.entry-cat{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.entry-text{font-size:14px;line-height:1.5;color:var(--text)}
-.del{background:none;border:none;color:var(--border);font-size:18px;cursor:pointer;padding:0;line-height:1;transition:color .12s;touch-action:manipulation}
-.del:hover{color:var(--red)}
+.btn-add{width:100%;background:#111;color:#fff;border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;font-family:inherit}
 
-/* Empty */
-.empty{text-align:center;padding:48px 24px;color:var(--muted);font-size:13px}
+/* Resumen del día */
+.resumen{margin:0 16px 12px;display:flex;gap:8px;flex-wrap:wrap}
+.res-chip{border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.res-chip span{font-weight:400;opacity:.8}
+.res-chip.venta   {background:var(--verde-bg);  color:var(--verde)}
+.res-chip.facebook{background:var(--azul-bg);   color:var(--azul)}
+.res-chip.gasto   {background:var(--naranja-bg);color:var(--naranja)}
+.res-chip.admin   {background:var(--morado-bg); color:var(--morado)}
+.res-chip.problema{background:var(--rojo-bg);   color:var(--rojo)}
+.res-chip.general {background:#eeeeee;          color:var(--gris)}
 
-/* Export btn */
-.export-btn{position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:12px;color:var(--muted);cursor:pointer;z-index:10;touch-action:manipulation}
+/* Timeline */
+.timeline{padding:0 16px 80px;display:flex;flex-direction:column;gap:8px}
+.entry{background:#fff;border-radius:10px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.entry-bar{width:4px;border-radius:2px;align-self:stretch;min-height:40px;flex-shrink:0}
+.entry-bar.venta   {background:var(--verde)}
+.entry-bar.facebook{background:var(--azul)}
+.entry-bar.gasto   {background:var(--naranja)}
+.entry-bar.admin   {background:var(--morado)}
+.entry-bar.problema{background:var(--rojo)}
+.entry-bar.general {background:#bdbdbd}
+.entry-main{flex:1}
+.entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.entry-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.entry-tag.venta   {color:var(--verde)}
+.entry-tag.facebook{color:var(--azul)}
+.entry-tag.gasto   {color:var(--naranja)}
+.entry-tag.admin   {color:var(--morado)}
+.entry-tag.problema{color:var(--rojo)}
+.entry-tag.general {color:#999}
+.entry-time{font-size:11px;color:#aaa}
+.entry-text{font-size:14px;line-height:1.5;color:#222}
+.entry-dur{font-size:11px;color:#bbb;margin-top:4px}
+.del{background:none;border:none;color:#ddd;font-size:20px;cursor:pointer;touch-action:manipulation;padding:0 0 0 8px;line-height:1;transition:color .12s}
+.del:hover,.del:active{color:#b71c1c}
 
-/* Totales del día */
-.day-summary{font-size:11px;color:var(--muted);padding:6px 16px 0;text-align:right}
+.empty{text-align:center;padding:40px 24px;color:#bbb;font-size:13px}
+
+/* Export */
+.fab{position:fixed;bottom:20px;right:16px;background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:10px 18px;font-size:12px;color:#666;cursor:pointer;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.1);touch-action:manipulation;font-family:inherit}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Bitácora La Jardín</h1>
-  <span class="fecha-hoy" id="fecha-hoy"></span>
+  <div class="header-top">
+    <h1>Mi Tiempo</h1>
+    <span class="fecha" id="fecha-hoy"></span>
+  </div>
+  <div class="day-tabs" id="day-tabs"></div>
 </header>
 
-<div class="input-area">
-  <div class="input-row">
-    <textarea id="txt" placeholder="¿Qué estás haciendo ahora?"></textarea>
-    <button class="btn-log" onclick="logear()">+</button>
+<div class="form-card">
+  <h2>Nuevo registro</h2>
+  <div class="time-row">
+    <div class="time-input">
+      <label>Inicio</label>
+      <input type="time" id="t-inicio">
+    </div>
+    <div class="time-input">
+      <label>Fin</label>
+      <input type="time" id="t-fin">
+    </div>
   </div>
-  <div class="cats" id="cats">
-    <div class="cat active" data-cat="general">General</div>
-    <div class="cat" data-cat="venta">Venta</div>
-    <div class="cat" data-cat="facebook">Facebook</div>
-    <div class="cat" data-cat="gasto">Gasto</div>
-    <div class="cat" data-cat="llamada">Llamada</div>
-    <div class="cat" data-cat="obra">Obra</div>
-    <div class="cat" data-cat="admin">Admin</div>
+  <textarea class="desc-input" id="txt" placeholder="¿Qué hiciste? (ej: Llamada con cliente sobre triplay)"></textarea>
+  <div class="etiquetas">
+    <button class="etq venta active"   data-etq="venta">   Venta</button>
+    <button class="etq facebook"       data-etq="facebook"> Facebook</button>
+    <button class="etq gasto"          data-etq="gasto">    Gasto</button>
+    <button class="etq admin"          data-etq="admin">    Admin</button>
+    <button class="etq problema"       data-etq="problema"> Problema</button>
+    <button class="etq general"        data-etq="general">  General</button>
   </div>
+  <button class="btn-add" onclick="agregar()">+ Agregar registro</button>
 </div>
 
-<div class="filter-bar" id="filter-bar"></div>
-<div class="day-summary" id="day-summary"></div>
-<div class="entries" id="entries"></div>
-
-<button class="export-btn" onclick="exportar()">Exportar día</button>
+<div class="resumen" id="resumen"></div>
+<div class="timeline" id="timeline"></div>
+<button class="fab" onclick="exportar()">Exportar día</button>
 
 <script>
 const DB = {
-  get: () => JSON.parse(localStorage.getItem('bitacora') || '[]'),
-  set: v  => localStorage.setItem('bitacora', JSON.stringify(v))
+  get: ()  => JSON.parse(localStorage.getItem('tiempo_jardin') || '[]'),
+  set: (v) => localStorage.setItem('tiempo_jardin', JSON.stringify(v))
 };
 
-let catActiva  = 'general';
-let diaActivo  = hoy();
+let etqActiva = 'venta';
+let diaActivo = hoy();
 
 // ── Helpers ──
-function hoy() {
-  return new Date().toISOString().split('T')[0];
+function hoy() { return new Date().toISOString().split('T')[0]; }
+
+function horaActual() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
 }
 
 function fmtFecha(d) {
-  const [y, m, dd] = d.split('-');
-  const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const fecha = new Date(y, m-1, dd);
-  return `${dias[fecha.getDay()]} ${dd}/${m}`;
+  const [y,m,dd] = d.split('-');
+  const nom = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return `${nom[new Date(y,m-1,dd).getDay()]} ${dd}/${m}`;
 }
 
-function fmtHora(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+function duracion(ini, fin) {
+  if (!ini || !fin) return '';
+  const [h1,m1] = ini.split(':').map(Number);
+  const [h2,m2] = fin.split(':').map(Number);
+  const mins = (h2*60+m2) - (h1*60+m1);
+  if (mins <= 0) return '';
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins/60)}h ${mins%60 > 0 ? (mins%60)+'min' : ''}`.trim();
 }
 
-function ahora() {
-  return new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit', hour12:false});
-}
+// ── Init hora ──
+document.getElementById('t-inicio').value = horaActual();
 
 // ── Fecha header ──
-document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+document.getElementById('fecha-hoy').textContent =
+  new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
 
-// ── Categorías ──
-document.getElementById('cats').addEventListener('click', e => {
-  const cat = e.target.closest('.cat');
-  if (!cat) return;
-  document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
-  cat.classList.add('active');
-  catActiva = cat.dataset.cat;
+// ── Etiquetas ──
+document.querySelector('.etiquetas').addEventListener('click', e => {
+  const btn = e.target.closest('.etq');
+  if (!btn) return;
+  document.querySelectorAll('.etq').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  etqActiva = btn.dataset.etq;
 });
 
-// ── Log entrada ──
-function logear() {
-  const txt = document.getElementById('txt').value.trim();
-  if (!txt) return;
-  const entries = DB.get();
-  entries.unshift({
-    id:   Date.now(),
-    ts:   Date.now(),
-    date: hoy(),
-    cat:  catActiva,
-    txt
-  });
-  DB.set(entries);
-  document.getElementById('txt').value = '';
-  renderDias();
-  renderEntradas();
+// ── Agregar ──
+function agregar() {
+  const txt   = document.getElementById('txt').value.trim();
+  const ini   = document.getElementById('t-inicio').value;
+  const fin   = document.getElementById('t-fin').value;
+  if (!txt) { document.getElementById('txt').focus(); return; }
+
+  const items = DB.get();
+  items.unshift({ id: Date.now(), date: hoy(), ini, fin, etq: etqActiva, txt });
+  DB.set(items);
+
+  document.getElementById('txt').value  = '';
+  document.getElementById('t-inicio').value = fin || horaActual();
+  document.getElementById('t-fin').value    = '';
+
+  renderDias(); renderTimeline();
 }
 
-// ── Enter para loguear ──
-document.getElementById('txt').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); logear(); }
-});
-
-// ── Render días ──
+// ── Días ──
 function renderDias() {
-  const entries = DB.get();
-  const dias = [...new Set(entries.map(e => e.date))].sort((a,b) => b.localeCompare(a));
+  const items = DB.get();
+  const dias  = [...new Set(items.map(e => e.date))].sort((a,b) => b.localeCompare(a));
   if (!dias.includes(hoy())) dias.unshift(hoy());
 
-  const bar = document.getElementById('filter-bar');
-  bar.innerHTML = dias.slice(0, 14).map(d => `
-    <button class="day-btn ${d === diaActivo ? 'active' : ''}" onclick="cambiarDia('${d}')">
-      ${d === hoy() ? 'Hoy' : fmtFecha(d)}
-    </button>
-  `).join('');
+  document.getElementById('day-tabs').innerHTML = dias.slice(0,14).map(d =>
+    `<button class="day-tab ${d===diaActivo?'active':''}" onclick="cambiarDia('${d}')">
+      ${d===hoy() ? 'Hoy' : fmtFecha(d)}
+    </button>`
+  ).join('');
 }
 
-function cambiarDia(d) {
-  diaActivo = d;
-  renderDias();
-  renderEntradas();
-}
+function cambiarDia(d) { diaActivo=d; renderDias(); renderTimeline(); }
 
-// ── Render entradas ──
-function renderEntradas() {
-  const todas = DB.get().filter(e => e.date === diaActivo);
-  const cont  = document.getElementById('entries');
-  const summ  = document.getElementById('day-summary');
+// ── Timeline ──
+function renderTimeline() {
+  const items = DB.get().filter(e => e.date === diaActivo)
+                        .sort((a,b) => (a.ini||'').localeCompare(b.ini||'') || b.id - a.id);
 
-  summ.textContent = todas.length ? `${todas.length} entradas hoy` : '';
+  // Resumen por etiqueta
+  const contar = {};
+  items.forEach(e => { contar[e.etq] = (contar[e.etq]||0)+1; });
+  document.getElementById('resumen').innerHTML = Object.entries(contar).map(([etq,n]) =>
+    `<div class="res-chip ${etq}">${etq} <span>${n}</span></div>`
+  ).join('');
 
-  if (!todas.length) {
-    cont.innerHTML = `<div class="empty">Sin entradas${diaActivo === hoy() ? ' hoy — empieza registrando' : ' este día'}.</div>`;
+  const tl = document.getElementById('timeline');
+  if (!items.length) {
+    tl.innerHTML = '<div class="empty">Sin registros — agrega tu primera actividad.</div>';
     return;
   }
 
-  cont.innerHTML = todas.map(e => `
-    <div class="entry" id="e${e.id}">
-      <div class="entry-time">${fmtHora(e.ts)}</div>
-      <div class="entry-body">
-        <div class="entry-cat">${e.cat}</div>
+  tl.innerHTML = items.map(e => `
+    <div class="entry">
+      <div class="entry-bar ${e.etq}"></div>
+      <div class="entry-main">
+        <div class="entry-header">
+          <span class="entry-tag ${e.etq}">${e.etq}</span>
+          <span class="entry-time">${e.ini||''}${e.fin?' → '+e.fin:''}</span>
+        </div>
         <div class="entry-text">${e.txt.replace(/\n/g,'<br>')}</div>
+        ${duracion(e.ini,e.fin) ? `<div class="entry-dur">${duracion(e.ini,e.fin)}</div>` : ''}
       </div>
       <button class="del" onclick="borrar(${e.id})">×</button>
     </div>
@@ -193,25 +252,27 @@ function renderEntradas() {
 
 window.borrar = id => {
   DB.set(DB.get().filter(e => e.id !== id));
-  renderEntradas();
-  renderDias();
+  renderDias(); renderTimeline();
 };
 
 // ── Exportar ──
 function exportar() {
-  const entries = DB.get().filter(e => e.date === diaActivo);
-  if (!entries.empty && entries.length === 0) { alert('Sin entradas para exportar.'); return; }
-  const txt = `BITÁCORA — ${diaActivo}\n${'─'.repeat(40)}\n` +
-    entries.map(e => `[${fmtHora(e.ts)}] [${e.cat.toUpperCase()}] ${e.txt}`).join('\n');
-  const a   = document.createElement('a');
-  a.href    = 'data:text/plain;charset=utf-8,' + encodeURIComponent(txt);
-  a.download = `bitacora-${diaActivo}.txt`;
+  const items = DB.get().filter(e => e.date === diaActivo)
+                        .sort((a,b) => (a.ini||'').localeCompare(b.ini||''));
+  if (!items.length) { alert('Sin registros para exportar.'); return; }
+  const lineas = items.map(e =>
+    `[${e.ini||'--:--'}${e.fin?' - '+e.fin:''}] [${e.etq.toUpperCase()}] ${e.txt}${duracion(e.ini,e.fin)?' ('+duracion(e.ini,e.fin)+')':''}`
+  );
+  const txt = `MI TIEMPO — ${diaActivo}\n${'─'.repeat(45)}\n${lineas.join('\n')}`;
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(txt);
+  a.download = `tiempo-${diaActivo}.txt`;
   a.click();
 }
 
 // ── Init ──
 renderDias();
-renderEntradas();
+renderTimeline();
 </script>
 </body>
 </html>
