@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Nota de Remisión — Madería La Jardín</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#e0e0e0;display:flex;flex-direction:column;align-items:center;padding:20px;gap:16px}
+.controls{display:flex;gap:10px;width:680px}
+.btn{padding:10px 24px;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-print{background:#111;color:#fff}
+.btn-new{background:#fff;color:#111;border:1px solid #ccc}
+.hoja{background:#fff;width:680px;padding:20px;border:1px solid #ccc;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+.logo-area{flex:1}
+.logo-area .nombre{font-size:28px;font-weight:900;line-height:1;letter-spacing:1px}
+.logo-area .jardin{font-size:42px;font-weight:900;line-height:1;font-style:italic;letter-spacing:2px}
+.logo-area .direccion{font-size:11px;font-weight:700;margin-top:4px;line-height:1.4}
+.logo-area .telefonos{font-size:20px;font-weight:900;margin-top:6px;letter-spacing:1px}
+.header-right{display:flex;flex-direction:column;gap:6px;min-width:200px}
+.remision-box{background:#111;color:#fff;text-align:center;font-size:13px;font-weight:900;letter-spacing:2px;padding:8px 12px;border:2px solid #111}
+.remision-num{border:2px solid #111;height:36px;display:flex;align-items:center;padding:0 8px}
+.remision-num input{border:none;outline:none;font-size:14px;font-weight:700;width:100%;font-family:inherit}
+.fecha-box{border:2px solid #111}
+.fecha-title{background:#111;color:#fff;text-align:center;font-size:12px;font-weight:900;letter-spacing:3px;padding:4px}
+.fecha-fields{display:grid;grid-template-columns:1fr 1fr 1fr}
+.fecha-field{display:flex;flex-direction:column;align-items:center;border-right:1px solid #111;padding:4px 2px}
+.fecha-field:last-child{border-right:none}
+.fecha-field label{font-size:9px;font-weight:700;letter-spacing:1px}
+.fecha-field input{border:none;outline:none;font-size:13px;font-weight:700;text-align:center;width:100%;font-family:inherit}
+.cliente{border:2px solid #111;margin-bottom:10px}
+.cliente-row{display:flex;border-bottom:1px solid #111;padding:6px 8px;gap:8px;align-items:center}
+.cliente-row:last-child{border-bottom:none}
+.cliente-row label{font-size:12px;font-weight:700;white-space:nowrap;min-width:90px}
+.cliente-row input{border:none;outline:none;font-size:13px;flex:1;font-family:inherit}
+.tabla{width:100%;border-collapse:collapse}
+.tabla th{background:#111;color:#fff;border:1px solid #111;padding:7px 6px;font-size:11px;font-weight:900;letter-spacing:1px;text-align:center}
+.tabla td{border:1px solid #555;padding:0}
+.tabla td input{border:none;outline:none;width:100%;padding:7px 6px;font-size:13px;font-family:inherit;text-align:center}
+.tabla td.desc input{text-align:left}
+.col-cant{width:60px}
+.col-pu{width:90px}
+.col-imp{width:90px}
+.footer{display:flex;justify-content:space-between;align-items:center;border:2px solid #111;border-top:none;padding:10px 16px}
+.gracias{font-size:16px;font-weight:900;font-style:italic}
+.total-area{display:flex;align-items:center;gap:10px}
+.total-label{font-size:18px;font-weight:900;letter-spacing:1px}
+.total-val{border:2px solid #111;padding:8px 20px;font-size:18px;font-weight:900;min-width:120px;text-align:right}
+.rif{text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;margin-top:8px;border-top:1px solid #ccc;padding-top:8px}
+@media print{body{background:#fff;padding:0}.controls{display:none}.hoja{box-shadow:none;border:none;width:100%;padding:14px}}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="btn btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+  <button class="btn btn-new" onclick="nuevaRemision()">Nueva remisión</button>
+</div>
+<div class="hoja">
+  <div class="header">
+    <div class="logo-area">
+      <div class="nombre">MADERÍA</div>
+      <div class="jardin">LA JARDÍN</div>
+      <div class="direccion">CALLE NOGAL # 3516 COL. JARDÍN,<br>TIJUANA, B.C. 22610</div>
+      <div class="telefonos">(664) 123-0543 &nbsp; (001) 714-4650</div>
+    </div>
+    <div class="header-right">
+      <div class="remision-box">NOTA DE REMISIÓN</div>
+      <div class="remision-num"><input type="text" id="num-remision" placeholder="N°"></div>
+      <div class="fecha-box">
+        <div class="fecha-title">F &nbsp; E &nbsp; C &nbsp; H &nbsp; A</div>
+        <div class="fecha-fields">
+          <div class="fecha-field"><label>DIA</label><input type="text" id="f-dia" maxlength="2"></div>
+          <div class="fecha-field"><label>MES</label><input type="text" id="f-mes" maxlength="2"></div>
+          <div class="fecha-field"><label>AÑO</label><input type="text" id="f-ano" maxlength="4"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cliente">
+    <div class="cliente-row"><label>NOMBRE:</label><input type="text" id="c-nombre"></div>
+    <div class="cliente-row"><label>DIRECCIÓN:</label><input type="text" id="c-dir"></div>
+    <div class="cliente-row"><label>TEL.:</label><input type="text" id="c-tel"></div>
+  </div>
+  <table class="tabla">
+    <thead><tr><th class="col-cant">CANT.</th><th>D E S C R I P C I Ó N</th><th class="col-pu">P/UNIT.</th><th class="col-imp">IMPORTE</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="footer">
+    <div class="gracias">Gracias por su preferencia!!!</div>
+    <div class="total-area"><div class="total-label">TOTAL $</div><div class="total-val" id="total-display">0.00</div></div>
+  </div>
+  <div class="rif">RÉGIMEN DE INCORPORACIÓN FISCAL / EXPEDIDO EN TIJUANA, B.C.</div>
+</div>
+<script>
+const FILAS=10;
+function initFecha(){const h=new Date();document.getElementById('f-dia').value=String(h.getDate()).padStart(2,'0');document.getElementById('f-mes').value=String(h.getMonth()+1).padStart(2,'0');document.getElementById('f-ano').value=h.getFullYear();}
+function buildTabla(){const t=document.getElementById('tbody');t.innerHTML='';for(let i=0;i<FILAS;i++){const tr=document.createElement('tr');tr.innerHTML='<td class="num"><input type="number" min="0" step="any" class="cant" oninput="calcFila('+i+')" placeholder=""></td><td class="desc"><input type="text" class="desc-txt" placeholder=""></td><td class="num"><input type="number" min="0" step="0.01" class="pu" oninput="calcFila('+i+')" placeholder=""></td><td class="num"><input type="number" class="imp" readonly tabindex="-1" placeholder=""></td>';t.appendChild(tr);}}
+function calcFila(i){const f=document.querySelectorAll('#tbody tr');const c=parseFloat(f[i].querySelector('.cant').value)||0;const p=parseFloat(f[i].querySelector('.pu').value)||0;const imp=c*p;f[i].querySelector('.imp').value=imp>0?imp.toFixed(2):'';calcTotal();}
+function calcTotal(){let t=0;document.querySelectorAll('.imp').forEach(el=>{t+=parseFloat(el.value)||0;});document.getElementById('total-display').textContent=t.toLocaleString('es-MX',{minimumFractionDigits:2});}
+function nuevaRemision(){if(!confirm('¿Limpiar para nueva remisión?'))return;document.querySelectorAll('.cant,.desc-txt,.pu,.imp').forEach(el=>el.value='');document.getElementById('c-nombre').value='';document.getElementById('c-dir').value='';document.getElementById('c-tel').value='';document.getElementById('num-remision').value='';calcTotal();initFecha();}
+initFecha();buildTabla();
+</script>
+</body>
+</html>
