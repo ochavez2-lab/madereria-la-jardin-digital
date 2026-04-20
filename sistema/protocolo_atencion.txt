@@ -1,0 +1,61 @@
+PROTOCOLO DE ATENCIÓN AL CLIENTE — Maderería La Jardín
+==========================================================
+Para empleado nuevo — Sigue estos pasos en orden
+
+----------------------------------------------------------
+PASO 1: SALUDO
+----------------------------------------------------------
+"Buen día, bienvenido a Maderería La Jardín.
+¿En qué le puedo ayudar?"
+
+----------------------------------------------------------
+PASO 2: IDENTIFICAR LA NECESIDAD
+----------------------------------------------------------
+Preguntas clave:
+- ¿Qué tipo de madera necesita? (pino, MDF, triplay, etc.)
+- ¿Qué medida necesita?
+- ¿Cuántas piezas?
+- ¿Es para uso interior o exterior?
+
+----------------------------------------------------------
+PASO 3: CONSULTAR EL PRECIO
+----------------------------------------------------------
+Antes de dar cualquier precio:
+1. Consulta el archivo: precios_oficiales.md
+2. Busca el producto exacto
+3. Da SOLO el precio que aparece ahí
+
+NUNCA inventes un precio. Si no lo encuentras, di:
+"Un momento, voy a verificar el precio exacto."
+
+----------------------------------------------------------
+PASO 4: COTIZAR
+----------------------------------------------------------
+Fórmula: precio_unitario × cantidad = total
+Ejemplo: $45 MXN × 10 piezas = $450 MXN
+
+Ofrece siempre el total incluyendo corte si aplica.
+
+----------------------------------------------------------
+PASO 5: CIERRE
+----------------------------------------------------------
+"¿Le podemos hacer el corte aquí?
+¿Va a pagar en efectivo o con transferencia?"
+
+----------------------------------------------------------
+PASO 6: REGISTRO
+----------------------------------------------------------
+Anota en el log diario:
+- Hora de la venta
+- Producto vendido
+- Cantidad
+- Precio cobrado
+- Forma de pago
+
+----------------------------------------------------------
+REGLAS IMPORTANTES
+----------------------------------------------------------
+- Nunca des descuentos sin autorización del dueño.
+- Si el cliente insiste en un precio diferente, di:
+  "Ese precio no me aparece en el sistema, déjeme llamar al encargado."
+- Toda venta queda grabada para auditoría.
