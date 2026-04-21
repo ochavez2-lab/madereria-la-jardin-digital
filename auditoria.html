@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Auditoría La Jardín</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:20px;padding:20px}
+.login h1{font-size:22px;font-weight:700;letter-spacing:2px;color:#c9a84c}
+.login p{font-size:13px;color:#666;text-align:center}
+.perfil-btn{width:100%;max-width:320px;padding:18px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-admin{background:#c9a84c;color:#000}
+.btn-cajero{background:#1a1a1a;color:#fff;border:1px solid #333}
+.btn-admin:hover{background:#e0c060}
+.btn-cajero:hover{background:#222}
+
+.app{display:none;flex-direction:column;min-height:100vh}
+.app.open{display:flex}
+
+.topbar{background:#111;border-bottom:1px solid #222;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.topbar .titulo{font-size:14px;font-weight:700;color:#c9a84c;letter-spacing:1px}
+.topbar .perfil-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:700}
+.badge-admin{background:#c9a84c;color:#000}
+.badge-cajero{background:#333;color:#aaa}
+.logout{background:none;border:none;color:#555;font-size:12px;cursor:pointer;font-family:inherit}
+
+.tabs{display:flex;border-bottom:1px solid #222}
+.tab{flex:1;padding:12px;background:none;border:none;color:#555;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s}
+.tab.active{color:#c9a84c;border-bottom-color:#c9a84c}
+
+.panel{display:none;flex:1;padding:16px;flex-direction:column;gap:12px}
+.panel.active{display:flex}
+
+.search-box{background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;width:100%;font-family:inherit;outline:none}
+.search-box:focus{border-color:#c9a84c}
+.producto-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center}
+.prod-info .nombre{font-size:14px;font-weight:700}
+.prod-info .medida{font-size:11px;color:#666;margin-top:2px}
+.prod-precio{font-size:18px;font-weight:900;color:#c9a84c}
+.prod-stock{font-size:10px;color:#2e7d32;background:#1b3a1e;padding:2px 8px;border-radius:10px;margin-top:4px;text-align:right}
+
+.venta-box{background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:14px}
+.venta-box h3{font-size:13px;font-weight:700;color:#888;margin-bottom:10px;letter-spacing:1px}
+.venta-row{display:flex;gap:8px;margin-bottom:8px}
+.venta-row select,.venta-row input{flex:1;background:#111;border:1px solid #333;border-radius:8px;padding:8px 10px;color:#fff;font-size:13px;font-family:inherit;outline:none}
+.venta-row select:focus,.venta-row input:focus{border-color:#c9a84c}
+.btn-registrar{width:100%;background:#c9a84c;color:#000;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-registrar:hover{background:#e0c060}
+
+.audit-header{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:14px}
+.audit-header h3{font-size:12px;color:#666;margin-bottom:8px;letter-spacing:1px}
+.kpi-row{display:flex;gap:8px}
+.kpi{flex:1;background:#111;border-radius:8px;padding:10px;text-align:center}
+.kpi-val{font-size:20px;font-weight:900}
+.kpi-val.ok{color:#2e7d32}
+.kpi-val.warn{color:#f59e0b}
+.kpi-val.bad{color:#dc2626}
+.kpi-lbl{font-size:10px;color:#555;margin-top:2px}
+
+.alerta{background:#1a0000;border:1px solid #dc2626;border-radius:10px;padding:12px;font-size:13px;color:#dc2626}
+.alerta .alerta-titulo{font-weight:700;margin-bottom:4px}
+
+.log-item{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;font-size:12px}
+.log-item .log-hora{color:#555;font-size:10px;margin-bottom:4px}
+.log-item .log-texto{color:#ccc}
+.log-item.discrepancia{border-color:#dc2626;background:#1a0000}
+.log-item.discrepancia .log-texto{color:#f87171}
+
+.simulador{background:#111;border:1px solid #1e3a1e;border-radius:10px;padding:14px}
+.simulador h3{font-size:12px;color:#2e7d32;margin-bottom:10px;letter-spacing:1px}
+.sim-textarea{width:100%;background:#0a0a0a;border:1px solid #1e3a1e;border-radius:8px;padding:10px;color:#ccc;font-size:12px;font-family:inherit;resize:none;height:70px;outline:none}
+.btn-analizar{width:100%;background:#1e3a1e;color:#4ade80;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px}
+.btn-analizar:hover{background:#2e7d32;color:#fff}
+.resultado-analisis{background:#0a1a0a;border:1px solid #1e3a1e;border-radius:8px;padding:12px;font-size:12px;color:#4ade80;margin-top:8px;display:none;line-height:1.6;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div style="font-size:32px;font-weight:900;color:#c9a84c;letter-spacing:2px">LA JARDÍN</div>
+  <div style="font-size:12px;color:#444;letter-spacing:3px">SISTEMA DE AUDITORÍA</div>
+  <div style="height:1px;width:200px;background:#222;margin:10px 0"></div>
+  <button class="perfil-btn btn-admin" onclick="entrar('admin')">Entrar como Admin (Dueño)</button>
+  <button class="perfil-btn btn-cajero" onclick="entrar('cajero')">Entrar como Cajero</button>
+  <p>Selecciona tu perfil para acceder</p>
+</div>
+
+<div class="app" id="app-cajero">
+  <div class="topbar">
+    <div class="titulo">LA JARDÍN</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="perfil-badge badge-cajero">CAJERO</span>
+      <button class="logout" onclick="salir()">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="cambiarTab('cajero','precios',this)">Precios</button>
+    <button class="tab" onclick="cambiarTab('cajero','venta',this)">Registrar Venta</button>
+  </div>
+  <div class="panel active" id="cajero-precios">
+    <input class="search-box" type="text" placeholder="Buscar producto..." oninput="filtrarProductos(this.value)">
+    <div id="lista-productos"></div>
+  </div>
+  <div class="panel" id="cajero-venta">
+    <div class="venta-box">
+      <h3>NUEVA VENTA</h3>
+      <div class="venta-row">
+        <select id="v-producto"><option value="">Seleccionar producto...</option></select>
+      </div>
+      <div class="venta-row">
+        <input type="number" id="v-cantidad" placeholder="Cantidad" min="1">
+        <input type="number" id="v-precio-cobrado" placeholder="Precio cobrado $">
+      </div>
+      <button class="btn-registrar" onclick="registrarVenta()">Registrar Venta</button>
+    </div>
+    <div id="ventas-hoy"></div>
+  </div>
+</div>
+
+<div class="app" id="app-admin">
+  <div class="topbar">
+    <div class="titulo">LA JARDÍN — AUDITORÍA</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="perfil-badge badge-admin">ADMIN</span>
+      <button class="logout" onclick="salir()">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="cambiarTab('admin','resumen',this)">Resumen</button>
+    <button class="tab" onclick="cambiarTab('admin','logs',this)">Logs</button>
+    <button class="tab" onclick="cambiarTab('admin','ia',this)">IA Auditor</button>
+  </div>
+  <div class="panel active" id="admin-resumen">
+    <div class="audit-header">
+      <h3>HOY</h3>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-val ok" id="kpi-ventas">0</div><div class="kpi-lbl">Ventas</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-total">$0</div><div class="kpi-lbl">Total</div></div>
+        <div class="kpi"><div class="kpi-val bad" id="kpi-disc">0</div><div class="kpi-lbl">Discrepancias</div></div>
+      </div>
+    </div>
+    <div id="alertas-admin"></div>
+  </div>
+  <div class="panel" id="admin-logs"><div id="logs-lista"></div></div>
+  <div class="panel" id="admin-ia">
+    <div class="simulador">
+      <h3>SIMULADOR — TRANSCRIPCIÓN DE AUDIO</h3>
+      <textarea class="sim-textarea" id="transcripcion" placeholder='Ejemplo: "Cliente pidió 10 barrotes 2x4 de 16 pies, le dijeron $85 cada uno"'></textarea>
+      <button class="btn-analizar" onclick="analizarTranscripcion()">Analizar con IA</button>
+      <div class="resultado-analisis" id="resultado-ia"></div>
+    </div>
+    <div id="logs-lista-admin"></div>
+  </div>
+</div>
+
+<script>
+const PRECIOS=[{id:1,nombre:'Barrote 2x4',medida:'16 pies',precio:85,stock:'En stock'},{id:2,nombre:'Barrote 2x4',medida:'8 pies',precio:45,stock:'En stock'},{id:3,nombre:'Tablón 2x6',medida:'16 pies',precio:140,stock:'En stock'},{id:4,nombre:'Triplay 3/4"',medida:'4x8 pies',precio:580,stock:'En stock'},{id:5,nombre:'Triplay 1/2"',medida:'4x8 pies',precio:420,stock:'En stock'},{id:6,nombre:'Triplay 3/8"',medida:'4x8 pies',precio:310,stock:'En stock'},{id:7,nombre:'OSB/Cimbraplay',medida:'4x8 pies',precio:380,stock:'En stock'},{id:8,nombre:'Shingle asfáltico',medida:'por pieza',precio:425,stock:'En stock'},{id:9,nombre:'Membrana azul',medida:'por rollo',precio:650,stock:'En stock'},{id:10,nombre:'Viga 4x4',medida:'16 pies',precio:210,stock:'En stock'}];
+const DB={get:k=>JSON.parse(localStorage.getItem(k)||'[]'),set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+let perfilActual=null;
+function entrar(p){perfilActual=p;document.getElementById('login').style.display='none';if(p==='cajero'){document.getElementById('app-cajero').classList.add('open');renderProductos(PRECIOS);llenarSelectProductos();renderVentasHoy();}else{document.getElementById('app-admin').classList.add('open');renderResumenAdmin();renderLogs();}}
+function salir(){document.querySelectorAll('.app').forEach(a=>a.classList.remove('open'));document.getElementById('login').style.display='flex';perfilActual=null;}
+function cambiarTab(perfil,tab,btn){document.querySelectorAll(`#app-${perfil} .tab`).forEach(t=>t.classList.remove('active'));document.querySelectorAll(`#app-${perfil} .panel`).forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById(perfil+'-'+tab).classList.add('active');if(perfil==='admin'&&tab==='logs')renderLogs('logs-lista');if(perfil==='admin'&&tab==='ia')renderLogs('logs-lista-admin');}
+function renderProductos(lista){document.getElementById('lista-productos').innerHTML=lista.map(p=>`<div class="producto-card"><div class="prod-info"><div class="nombre">${p.nombre}</div><div class="medida">${p.medida}</div></div><div style="text-align:right"><div class="prod-precio">$${p.precio}</div><div class="prod-stock">${p.stock}</div></div></div>`).join('');}
+function filtrarProductos(q){renderProductos(PRECIOS.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase())||p.medida.includes(q)));}
+function llenarSelectProductos(){const sel=document.getElementById('v-producto');PRECIOS.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=`${p.nombre} ${p.medida} — $${p.precio}`;sel.appendChild(o);});}
+function registrarVenta(){const pid=parseInt(document.getElementById('v-producto').value);const cant=parseFloat(document.getElementById('v-cantidad').value);const cobrado=parseFloat(document.getElementById('v-precio-cobrado').value);if(!pid||!cant||!cobrado)return alert('Completa todos los campos');const prod=PRECIOS.find(p=>p.id===pid);const esperado=prod.precio*cant;const diff=cobrado-esperado;const disc=Math.abs(diff)>1;const ventas=DB.get('ventas_lj');ventas.push({id:Date.now(),hora:new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),producto:prod.nombre+' '+prod.medida,cantidad:cant,precioUnitario:prod.precio,esperado,cobrado,diff,discrepancia:disc});DB.set('ventas_lj',ventas);document.getElementById('v-producto').value='';document.getElementById('v-cantidad').value='';document.getElementById('v-precio-cobrado').value='';renderVentasHoy();alert(disc?`⚠️ Discrepancia: esperado $${esperado}, cobrado $${cobrado}`:'✓ Venta registrada');}
+function renderVentasHoy(){const v=DB.get('ventas_lj');document.getElementById('ventas-hoy').innerHTML=v.length?`<div style="font-size:11px;color:#555;margin:8px 0 4px">VENTAS DE HOY</div>${v.slice().reverse().map(x=>`<div class="log-item ${x.discrepancia?'discrepancia':''}"><div class="log-hora">${x.hora} — ${x.producto} × ${x.cantidad}</div><div class="log-texto">Cobrado: $${x.cobrado} / Esperado: $${x.esperado}${x.discrepancia?' ⚠️':' ✓'}</div></div>`).join('')}`:'<div style="font-size:12px;color:#444;text-align:center;padding:20px">Sin ventas registradas hoy</div>';}
+function renderResumenAdmin(){const v=DB.get('ventas_lj');const total=v.reduce((s,x)=>s+x.cobrado,0);const discs=v.filter(x=>x.discrepancia).length;document.getElementById('kpi-ventas').textContent=v.length;document.getElementById('kpi-total').textContent='$'+total.toLocaleString('es-MX');document.getElementById('kpi-disc').textContent=discs;document.getElementById('kpi-disc').className='kpi-val '+(discs>0?'bad':'ok');const dv=v.filter(x=>x.discrepancia);document.getElementById('alertas-admin').innerHTML=dv.length?dv.map(x=>`<div class="alerta"><div class="alerta-titulo">Discrepancia — ${x.hora}</div>${x.producto} × ${x.cantidad} — Esperado $${x.esperado}, cobrado $${x.cobrado} (diff $${x.diff>0?'+':''}${x.diff})</div>`).join(''):'<div style="font-size:12px;color:#2e7d32;text-align:center;padding:20px">Sin discrepancias hoy</div>';}
+function renderLogs(el='logs-lista'){const v=DB.get('ventas_lj');document.getElementById(el).innerHTML=v.length?v.slice().reverse().map(x=>`<div class="log-item ${x.discrepancia?'discrepancia':''}"><div class="log-hora">${x.hora} — ${x.producto}</div><div class="log-texto">× ${x.cantidad} | Cobrado: $${x.cobrado} | Esperado: $${x.esperado} ${x.discrepancia?'⚠️ DISCREPANCIA':'✓ OK'}</div></div>`).join(''):'<div style="font-size:12px;color:#444;text-align:center;padding:20px">Sin registros</div>';}
+function analizarTranscripcion(){const texto=document.getElementById('transcripcion').value.trim();if(!texto)return;const r=document.getElementById('resultado-ia');r.style.display='block';r.textContent='Analizando...';setTimeout(()=>{const nums=(texto.match(/\$?\d+(\.\d+)?/g)||[]);if(nums.length>=2){const precios=nums.map(n=>parseFloat(n.replace('$','')));const max=Math.max(...precios);const prod=PRECIOS.find(p=>texto.toLowerCase().includes(p.nombre.toLowerCase().split(' ')[0]));if(prod&&Math.abs(max-prod.precio)>5){r.textContent=`⚠️ POSIBLE DISCREPANCIA\n\nProducto: ${prod.nombre}\nPrecio oficial: $${prod.precio}\nPrecio mencionado: $${max}\nDiferencia: $${(max-prod.precio).toFixed(2)}\n\nVerificar venta en caja.`;}else{r.textContent=`✓ SIN ANOMALÍAS\n\nPrecios dentro del rango esperado.\nNúmeros detectados: ${nums.join(', ')}`;}}else{r.textContent='ℹ️ DATOS INSUFICIENTES\n\nAgrega producto, cantidad y precio para analizar.';}},1200);}
+</script>
+</body>
+</html>
