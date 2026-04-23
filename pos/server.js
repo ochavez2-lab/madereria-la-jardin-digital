@@ -48,7 +48,6 @@ function readDB() {
 
 function writeDB(data) { fs.writeFileSync(DB, JSON.stringify(data, null, 2)); }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
 const sessions = {};
 function makeToken(role) {
   const t = crypto.randomBytes(24).toString('hex');
@@ -70,7 +69,6 @@ function auth(...roles) {
   };
 }
 
-// ── Login ─────────────────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
   const { role, password } = req.body;
   const db = readDB();
@@ -79,7 +77,6 @@ app.post('/api/login', (req, res) => {
   res.json({ token: makeToken(role), role });
 });
 
-// ── Productos ─────────────────────────────────────────────────────────────────
 app.get('/api/productos', auth('admin','cajero'), (req, res) => res.json(readDB().productos));
 
 app.post('/api/productos', auth('admin'), (req, res) => {
@@ -110,7 +107,6 @@ app.delete('/api/productos/:id', auth('admin'), (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Remisiones ────────────────────────────────────────────────────────────────
 app.get('/api/remisiones', auth('admin','cajero'), (req, res) => res.json(readDB()));
 
 app.post('/api/remisiones', auth('admin','cajero'), (req, res) => {
@@ -138,10 +134,8 @@ app.delete('/api/remisiones/:id', auth('admin'), (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Clientes ──────────────────────────────────────────────────────────────────
 app.get('/api/clientes', auth('admin'), (req, res) => res.json(readDB().clientes));
 
-// ── Reportes ──────────────────────────────────────────────────────────────────
 app.get('/api/reportes/hoy', auth('admin','cajero'), (req, res) => {
   const db  = readDB();
   const hoy = new Date().toDateString();
@@ -153,7 +147,6 @@ app.get('/api/reportes/hoy', auth('admin','cajero'), (req, res) => {
   res.json({ count: rs.length, total, top: top?top[0]:'—', topQty: top?top[1]:0 });
 });
 
-// ── Config ────────────────────────────────────────────────────────────────────
 app.put('/api/config/passwords', auth('admin'), (req, res) => {
   const db = readDB();
   Object.assign(db.config.passwords, req.body);
@@ -161,13 +154,11 @@ app.put('/api/config/passwords', auth('admin'), (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Socket ────────────────────────────────────────────────────────────────────
 io.on('connection', socket => {
   socket.on('actualizar_carrito', data => socket.broadcast.emit('carrito_cliente', data));
   socket.on('limpiar_cliente',    ()   => socket.broadcast.emit('limpiar_cliente'));
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, '0.0.0.0', () => {
   const nets = os.networkInterfaces();
   let ip = 'localhost';
