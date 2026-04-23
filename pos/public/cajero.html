@@ -3,85 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>POS — Cajero | La Jardín</title>
+<title>Cajero — La Jardín</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111;color:#fff;height:100vh;display:grid;grid-template-rows:56px 1fr;grid-template-columns:1fr 360px}
-
-/* Topbar */
-.topbar{grid-column:1/-1;background:#000;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
-.topbar .brand{font-size:16px;font-weight:900;color:#c9a84c;letter-spacing:2px}
-.topbar .info{font-size:12px;color:#555}
-
-/* Productos */
-.productos{padding:16px;overflow-y:auto;background:#111}
-.search{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111;color:#fff;height:100vh;display:grid;grid-template-rows:52px 1fr;grid-template-columns:1fr 360px}
+.topbar{grid-column:1/-1;background:#000;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.brand{font-size:14px;font-weight:900;color:#c9a84c;letter-spacing:2px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.hora{font-size:12px;color:#444}
+.btn-salir{font-size:12px;color:#555;cursor:pointer;padding:5px 10px;border:1px solid #222;border-radius:7px;background:none;font-family:inherit}
+.btn-salir:hover{color:#ef4444;border-color:#ef4444}
+.productos{padding:14px;overflow-y:auto;background:#111}
+.search{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px}
 .search:focus{border-color:#c9a84c}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.prod-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;user-select:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.prod-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:14px;cursor:pointer;transition:all .12s;user-select:none}
 .prod-card:hover{border-color:#c9a84c;background:#222}
 .prod-card:active{transform:scale(.97)}
-.prod-nombre{font-size:13px;font-weight:700;margin-bottom:4px}
-.prod-medida{font-size:11px;color:#666;margin-bottom:8px}
-.prod-precio{font-size:18px;font-weight:900;color:#c9a84c}
-.prod-stock{font-size:10px;color:#2e7d32;margin-top:4px}
-
-/* Carrito */
-.carrito{background:#0a0a0a;border-left:1px solid #222;display:flex;flex-direction:column}
-.carrito-header{padding:14px 16px;border-bottom:1px solid #222;font-size:13px;font-weight:700;color:#888;letter-spacing:1px}
-.carrito-items{flex:1;overflow-y:auto;padding:10px}
+.prod-nombre{font-size:13px;font-weight:700;margin-bottom:3px}
+.prod-medida{font-size:11px;color:#555;margin-bottom:8px}
+.prod-precio{font-size:19px;font-weight:900;color:#c9a84c}
+.carrito{background:#0a0a0a;border-left:1px solid #1a1a1a;display:flex;flex-direction:column}
+.cart-header{padding:12px 16px;border-bottom:1px solid #1a1a1a;font-size:11px;font-weight:700;color:#444;letter-spacing:2px}
+.cart-items{flex:1;overflow-y:auto;padding:10px}
 .item{background:#1a1a1a;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start}
 .item-info{flex:1}
 .item-nombre{font-size:13px;font-weight:700}
-.item-sub{font-size:11px;color:#666;margin-top:2px}
-.item-controles{display:flex;align-items:center;gap:6px;margin-top:6px}
-.qty-btn{width:26px;height:26px;border-radius:6px;border:1px solid #333;background:#222;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.item-sub{font-size:11px;color:#555;margin-top:2px}
+.item-ctrls{display:flex;align-items:center;gap:6px;margin-top:8px}
+.qty-btn{width:26px;height:26px;border-radius:6px;border:1px solid #2a2a2a;background:#222;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 .qty-btn:hover{background:#333}
-.qty-num{font-size:14px;font-weight:700;min-width:24px;text-align:center}
-.item-precio{font-size:14px;font-weight:900;color:#c9a84c;white-space:nowrap}
-.del-item{background:none;border:none;color:#555;cursor:pointer;font-size:16px;padding:2px 6px}
-.del-item:hover{color:#dc2626}
-
-.carrito-footer{padding:14px 16px;border-top:1px solid #222}
-.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.total-lbl{font-size:14px;font-weight:700;color:#888}
-.total-val{font-size:28px;font-weight:900;color:#c9a84c}
-
-/* Cliente info */
-.cliente-form{margin-bottom:12px}
-.c-input{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 10px;color:#fff;font-size:12px;font-family:inherit;outline:none;margin-bottom:6px}
+.qty-n{font-size:14px;font-weight:700;min-width:22px;text-align:center}
+.item-price{font-size:14px;font-weight:900;color:#c9a84c;white-space:nowrap}
+.del-btn{background:none;border:none;color:#333;cursor:pointer;font-size:18px;padding:0 4px;line-height:1}
+.del-btn:hover{color:#ef4444}
+.cart-footer{padding:14px 16px;border-top:1px solid #1a1a1a}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.total-lbl{font-size:13px;font-weight:700;color:#555}
+.total-val{font-size:30px;font-weight:900;color:#c9a84c}
+.c-input{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:8px 10px;color:#fff;font-size:12px;font-family:inherit;outline:none;margin-bottom:6px}
 .c-input:focus{border-color:#c9a84c}
-
 .btn-cobrar{width:100%;background:#c9a84c;color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:1px}
 .btn-cobrar:hover{background:#e0c060}
-.btn-cobrar:disabled{background:#333;color:#666;cursor:not-allowed}
-.btn-limpiar{width:100%;background:none;border:1px solid #333;color:#666;border-radius:10px;padding:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px}
-.btn-limpiar:hover{border-color:#dc2626;color:#dc2626}
-
-/* Historial */
-.historial-toggle{text-align:center;padding:8px;font-size:12px;color:#555;cursor:pointer;border-top:1px solid #111}
-.historial-toggle:hover{color:#c9a84c}
-.historial{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:50;padding:20px;overflow-y:auto}
+.btn-cobrar:disabled{background:#222;color:#444;cursor:not-allowed}
+.btn-limpiar{width:100%;background:none;border:1px solid #222;color:#444;border-radius:10px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;margin-top:6px}
+.btn-limpiar:hover{border-color:#ef4444;color:#ef4444}
+.hist-link{text-align:center;padding:8px;font-size:11px;color:#333;cursor:pointer;border-top:1px solid #111}
+.hist-link:hover{color:#c9a84c}
+.historial{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:40;padding:20px;overflow-y:auto}
 .historial.open{display:block}
-.historial h2{color:#c9a84c;margin-bottom:16px;font-size:16px}
-.hist-item{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start}
-.hist-info .num{font-size:12px;color:#888;margin-bottom:4px}
-.hist-info .cliente{font-size:13px;font-weight:700}
-.hist-info .detalle{font-size:11px;color:#666;margin-top:2px}
+.hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hist-head h2{color:#c9a84c;font-size:15px}
+.btn-cerrar-hist{background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-family:inherit;font-size:13px}
+.hist-item{background:#111;border:1px solid #1a1a1a;border-radius:10px;padding:12px;margin-bottom:8px}
+.hist-item .num{font-size:11px;color:#555;margin-bottom:4px}
+.hist-item .cli{font-size:13px;font-weight:700}
+.hist-item .det{font-size:11px;color:#444;margin-top:2px}
+.hist-row{display:flex;justify-content:space-between;align-items:flex-start}
 .hist-total{font-size:16px;font-weight:900;color:#c9a84c}
-.btn-void{background:#1a0000;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;margin-top:6px}
-.btn-void:hover{background:#dc2626;color:#fff}
-.btn-cerrar{background:#c9a84c;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:16px}
-
-/* Modal remisión */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:#fff;color:#111;width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;border-radius:4px;padding:20px}
 .modal-btns{display:flex;gap:10px;margin-bottom:16px}
 .btn-print{background:#111;color:#fff;border:none;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}
-.btn-close-modal{background:#f5f5f5;color:#111;border:1px solid #ccc;border-radius:6px;padding:10px 20px;font-size:13px;cursor:pointer}
-
+.btn-close-m{background:#f5f5f5;color:#111;border:1px solid #ccc;border-radius:6px;padding:10px 20px;font-size:13px;cursor:pointer}
 @media print{
   body{display:block}
   .modal-overlay{display:block!important;position:static;background:none}
@@ -92,294 +78,108 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <div class="brand">MADERERÍA LA JARDÍN — POS</div>
-  <div class="info" id="hora"></div>
+  <div class="brand">MADERERÍA LA JARDÍN — CAJERO</div>
+  <div class="topbar-right">
+    <span class="hora" id="hora"></span>
+    <button class="btn-salir" onclick="salir()">Salir</button>
+  </div>
 </div>
-
 <div class="productos">
   <input class="search" type="text" placeholder="Buscar producto..." oninput="filtrar(this.value)">
   <div class="grid" id="grid"></div>
 </div>
-
 <div class="carrito">
-  <div class="carrito-header">VENTA ACTUAL</div>
-  <div class="carrito-items" id="carrito-items">
-    <div style="font-size:12px;color:#333;text-align:center;padding:30px">Selecciona productos</div>
+  <div class="cart-header">VENTA ACTUAL</div>
+  <div class="cart-items" id="cart-items">
+    <div style="font-size:12px;color:#222;text-align:center;padding:30px">Selecciona productos</div>
   </div>
-  <div class="carrito-footer">
+  <div class="cart-footer">
     <div class="total-row">
       <div class="total-lbl">TOTAL</div>
       <div class="total-val" id="total">$0.00</div>
     </div>
-    <div class="cliente-form">
+    <div>
       <input class="c-input" id="c-nombre" placeholder="Nombre del cliente (opcional)">
       <input class="c-input" id="c-tel" placeholder="Teléfono (opcional)">
     </div>
     <button class="btn-cobrar" id="btn-cobrar" onclick="cobrar()" disabled>COBRAR</button>
-    <button class="btn-limpiar" onclick="limpiarCarrito()">Limpiar carrito</button>
+    <button class="btn-limpiar" onclick="limpiar()">Limpiar carrito</button>
   </div>
-  <div class="historial-toggle" onclick="toggleHistorial()">Ver remisiones del día</div>
+  <div class="hist-link" onclick="toggleHistorial()">Ver remisiones del día</div>
 </div>
-
-<!-- Historial -->
 <div class="historial" id="historial">
-  <button class="btn-cerrar" onclick="toggleHistorial()">← Cerrar</button>
-  <h2>Remisiones del día</h2>
+  <div class="hist-head">
+    <h2>Remisiones del día</h2>
+    <button class="btn-cerrar-hist" onclick="toggleHistorial()">← Cerrar</button>
+  </div>
   <div id="hist-lista"></div>
 </div>
-
-<!-- Modal remisión imprimible -->
 <div class="modal-overlay" id="modal-rem">
   <div class="modal">
     <div class="modal-btns">
       <button class="btn-print" onclick="window.print()">Imprimir / PDF</button>
-      <button class="btn-close-modal" onclick="cerrarModal()">Cerrar</button>
+      <button class="btn-close-m" onclick="cerrarModal()">Cerrar</button>
     </div>
-    <div id="remision-print"></div>
+    <div id="rem-print"></div>
   </div>
 </div>
-
 <script>
+const token = sessionStorage.getItem('token');
+if (!token) window.location.href = '/';
 const socket = io();
-let carrito = [];
-
-const PRODUCTOS = [
-  {id:1,  nombre:'Barrote 2x4',        medida:'8 pies',   precio:45},
-  {id:2,  nombre:'Barrote 2x4',        medida:'16 pies',  precio:85},
-  {id:3,  nombre:'Barrote 2x4',        medida:'30 pies',  precio:180},
-  {id:4,  nombre:'Tablón 2x6',         medida:'16 pies',  precio:140},
-  {id:5,  nombre:'Viga 4x4',           medida:'16 pies',  precio:210},
-  {id:6,  nombre:'Triplay 3/8"',       medida:'4x8 pies', precio:310},
-  {id:7,  nombre:'Triplay 1/2"',       medida:'4x8 pies', precio:420},
-  {id:8,  nombre:'Triplay 5/8"',       medida:'4x8 pies', precio:425},
-  {id:9,  nombre:'Triplay 3/4"',       medida:'4x8 pies', precio:580},
-  {id:10, nombre:'Triplay ranurado',   medida:'4x8 pies', precio:390},
-  {id:11, nombre:'OSB / Cimbraplay',   medida:'4x8 pies', precio:380},
-  {id:12, nombre:'Cimbra fenólica',    medida:'4x8 pies', precio:450},
-  {id:13, nombre:'Shingle asfáltico',  medida:'por pieza',precio:425},
-  {id:14, nombre:'Membrana azul',      medida:'por rollo', precio:650},
-  {id:15, nombre:'Membrana granular',  medida:'por rollo', precio:580},
-];
-
-let productosFiltrados = [...PRODUCTOS];
-
-function filtrar(q) {
-  productosFiltrados = PRODUCTOS.filter(p =>
-    p.nombre.toLowerCase().includes(q.toLowerCase()) || p.medida.includes(q)
-  );
+let carrito=[], productos=[], filtrados=[];
+const H=(url,opts={})=>fetch(url,{...opts,headers:{'Content-Type':'application/json','x-token':token,...(opts.headers||{})}});
+function salir(){sessionStorage.clear();socket.emit('limpiar_cliente');window.location.href='/';}
+async function init(){
+  const res=await H('/api/productos');
+  if(res.status===401){window.location.href='/';return;}
+  productos=await res.json();
+  filtrados=productos.filter(p=>p.stock);
   renderGrid();
 }
-
-function renderGrid() {
-  document.getElementById('grid').innerHTML = productosFiltrados.map(p => `
-    <div class="prod-card" onclick="agregarAlCarrito(${p.id})">
-      <div class="prod-nombre">${p.nombre}</div>
-      <div class="prod-medida">${p.medida}</div>
-      <div class="prod-precio">$${p.precio}</div>
-      <div class="prod-stock">En stock</div>
-    </div>
-  `).join('');
+function filtrar(q){filtrados=productos.filter(p=>p.stock&&(p.nombre.toLowerCase().includes(q.toLowerCase())||p.medida.includes(q)));renderGrid();}
+function renderGrid(){document.getElementById('grid').innerHTML=filtrados.map(p=>`<div class="prod-card" onclick="agregar(${p.id})"><div class="prod-nombre">${p.nombre}</div><div class="prod-medida">${p.medida}</div><div class="prod-precio">$${p.precio}</div></div>`).join('');}
+function agregar(id){const p=productos.find(x=>x.id===id);const e=carrito.find(x=>x.id===id);if(e)e.qty++;else carrito.push({...p,qty:1});renderCarrito();emitir();}
+function cambiarQty(id,d){const i=carrito.find(x=>x.id===id);if(!i)return;i.qty+=d;if(i.qty<=0)carrito=carrito.filter(x=>x.id!==id);renderCarrito();emitir();}
+function eliminar(id){carrito=carrito.filter(x=>x.id!==id);renderCarrito();emitir();}
+function limpiar(){carrito=[];document.getElementById('c-nombre').value='';document.getElementById('c-tel').value='';renderCarrito();socket.emit('limpiar_cliente');}
+function renderCarrito(){
+  const el=document.getElementById('cart-items');
+  if(!carrito.length){el.innerHTML='<div style="font-size:12px;color:#222;text-align:center;padding:30px">Selecciona productos</div>';document.getElementById('total').textContent='$0.00';document.getElementById('btn-cobrar').disabled=true;return;}
+  el.innerHTML=carrito.map(i=>`<div class="item"><div class="item-info"><div class="item-nombre">${i.nombre}</div><div class="item-sub">${i.medida} — $${i.precio} c/u</div><div class="item-ctrls"><button class="qty-btn" onclick="cambiarQty(${i.id},-1)">−</button><span class="qty-n">${i.qty}</span><button class="qty-btn" onclick="cambiarQty(${i.id},1)">+</button></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="item-price">$${(i.precio*i.qty).toLocaleString('es-MX',{minimumFractionDigits:2})}</div><button class="del-btn" onclick="eliminar(${i.id})">×</button></div></div>`).join('');
+  const t=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
+  document.getElementById('total').textContent='$'+t.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('btn-cobrar').disabled=false;
 }
-
-function agregarAlCarrito(id) {
-  const prod = PRODUCTOS.find(p => p.id === id);
-  const existe = carrito.find(i => i.id === id);
-  if (existe) {
-    existe.qty++;
-  } else {
-    carrito.push({ ...prod, qty: 1 });
-  }
-  renderCarrito();
-  emitirCliente();
+function emitir(){const t=carrito.reduce((s,i)=>s+i.precio*i.qty,0);socket.emit('actualizar_carrito',{items:carrito,total:t});}
+async function cobrar(){
+  if(!carrito.length)return;
+  const total=carrito.reduce((s,i)=>s+i.precio*i.qty,0);
+  const rem={cliente:document.getElementById('c-nombre').value.trim()||'Mostrador',tel:document.getElementById('c-tel').value.trim(),items:carrito.map(i=>({nombre:i.nombre,medida:i.medida,qty:i.qty,precio:i.precio,importe:i.precio*i.qty})),total};
+  const res=await H('/api/remisiones',{method:'POST',body:JSON.stringify(rem)});
+  const saved=await res.json();
+  mostrarRemision(saved);
+  limpiar();
 }
-
-function cambiarQty(id, delta) {
-  const item = carrito.find(i => i.id === id);
-  if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) carrito = carrito.filter(i => i.id !== id);
-  renderCarrito();
-  emitirCliente();
-}
-
-function eliminarItem(id) {
-  carrito = carrito.filter(i => i.id !== id);
-  renderCarrito();
-  emitirCliente();
-}
-
-function limpiarCarrito() {
-  carrito = [];
-  document.getElementById('c-nombre').value = '';
-  document.getElementById('c-tel').value = '';
-  renderCarrito();
-  socket.emit('limpiar_cliente');
-}
-
-function renderCarrito() {
-  const el = document.getElementById('carrito-items');
-  if (!carrito.length) {
-    el.innerHTML = '<div style="font-size:12px;color:#333;text-align:center;padding:30px">Selecciona productos</div>';
-    document.getElementById('total').textContent = '$0.00';
-    document.getElementById('btn-cobrar').disabled = true;
-    return;
-  }
-  el.innerHTML = carrito.map(i => `
-    <div class="item">
-      <div class="item-info">
-        <div class="item-nombre">${i.nombre}</div>
-        <div class="item-sub">${i.medida} — $${i.precio} c/u</div>
-        <div class="item-controles">
-          <button class="qty-btn" onclick="cambiarQty(${i.id},-1)">−</button>
-          <span class="qty-num">${i.qty}</span>
-          <button class="qty-btn" onclick="cambiarQty(${i.id},1)">+</button>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end">
-        <div class="item-precio">$${(i.precio*i.qty).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-        <button class="del-item" onclick="eliminarItem(${i.id})">×</button>
-      </div>
-    </div>
-  `).join('');
-
-  const total = carrito.reduce((s,i) => s + i.precio*i.qty, 0);
-  document.getElementById('total').textContent = '$' + total.toLocaleString('es-MX',{minimumFractionDigits:2});
-  document.getElementById('btn-cobrar').disabled = false;
-}
-
-function emitirCliente() {
-  const total = carrito.reduce((s,i) => s + i.precio*i.qty, 0);
-  socket.emit('actualizar_carrito', { items: carrito, total });
-}
-
-async function cobrar() {
-  if (!carrito.length) return;
-  const total    = carrito.reduce((s,i) => s + i.precio*i.qty, 0);
-  const cliente  = document.getElementById('c-nombre').value.trim();
-  const tel      = document.getElementById('c-tel').value.trim();
-  const remision = {
-    cliente: cliente || 'Mostrador',
-    tel,
-    items: carrito.map(i => ({ nombre:i.nombre, medida:i.medida, qty:i.qty, precio:i.precio, importe:i.precio*i.qty })),
-    total,
-  };
-
-  const res = await fetch('/api/remisiones', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(remision),
-  });
-  const rem = await res.json();
-  mostrarRemision(rem);
-  limpiarCarrito();
-}
-
-function mostrarRemision(rem) {
-  const fecha = new Date(rem.fecha);
-  const dia   = String(fecha.getDate()).padStart(2,'0');
-  const mes   = String(fecha.getMonth()+1).padStart(2,'0');
-  const ano   = fecha.getFullYear();
-
-  document.getElementById('remision-print').innerHTML = `
-    <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div>
-          <div style="font-size:26px;font-weight:900;line-height:1">MADERERÍA</div>
-          <div style="font-size:38px;font-weight:900;font-style:italic;line-height:1">LA JARDÍN</div>
-          <div style="font-size:11px;font-weight:700;margin-top:4px">CALLE NOGAL #3516 COL. JARDÍN,<br>TIJUANA, B.C. 22610</div>
-          <div style="font-size:18px;font-weight:900;margin-top:6px">(664) 709-3835</div>
-        </div>
-        <div style="min-width:180px">
-          <div style="background:#111;color:#fff;text-align:center;font-size:12px;font-weight:900;letter-spacing:2px;padding:7px 10px">NOTA DE REMISIÓN</div>
-          <div style="border:2px solid #111;padding:6px 8px;font-size:14px;font-weight:700">N° ${String(rem.id).padStart(4,'0')}</div>
-          <div style="border:2px solid #111;border-top:none">
-            <div style="background:#111;color:#fff;text-align:center;font-size:11px;font-weight:900;padding:3px;letter-spacing:2px">F E C H A</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center">
-              <div style="border-right:1px solid #111;padding:4px"><div style="font-size:9px;font-weight:700">DIA</div><div style="font-size:13px;font-weight:700">${dia}</div></div>
-              <div style="border-right:1px solid #111;padding:4px"><div style="font-size:9px;font-weight:700">MES</div><div style="font-size:13px;font-weight:700">${mes}</div></div>
-              <div style="padding:4px"><div style="font-size:9px;font-weight:700">AÑO</div><div style="font-size:13px;font-weight:700">${ano}</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div style="border:2px solid #111;margin-bottom:10px">
-        <div style="display:flex;border-bottom:1px solid #111;padding:5px 8px"><span style="font-size:12px;font-weight:700;min-width:80px">NOMBRE:</span><span style="font-size:13px">${rem.cliente}</span></div>
-        <div style="display:flex;padding:5px 8px"><span style="font-size:12px;font-weight:700;min-width:80px">TEL.:</span><span style="font-size:13px">${rem.tel || '—'}</span></div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:0">
-        <thead>
-          <tr>
-            <th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;font-weight:900;text-align:center;width:55px">CANT.</th>
-            <th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;font-weight:900;letter-spacing:1px">D E S C R I P C I Ó N</th>
-            <th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;font-weight:900;text-align:center;width:85px">P/UNIT.</th>
-            <th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;font-weight:900;text-align:center;width:85px">IMPORTE</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rem.items.map(i => `
-            <tr>
-              <td style="border:1px solid #555;padding:6px;text-align:center;font-size:13px">${i.qty}</td>
-              <td style="border:1px solid #555;padding:6px;font-size:13px">${i.nombre} ${i.medida}</td>
-              <td style="border:1px solid #555;padding:6px;text-align:right;font-size:13px">$${i.precio.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-              <td style="border:1px solid #555;padding:6px;text-align:right;font-size:13px">$${i.importe.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-            </tr>
-          `).join('')}
-          ${Array(Math.max(0,8-rem.items.length)).fill('<tr><td style="border:1px solid #555;padding:6px;height:28px">&nbsp;</td><td style="border:1px solid #555;padding:6px"></td><td style="border:1px solid #555;padding:6px"></td><td style="border:1px solid #555;padding:6px"></td></tr>').join('')}
-        </tbody>
-      </table>
-      <div style="display:flex;justify-content:space-between;align-items:center;border:2px solid #111;border-top:none;padding:10px 16px">
-        <div style="font-size:15px;font-weight:900;font-style:italic">Gracias por su preferencia!!!</div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:17px;font-weight:900">TOTAL $</div>
-          <div style="border:2px solid #111;padding:7px 18px;font-size:17px;font-weight:900;min-width:110px;text-align:right">$${rem.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-        </div>
-      </div>
-      <div style="text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;margin-top:8px;border-top:1px solid #ccc;padding-top:8px">RÉGIMEN DE INCORPORACIÓN FISCAL / EXPEDIDO EN TIJUANA, B.C.</div>
-    </div>
-  `;
+function mostrarRemision(r){
+  const f=new Date(r.fecha);
+  document.getElementById('rem-print').innerHTML=`<div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:26px;font-weight:900;line-height:1">MADERERÍA</div><div style="font-size:38px;font-weight:900;font-style:italic;line-height:1">LA JARDÍN</div><div style="font-size:11px;font-weight:700;margin-top:4px">CALLE NOGAL #3516 COL. JARDÍN, TIJUANA, B.C. 22610</div><div style="font-size:18px;font-weight:900;margin-top:6px">(664) 709-3835</div></div><div style="min-width:180px"><div style="background:#111;color:#fff;text-align:center;font-size:12px;font-weight:900;letter-spacing:2px;padding:7px 10px">NOTA DE REMISIÓN</div><div style="border:2px solid #111;padding:6px 8px;font-size:14px;font-weight:700">N° ${String(r.id).padStart(4,'0')}</div><div style="border:2px solid #111;border-top:none"><div style="background:#111;color:#fff;text-align:center;font-size:11px;font-weight:900;padding:3px;letter-spacing:2px">F E C H A</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center"><div style="border-right:1px solid #111;padding:4px"><div style="font-size:9px;font-weight:700">DIA</div><div style="font-size:13px;font-weight:700">${String(f.getDate()).padStart(2,'0')}</div></div><div style="border-right:1px solid #111;padding:4px"><div style="font-size:9px;font-weight:700">MES</div><div style="font-size:13px;font-weight:700">${String(f.getMonth()+1).padStart(2,'0')}</div></div><div style="padding:4px"><div style="font-size:9px;font-weight:700">AÑO</div><div style="font-size:13px;font-weight:700">${f.getFullYear()}</div></div></div></div></div></div><div style="border:2px solid #111;margin-bottom:10px"><div style="display:flex;border-bottom:1px solid #111;padding:5px 8px"><span style="font-size:12px;font-weight:700;min-width:80px">NOMBRE:</span><span>${r.cliente}</span></div><div style="display:flex;padding:5px 8px"><span style="font-size:12px;font-weight:700;min-width:80px">TEL.:</span><span>${r.tel||'—'}</span></div></div><table style="width:100%;border-collapse:collapse"><thead><tr><th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;text-align:center;width:55px">CANT.</th><th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px">DESCRIPCIÓN</th><th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;text-align:center;width:85px">P/UNIT.</th><th style="background:#111;color:#fff;border:1px solid #111;padding:6px;font-size:11px;text-align:center;width:85px">IMPORTE</th></tr></thead><tbody>${r.items.map(i=>`<tr><td style="border:1px solid #555;padding:6px;text-align:center">${i.qty}</td><td style="border:1px solid #555;padding:6px">${i.nombre} ${i.medida}</td><td style="border:1px solid #555;padding:6px;text-align:right">$${i.precio.toLocaleString('es-MX',{minimumFractionDigits:2})}</td><td style="border:1px solid #555;padding:6px;text-align:right">$${i.importe.toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>`).join('')}${Array(Math.max(0,8-r.items.length)).fill('<tr><td style="border:1px solid #555;padding:6px;height:28px">&nbsp;</td><td style="border:1px solid #555;padding:6px"></td><td style="border:1px solid #555;padding:6px"></td><td style="border:1px solid #555;padding:6px"></td></tr>').join('')}</tbody></table><div style="display:flex;justify-content:space-between;align-items:center;border:2px solid #111;border-top:none;padding:10px 16px"><div style="font-size:15px;font-weight:900;font-style:italic">Gracias por su preferencia!!!</div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:17px;font-weight:900">TOTAL $</div><div style="border:2px solid #111;padding:7px 18px;font-size:17px;font-weight:900;min-width:110px;text-align:right">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div></div><div style="text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;margin-top:8px;border-top:1px solid #ccc;padding-top:8px">RÉGIMEN DE INCORPORACIÓN FISCAL / EXPEDIDO EN TIJUANA, B.C.</div></div>`;
   document.getElementById('modal-rem').classList.add('open');
 }
-
-function cerrarModal() {
-  document.getElementById('modal-rem').classList.remove('open');
-}
-
-async function toggleHistorial() {
-  const el = document.getElementById('historial');
-  if (el.classList.toggle('open')) {
-    const res  = await fetch('/api/remisiones');
-    const db   = await res.json();
-    const hoy  = new Date().toDateString();
-    const hoyRems = db.remisiones.filter(r => new Date(r.fecha).toDateString() === hoy);
-    document.getElementById('hist-lista').innerHTML = hoyRems.length ? hoyRems.map(r => `
-      <div class="hist-item">
-        <div class="hist-info">
-          <div class="num">N° ${String(r.id).padStart(4,'0')} — ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
-          <div class="cliente">${r.cliente}</div>
-          <div class="detalle">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</div>
-          <button class="btn-void" onclick="anularRemision(${r.id})">Anular remisión</button>
-        </div>
-        <div class="hist-total">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-      </div>
-    `).join('') : '<div style="color:#555;font-size:13px;text-align:center;padding:20px">Sin remisiones hoy</div>';
+function cerrarModal(){document.getElementById('modal-rem').classList.remove('open');}
+async function toggleHistorial(){
+  const el=document.getElementById('historial');
+  if(el.classList.toggle('open')){
+    const db=await H('/api/remisiones').then(r=>r.json());
+    const hoy=new Date().toDateString();
+    const rs=(db.remisiones||[]).filter(r=>new Date(r.fecha).toDateString()===hoy);
+    document.getElementById('hist-lista').innerHTML=rs.length?rs.map(r=>`<div class="hist-item"><div class="hist-row"><div><div class="num">N°${String(r.id).padStart(4,'0')} — ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div><div class="cli">${r.cliente}</div><div class="det">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</div></div><div class="hist-total">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div></div>`).join(''):'<div style="color:#333;text-align:center;padding:24px;font-size:13px">Sin remisiones hoy</div>';
   }
 }
-
-async function anularRemision(id) {
-  if (!confirm('¿Anular esta remisión?')) return;
-  await fetch(`/api/remisiones/${id}`, { method: 'DELETE' });
-  toggleHistorial();
-  toggleHistorial();
-}
-
-// Reloj
-setInterval(() => {
-  document.getElementById('hora').textContent = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}, 1000);
-
-renderGrid();
+setInterval(()=>{document.getElementById('hora').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
+socket.on('productos_actualizados',p=>{productos=p;filtrados=p.filter(x=>x.stock);renderGrid();});
+init();
 </script>
 </body>
 </html>
