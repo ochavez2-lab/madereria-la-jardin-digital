@@ -7,200 +7,439 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
-.topbar{background:#000;border-bottom:1px solid #1a1a1a;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:10}
-.brand{font-size:14px;font-weight:900;color:#c9a84c;letter-spacing:2px}
-.tabs{display:flex;gap:2px;overflow-x:auto}
-.tab{padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:8px;color:#555;border:none;background:none;font-family:inherit;white-space:nowrap;transition:all .15s}
-.tab.active,.tab:hover{color:#fff;background:#1a1a1a}
-.tab.active{color:#c9a84c}
+.topbar{background:#000;border-bottom:2px solid #c9a84c33;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:10}
+.brand{font-size:14px;font-weight:900;color:#c9a84c;letter-spacing:3px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:8px;color:#444;border:none;background:none;font-family:inherit;white-space:nowrap;transition:all .15s}
+.tab:hover{color:#fff;background:#1a1a1a}
+.tab.on{color:#c9a84c;background:#c9a84c11}
 .logout{font-size:12px;cursor:pointer;padding:6px 12px;border:1px solid #222;border-radius:8px;background:none;color:#555;font-family:inherit}
 .logout:hover{color:#ef4444;border-color:#ef4444}
 .panel{display:none;padding:20px;max-width:1100px;margin:0 auto}
-.panel.active{display:block}
-.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
-.kpi{background:#111;border:1px solid #1a1a1a;border-radius:14px;padding:18px 20px}
-.kpi-lbl{font-size:11px;color:#555;letter-spacing:1px;margin-bottom:6px}
-.kpi-val{font-size:28px;font-weight:900;color:#c9a84c}
-.kpi-sub{font-size:11px;color:#444;margin-top:4px}
-.section-title{font-size:13px;font-weight:700;color:#888;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase}
+.panel.on{display:block}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:18px 20px}
+.kpi-l{font-size:10px;color:#555;letter-spacing:1px;margin-bottom:6px}
+.kpi-v{font-size:26px;font-weight:900;color:#c9a84c}
+.kpi-s{font-size:11px;color:#333;margin-top:3px}
+.kpi.gold{border-color:#c9a84c33}
+/* CHART */
+.chart-wrap{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:18px;margin-bottom:24px}
+.chart-title{font-size:11px;color:#555;letter-spacing:1px;margin-bottom:14px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:80px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{background:linear-gradient(180deg,#c9a84c,#c9a84c88);border-radius:4px 4px 0 0;width:100%;min-height:2px;transition:height .3s}
+.bar-lbl{font-size:9px;color:#444;text-align:center}
+.bar-val{font-size:9px;color:#c9a84c;font-weight:700}
+/* TABLES */
+.sec-t{font-size:11px;font-weight:700;color:#666;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#111;color:#555;font-size:11px;font-weight:700;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid #1a1a1a}
-td{padding:10px 12px;border-bottom:1px solid #111;vertical-align:middle}
-tr:hover td{background:#0f0f0f}
-.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
-.badge-green{background:#0a2e0a;color:#4ade80}
-.badge-red{background:#2e0a0a;color:#f87171}
-.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:none;letter-spacing:.5px;transition:all .15s}
-.btn-gold{background:#c9a84c;color:#000}
-.btn-gold:hover{background:#e0c060}
-.btn-outline{background:none;border:1px solid #333;color:#888}
-.btn-outline:hover{border-color:#888;color:#fff}
-.btn-danger{background:none;border:1px solid #333;color:#555}
-.btn-danger:hover{background:#2e0a0a;border-color:#ef4444;color:#ef4444}
-.btn-sm{padding:4px 10px;font-size:11px}
-.edit-input{background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:13px;font-family:inherit;outline:none;width:80px}
-.edit-input:focus{border-color:#c9a84c}
-.edit-input.wide{width:140px}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;align-items:center;justify-content:center}
-.overlay.open{display:flex}
+th{background:#111;color:#555;font-size:10px;font-weight:700;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid #1a1a1a}
+td{padding:10px 12px;border-bottom:1px solid #0f0f0f;vertical-align:middle}
+tr:hover td{background:#0d0d0d}
+/* BADGES */
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.b-green{background:#0a2e0a;color:#4ade80}
+.b-red{background:#2e0a0a;color:#f87171}
+.b-gold{background:#2a200a;color:#c9a84c}
+.b-blue{background:#0a1a2e;color:#60a5fa}
+.b-purple{background:#1a0a2e;color:#c084fc}
+.b-gray{background:#1a1a1a;color:#888}
+/* BUTTONS */
+.btn{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
+.bg{background:#c9a84c;color:#000}.bg:hover{background:#e0c060}
+.bo{background:none;border:1px solid #2a2a2a;color:#777}.bo:hover{border-color:#888;color:#fff}
+.bd{background:none;border:1px solid #2a2a2a;color:#555}.bd:hover{background:#2e0a0a;border-color:#ef4444;color:#ef4444}
+.bsm{padding:4px 9px;font-size:11px}
+/* INPUTS */
+.ei{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:5px 8px;color:#fff;font-size:13px;font-family:inherit;outline:none}
+.ei:focus{border-color:#c9a84c}
+.ei.w{width:140px}
+.fi{width:100%;background:#0a0a0a;border:1px solid #252525;border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;font-family:inherit;outline:none}
+.fi:focus{border-color:#c9a84c}
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:50;align-items:center;justify-content:center}
+.ov.on{display:flex}
 .modal{background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:28px;width:380px}
-.modal h3{font-size:16px;font-weight:900;color:#c9a84c;margin-bottom:20px}
-.form-row{margin-bottom:12px}
-.form-label{font-size:11px;color:#555;letter-spacing:1px;margin-bottom:4px;display:block}
-.form-input{width:100%;background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;outline:none}
-.form-input:focus{border-color:#c9a84c}
-.modal-actions{display:flex;gap:8px;margin-top:18px}
-.rem-items{font-size:11px;color:#555}
+.modal h3{font-size:15px;font-weight:900;color:#c9a84c;margin-bottom:18px}
+.fr{margin-bottom:12px}
+.fl{font-size:11px;color:#555;letter-spacing:.5px;margin-bottom:4px;display:block}
+.ma{display:flex;gap:8px;margin-top:16px}
+/* CONFIG */
+.cs{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:20px;margin-bottom:16px;max-width:480px}
+.cs h4{font-size:12px;font-weight:700;color:#666;letter-spacing:1px;margin-bottom:14px}
+/* GASTOS */
+.gasto-form{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.gasto-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111;border-radius:8px;margin-bottom:4px;font-size:13px}
 .total-gold{color:#c9a84c;font-weight:900}
-.config-section{background:#111;border:1px solid #1a1a1a;border-radius:14px;padding:20px;margin-bottom:16px;max-width:480px}
-.config-section h4{font-size:13px;font-weight:700;color:#888;letter-spacing:1px;margin-bottom:14px}
+/* FIADO TOTAL */
+.fiado-total{background:#1a0a0a;border:1px solid #c9a84c22;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="brand">LA JARDÍN — ADMIN</div>
   <div class="tabs">
-    <button class="tab active" onclick="showPanel('hoy',this)">HOY</button>
-    <button class="tab" onclick="showPanel('productos',this)">PRODUCTOS</button>
-    <button class="tab" onclick="showPanel('clientes',this)">CLIENTES</button>
-    <button class="tab" onclick="showPanel('historial',this)">HISTORIAL</button>
-    <button class="tab" onclick="showPanel('config',this)">CONFIG</button>
+    <button class="tab on"  onclick="show('hoy',this)">HOY</button>
+    <button class="tab"     onclick="show('productos',this)">PRODUCTOS</button>
+    <button class="tab"     onclick="show('clientes',this)">CLIENTES</button>
+    <button class="tab"     onclick="show('fiado',this)">FIADO</button>
+    <button class="tab"     onclick="show('historial',this)">HISTORIAL</button>
+    <button class="tab"     onclick="show('config',this)">CONFIG</button>
   </div>
   <button class="logout" onclick="salir()">Salir</button>
 </div>
-<div class="panel active" id="panel-hoy">
-  <div style="margin-bottom:20px;padding-top:8px"><div style="font-size:11px;color:#444;letter-spacing:1px" id="fecha-hoy"></div></div>
+
+<!-- HOY -->
+<div class="panel on" id="panel-hoy">
+  <div style="padding-top:8px;margin-bottom:16px;font-size:11px;color:#333;letter-spacing:1px" id="fecha-hoy"></div>
   <div class="kpis" id="kpis"></div>
-  <div class="section-title">Ventas de hoy</div>
-  <table><thead><tr><th>N°</th><th>HORA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>TOTAL</th><th></th></tr></thead><tbody id="body-hoy"></tbody></table>
+  <div class="chart-wrap">
+    <div class="chart-title">VENTAS ÚLTIMOS 7 DÍAS</div>
+    <div class="bars" id="bars"></div>
+  </div>
+  <!-- GASTOS -->
+  <div class="sec-t" style="margin-bottom:10px">GASTOS DEL DÍA
+    <button class="btn bg bsm" onclick="toggleGastos()">+ Agregar</button>
+  </div>
+  <div id="gastos-form" style="display:none;margin-bottom:12px">
+    <div class="gasto-form">
+      <input class="fi" id="g-desc" placeholder="Descripción (flete, papelería...)" style="flex:1;min-width:160px">
+      <input class="fi" id="g-monto" type="number" placeholder="Monto $" style="width:110px">
+      <button class="btn bg" onclick="addGasto()">Guardar</button>
+    </div>
+  </div>
+  <div id="gastos-lista"></div>
+  <div style="margin-top:20px" class="sec-t">VENTAS DE HOY</div>
+  <table style="margin-top:10px"><thead><tr><th>N°</th><th>HORA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-hoy"></tbody></table>
 </div>
+
+<!-- PRODUCTOS -->
 <div class="panel" id="panel-productos">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:8px">
-    <div class="section-title" style="margin:0">Catálogo de productos</div>
-    <button class="btn btn-gold" onclick="abrirNuevoProducto()">+ Nuevo producto</button>
+    <div class="sec-t" style="margin:0">CATÁLOGO</div>
+    <button class="btn bg" onclick="openProd()">+ Nuevo producto</button>
   </div>
-  <table><thead><tr><th>#</th><th>NOMBRE</th><th>MEDIDA</th><th>PRECIO</th><th>STOCK</th><th>ACCIONES</th></tr></thead><tbody id="body-productos"></tbody></table>
+  <table><thead><tr><th>#</th><th>NOMBRE</th><th>MEDIDA</th><th>CATEGORÍA</th><th>PRECIO</th><th>STOCK</th><th>ACCIONES</th></tr></thead>
+  <tbody id="body-prods"></tbody></table>
 </div>
+
+<!-- CLIENTES -->
 <div class="panel" id="panel-clientes">
-  <div style="margin-bottom:16px;padding-top:8px" class="section-title">Clientes registrados</div>
-  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>COMPRAS</th><th>TOTAL GASTADO</th><th>ÚTIMA VISITA</th></tr></thead><tbody id="body-clientes"></tbody></table>
+  <div style="padding-top:8px;margin-bottom:14px" class="sec-t">CLIENTES REGISTRADOS</div>
+  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>COMPRAS</th><th>TOTAL GASTADO</th><th>FIADO</th><th>ÚLTIMA VISITA</th></tr></thead>
+  <tbody id="body-clientes"></tbody></table>
 </div>
+
+<!-- FIADO -->
+<div class="panel" id="panel-fiado">
+  <div style="padding-top:8px;margin-bottom:14px">
+    <div class="fiado-total"><span style="font-size:13px;color:#888;font-weight:700">TOTAL PENDIENTE POR COBRAR</span><span class="total-gold" id="fiado-total" style="font-size:22px">$0.00</span></div>
+    <div class="sec-t">CUENTAS POR COBRAR</div>
+  </div>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-fiado"></tbody></table>
+</div>
+
+<!-- HISTORIAL -->
 <div class="panel" id="panel-historial">
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;padding-top:8px;flex-wrap:wrap">
-    <div class="section-title" style="margin:0">Historial de remisiones</div>
-    <input type="date" id="filtro-fecha" class="edit-input wide" onchange="cargarHistorial()">
+    <div class="sec-t" style="margin:0">HISTORIAL</div>
+    <input type="date" id="filtro-fecha" class="ei w" onchange="loadHistorial()">
+    <select id="filtro-pago" class="ei" onchange="loadHistorial()">
+      <option value="">Todos los pagos</option>
+      <option value="efectivo">Efectivo</option>
+      <option value="tarjeta">Tarjeta</option>
+      <option value="transferencia">Transferencia</option>
+      <option value="fiado">Fiado</option>
+    </select>
+    <button class="btn bo bsm" onclick="exportCSV()">⬇ CSV</button>
   </div>
-  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>TOTAL</th><th></th></tr></thead><tbody id="body-historial"></tbody></table>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-hist"></tbody></table>
 </div>
+
+<!-- CONFIG -->
 <div class="panel" id="panel-config">
-  <div style="margin-bottom:20px;padding-top:8px" class="section-title">Configuración del sistema</div>
-  <div class="config-section">
+  <div style="padding-top:8px;margin-bottom:16px" class="sec-t">CONFIGURACIÓN</div>
+  <div class="cs">
     <h4>CONTRASEÑAS</h4>
-    <div class="form-row"><label class="form-label">Admin</label><input class="form-input" id="pwd-admin" type="password" placeholder="Nueva contraseña admin"></div>
-    <div class="form-row"><label class="form-label">Cajero</label><input class="form-input" id="pwd-cajero" type="password" placeholder="Nueva contraseña cajero"></div>
-    <div class="form-row"><label class="form-label">Cliente (pantalla)</label><input class="form-input" id="pwd-cliente" type="password" placeholder="Nueva contraseña cliente"></div>
-    <button class="btn btn-gold" style="margin-top:4px" onclick="guardarPasswords()">Guardar contraseñas</button>
-    <div id="msg-config" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
+    <div class="fr"><label class="fl">Admin</label><input class="fi" id="pwd-a" type="password" placeholder="Nueva contraseña admin"></div>
+    <div class="fr"><label class="fl">Cajero</label><input class="fi" id="pwd-c" type="password" placeholder="Nueva contraseña cajero"></div>
+    <div class="fr"><label class="fl">Cliente (pantalla)</label><input class="fi" id="pwd-cl" type="password" placeholder="Nueva contraseña cliente"></div>
+    <button class="btn bg" style="margin-top:4px" onclick="savePasswords()">Guardar contraseñas</button>
+    <div id="msg-cfg" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
   </div>
 </div>
-<div class="overlay" id="overlay-prod">
+
+<!-- MODAL PRODUCTO -->
+<div class="ov" id="ov-prod">
   <div class="modal">
-    <h3 id="modal-prod-title">Nuevo producto</h3>
+    <h3 id="prod-title">Nuevo producto</h3>
     <input type="hidden" id="prod-id">
-    <div class="form-row"><label class="form-label">Nombre</label><input class="form-input" id="prod-nombre" placeholder="Ej: Barrote 2x4"></div>
-    <div class="form-row"><label class="form-label">Medida</label><input class="form-input" id="prod-medida" placeholder="Ej: 16 pies"></div>
-    <div class="form-row"><label class="form-label">Precio ($MXN)</label><input class="form-input" id="prod-precio" type="number" placeholder="0"></div>
-    <div class="modal-actions"><button class="btn btn-gold" onclick="guardarProducto()">Guardar</button><button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button></div>
+    <div class="fr"><label class="fl">Nombre</label><input class="fi" id="prod-nom" placeholder="Ej: Barrote 2x4"></div>
+    <div class="fr"><label class="fl">Medida</label><input class="fi" id="prod-med" placeholder="Ej: 16 pies"></div>
+    <div class="fr"><label class="fl">Categoría</label>
+      <select class="fi" id="prod-cat">
+        <option value="Madera">Madera</option>
+        <option value="Triplay">Triplay</option>
+        <option value="Cubiertas">Cubiertas</option>
+        <option value="General">General</option>
+      </select>
+    </div>
+    <div class="fr"><label class="fl">Precio ($MXN)</label><input class="fi" id="prod-pre" type="number" placeholder="0"></div>
+    <div class="ma"><button class="btn bg" onclick="saveProd()">Guardar</button><button class="btn bo" onclick="closeProd()">Cancelar</button></div>
   </div>
 </div>
+
+<!-- MODAL CONFIRMAR ANULAR -->
+<div class="ov" id="ov-anular">
+  <div class="modal">
+    <h3>CONFIRMAR ANULACIÓN</h3>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">Ingresa la contraseña de administrador para anular esta remisión.</p>
+    <div class="fr"><label class="fl">Contraseña admin</label><input class="fi" id="pwd-anular" type="password" placeholder="Contraseña"></div>
+    <div id="err-anular" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:8px"></div>
+    <div class="ma"><button class="btn bd" onclick="confirmarAnular()">Anular remisión</button><button class="btn bo" onclick="closeAnular()">Cancelar</button></div>
+  </div>
+</div>
+
 <script>
 const token = sessionStorage.getItem('token');
 if (!token) window.location.href = '/';
-const H = (url, opts={}) => fetch(url, { ...opts, headers:{ 'Content-Type':'application/json','x-token':token, ...(opts.headers||{}) } });
-function showPanel(id, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  btn.classList.add('active');
-  if (id==='hoy') cargarHoy();
-  if (id==='productos') cargarProductos();
-  if (id==='clientes') cargarClientes();
-  if (id==='historial') cargarHistorial();
+const H = (u,o) => { o=o||{}; o.headers=Object.assign({'Content-Type':'application/json','x-token':token},o.headers||{}); return fetch(u,o); };
+
+function salir(){sessionStorage.clear();window.location.href='/';}
+
+function show(id,btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  btn.classList.add('on');
+  if (id==='hoy')      loadHoy();
+  if (id==='productos') loadProds();
+  if (id==='clientes') loadClientes();
+  if (id==='fiado')    loadFiado();
+  if (id==='historial') loadHistorial();
 }
-function salir() { sessionStorage.clear(); window.location.href = '/'; }
-async function cargarHoy() {
+
+// ── HOY ───────────────────────────────────────────────────────────────────────
+const MET_BADGE = {
+  efectivo:'<span class="badge b-green">💵 Efectivo</span>',
+  tarjeta:'<span class="badge b-blue">💳 Tarjeta</span>',
+  transferencia:'<span class="badge b-purple">📱 Transfer</span>',
+  fiado:'<span class="badge b-gold">📋 Fiado</span>'
+};
+function metBadge(m){return MET_BADGE[m]||'<span class="badge b-gray">'+m+'</span>';}
+
+async function loadHoy() {
   document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
-  const [rep, db] = await Promise.all([H('/api/reportes/hoy').then(r=>r.json()), H('/api/remisiones').then(r=>r.json())]);
-  document.getElementById('kpis').innerHTML = `<div class="kpi"><div class="kpi-lbl">TOTAL DEL DÍA</div><div class="kpi-val">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div><div class="kpi"><div class="kpi-lbl">VENTAS</div><div class="kpi-val">${rep.count}</div><div class="kpi-sub">remisiones generadas</div></div><div class="kpi"><div class="kpi-lbl">PRODUCTO TOP</div><div class="kpi-val" style="font-size:16px;line-height:1.3">${rep.top}</div><div class="kpi-sub">${rep.topQty} piezas</div></div><div class="kpi"><div class="kpi-lbl">TICKET PROMEDIO</div><div class="kpi-val">$${rep.count?Math.round(rep.total/rep.count).toLocaleString('es-MX'):'0'}</div></div>`;
+  const [rep, db, semana, gastos] = await Promise.all([
+    H('/api/reportes/hoy').then(r=>r.json()),
+    H('/api/remisiones').then(r=>r.json()),
+    H('/api/reportes/semana').then(r=>r.json()),
+    H('/api/gastos').then(r=>r.json())
+  ]);
+  // KPIs
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi gold"><div class="kpi-l">TOTAL DEL DÍA</div><div class="kpi-v">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">VENTAS</div><div class="kpi-v">${rep.count}</div><div class="kpi-s">remisiones</div></div>
+    <div class="kpi"><div class="kpi-l">FIADO HOY</div><div class="kpi-v" style="color:#f87171">$${(rep.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">GASTOS</div><div class="kpi-v" style="color:#f87171">$${(rep.gastos||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">UTILIDAD</div><div class="kpi-v" style="color:#4ade80">$${(rep.utilidad||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">TICKET PROM.</div><div class="kpi-v">$${rep.count?Math.round(rep.total/rep.count).toLocaleString('es-MX'):'0'}</div></div>
+    <div class="kpi"><div class="kpi-l">PRODUCTO TOP</div><div class="kpi-v" style="font-size:14px;line-height:1.3">${rep.top}</div><div class="kpi-s">${rep.topQty} piezas</div></div>`;
+  // Gráfica
+  const max = Math.max(...semana.map(d=>d.total),1);
+  document.getElementById('bars').innerHTML = semana.map(d=>`
+    <div class="bar-col">
+      <div class="bar-val">${d.total>0?'$'+Math.round(d.total/1000)+'k':''}</div>
+      <div class="bar" style="height:${Math.round(d.total/max*70)+2}px" title="$${d.total.toLocaleString('es-MX')}"></div>
+      <div class="bar-lbl">${d.label}</div>
+    </div>`).join('');
+  // Gastos hoy
   const hoy = new Date().toDateString();
-  const hoyR = (db.remisiones||[]).filter(r => new Date(r.fecha).toDateString() === hoy);
-  document.getElementById('body-hoy').innerHTML = hoyR.length ? hoyR.map(r => `<tr><td style="color:#555">N°${String(r.id).padStart(4,'0')}</td><td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${r.cliente}</td><td class="rem-items">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td><td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td><td><button class="btn btn-danger btn-sm" onclick="anular(${r.id})">Anular</button></td></tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:#333;padding:30px">Sin ventas hoy</td></tr>';
+  const gHoy = gastos.filter(g=>new Date(g.fecha).toDateString()===hoy);
+  document.getElementById('gastos-lista').innerHTML = gHoy.length
+    ? gHoy.map(g=>`<div class="gasto-item"><span>${g.descripcion}</span><span style="display:flex;align-items:center;gap:8px"><span class="total-gold">-$${g.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span><button class="btn bd bsm" onclick="delGasto(${g.id})">×</button></span></div>`).join('')
+    : '<div style="font-size:12px;color:#222;padding:8px 0">Sin gastos registrados hoy</div>';
+  // Ventas hoy
+  const rHoy = (db.remisiones||[]).filter(r=>new Date(r.fecha).toDateString()===hoy);
+  document.getElementById('body-hoy').innerHTML = rHoy.length
+    ? rHoy.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td>${r.cliente}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
+        <td>${metBadge(r.metodo_pago)}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#222;padding:28px">Sin ventas hoy</td></tr>';
 }
-async function anular(id) { if (!confirm('¿Anular esta remisión?')) return; await H(`/api/remisiones/${id}`, { method:'DELETE' }); cargarHoy(); }
-async function cargarProductos() {
-  const prods = await H('/api/productos').then(r=>r.json());
-  document.getElementById('body-productos').innerHTML = prods.map(p => `<tr><td style="color:#333">${p.id}</td><td style="font-weight:700">${p.nombre}</td><td style="color:#666">${p.medida}</td><td class="total-gold">$${p.precio}</td><td><span class="badge ${p.stock?'badge-green':'badge-red'}">${p.stock?'En stock':'Sin stock'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="editarProducto(${p.id})">Editar</button><button class="btn btn-outline btn-sm" onclick="toggleStock(${p.id},${!p.stock})">${p.stock?'Ocultar':'Mostrar'}</button><button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.id})">Eliminar</button></td></tr>`).join('');
+
+function toggleGastos(){const el=document.getElementById('gastos-form');el.style.display=el.style.display==='none'?'':'none';}
+async function addGasto(){
+  const desc=document.getElementById('g-desc').value.trim();
+  const monto=parseFloat(document.getElementById('g-monto').value);
+  if (!desc||isNaN(monto)||monto<=0) return;
+  await H('/api/gastos',{method:'POST',body:JSON.stringify({descripcion:desc,monto:monto})});
+  document.getElementById('g-desc').value='';
+  document.getElementById('g-monto').value='';
+  loadHoy();
 }
-let prodCache = [];
-async function editarProducto(id) {
-  prodCache = await H('/api/productos').then(r=>r.json());
-  const p = prodCache.find(x=>x.id===id);
-  if (!p) return;
-  document.getElementById('modal-prod-title').textContent = 'Editar producto';
-  document.getElementById('prod-id').value = p.id;
-  document.getElementById('prod-nombre').value = p.nombre;
-  document.getElementById('prod-medida').value = p.medida;
-  document.getElementById('prod-precio').value = p.precio;
-  document.getElementById('overlay-prod').classList.add('open');
+async function delGasto(id){await H('/api/gastos/'+id,{method:'DELETE'});loadHoy();}
+
+// ── ANULAR (con contraseña) ───────────────────────────────────────────────────
+let anularId = null;
+function pedirAnular(id){anularId=id;document.getElementById('pwd-anular').value='';document.getElementById('err-anular').textContent='';document.getElementById('ov-anular').classList.add('on');}
+function closeAnular(){document.getElementById('ov-anular').classList.remove('on');anularId=null;}
+async function confirmarAnular(){
+  const pwd=document.getElementById('pwd-anular').value;
+  const vr=await H('/api/verify-admin',{method:'POST',body:JSON.stringify({password:pwd})});
+  if (!vr.ok){document.getElementById('err-anular').textContent='Contraseña incorrecta';return;}
+  await H('/api/remisiones/'+anularId,{method:'DELETE'});
+  closeAnular();
+  loadHoy();
+  if (document.getElementById('panel-historial').classList.contains('on')) loadHistorial();
+  if (document.getElementById('panel-fiado').classList.contains('on')) loadFiado();
 }
-function abrirNuevoProducto() {
-  document.getElementById('modal-prod-title').textContent = 'Nuevo producto';
-  document.getElementById('prod-id').value = '';
-  document.getElementById('prod-nombre').value = '';
-  document.getElementById('prod-medida').value = '';
-  document.getElementById('prod-precio').value = '';
-  document.getElementById('overlay-prod').classList.add('open');
+
+// ── PRODUCTOS ─────────────────────────────────────────────────────────────────
+async function loadProds(){
+  const prods=await H('/api/productos').then(r=>r.json());
+  document.getElementById('body-prods').innerHTML=prods.map(p=>`<tr>
+    <td style="color:#333">${p.id}</td>
+    <td style="font-weight:700">${p.nombre}</td>
+    <td style="color:#555">${p.medida}</td>
+    <td><span class="badge b-gray">${p.categoria||'—'}</span></td>
+    <td class="total-gold">$${p.precio.toLocaleString('es-MX')}</td>
+    <td><span class="badge ${p.stock?'b-green':'b-red'}">${p.stock?'En stock':'Sin stock'}</span></td>
+    <td style="display:flex;gap:5px">
+      <button class="btn bo bsm" onclick="editProd(${p.id})">Editar</button>
+      <button class="btn bo bsm" onclick="toggleStock(${p.id},${!p.stock})">${p.stock?'Ocultar':'Mostrar'}</button>
+      <button class="btn bd bsm" onclick="delProd(${p.id})">Eliminar</button>
+    </td></tr>`).join('');
 }
-function cerrarModal() { document.getElementById('overlay-prod').classList.remove('open'); }
-async function guardarProducto() {
-  const id = document.getElementById('prod-id').value;
-  const body = { nombre: document.getElementById('prod-nombre').value.trim(), medida: document.getElementById('prod-medida').value.trim(), precio: parseFloat(document.getElementById('prod-precio').value) };
-  if (!body.nombre || !body.medida || isNaN(body.precio)) { alert('Completa todos los campos'); return; }
-  if (id) { await H(`/api/productos/${id}`, { method:'PUT', body: JSON.stringify(body) }); } else { await H('/api/productos', { method:'POST', body: JSON.stringify(body) }); }
-  cerrarModal(); cargarProductos();
+let prodsCache=[];
+async function editProd(id){
+  prodsCache=await H('/api/productos').then(r=>r.json());
+  const p=prodsCache.find(x=>x.id===id); if(!p) return;
+  document.getElementById('prod-title').textContent='Editar producto';
+  document.getElementById('prod-id').value=p.id;
+  document.getElementById('prod-nom').value=p.nombre;
+  document.getElementById('prod-med').value=p.medida;
+  document.getElementById('prod-cat').value=p.categoria||'General';
+  document.getElementById('prod-pre').value=p.precio;
+  document.getElementById('ov-prod').classList.add('on');
 }
-async function toggleStock(id, val) { await H(`/api/productos/${id}`, { method:'PUT', body: JSON.stringify({ stock: val }) }); cargarProductos(); }
-async function eliminarProducto(id) { if (!confirm('¿Eliminar este producto del catálogo?')) return; await H(`/api/productos/${id}`, { method:'DELETE' }); cargarProductos(); }
-async function cargarClientes() {
-  const clientes = await H('/api/clientes').then(r=>r.json());
-  document.getElementById('body-clientes').innerHTML = clientes.length ? clientes.map(c => `<tr><td style="font-weight:700">${c.nombre}</td><td style="color:#666">${c.tel}</td><td style="text-align:center">${c.compras}</td><td class="total-gold">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td><td style="color:#555">${c.ultima ? new Date(c.ultima).toLocaleDateString('es-MX') : '—'}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:#333;padding:30px">Sin clientes registrados aún</td></tr>';
+function openProd(){
+  document.getElementById('prod-title').textContent='Nuevo producto';
+  ['prod-id','prod-nom','prod-med','prod-pre'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prod-cat').value='General';
+  document.getElementById('ov-prod').classList.add('on');
 }
-async function cargarHistorial() {
-  const db = await H('/api/remisiones').then(r=>r.json());
-  const filtro = document.getElementById('filtro-fecha').value;
-  let rems = db.remisiones || [];
-  if (filtro) rems = rems.filter(r => r.fecha.startsWith(filtro));
-  document.getElementById('body-historial').innerHTML = rems.length ? rems.map(r => `<tr><td style="color:#555">N°${String(r.id).padStart(4,'0')}</td><td style="color:#666">${new Date(r.fecha).toLocaleDateString('es-MX')} ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td><td>${r.cliente}${r.tel?`<br><span style="font-size:11px;color:#555">${r.tel}</span>`:''}</td><td class="rem-items">${r.items.map(i=>i.nombre+' '+i.medida+' ×'+i.qty).join(', ')}</td><td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td><td><button class="btn btn-danger btn-sm" onclick="anularHist(${r.id})">Anular</button></td></tr>`).join('') : '<tr><td colspan="6" style="text-align:center;color:#333;padding:30px">Sin remisiones</td></tr>';
+function closeProd(){document.getElementById('ov-prod').classList.remove('on');}
+async function saveProd(){
+  const id=document.getElementById('prod-id').value;
+  const body={nombre:document.getElementById('prod-nom').value.trim(),medida:document.getElementById('prod-med').value.trim(),precio:parseFloat(document.getElementById('prod-pre').value),categoria:document.getElementById('prod-cat').value};
+  if (!body.nombre||!body.medida||isNaN(body.precio)){alert('Completa todos los campos');return;}
+  if (id) await H('/api/productos/'+id,{method:'PUT',body:JSON.stringify(body)});
+  else await H('/api/productos',{method:'POST',body:JSON.stringify(body)});
+  closeProd(); loadProds();
 }
-async function anularHist(id) { if (!confirm('¿Anular esta remisión?')) return; await H(`/api/remisiones/${id}`, { method:'DELETE' }); cargarHistorial(); }
-async function guardarPasswords() {
-  const body = {};
-  const a = document.getElementById('pwd-admin').value.trim();
-  const c = document.getElementById('pwd-cajero').value.trim();
-  const cl = document.getElementById('pwd-cliente').value.trim();
-  if (a) body.admin = a;
-  if (c) body.cajero = c;
-  if (cl) body.cliente = cl;
-  if (!Object.keys(body).length) return;
-  await H('/api/config/passwords', { method:'PUT', body: JSON.stringify(body) });
-  document.getElementById('msg-config').textContent = 'Contraseñas actualizadas';
-  document.getElementById('pwd-admin').value = '';
-  document.getElementById('pwd-cajero').value = '';
-  document.getElementById('pwd-cliente').value = '';
-  setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
+async function toggleStock(id,v){await H('/api/productos/'+id,{method:'PUT',body:JSON.stringify({stock:v})});loadProds();}
+async function delProd(id){if(!confirm('¿Eliminar producto?'))return;await H('/api/productos/'+id,{method:'DELETE'});loadProds();}
+
+// ── CLIENTES ──────────────────────────────────────────────────────────────────
+async function loadClientes(){
+  const cs=await H('/api/clientes').then(r=>r.json());
+  document.getElementById('body-clientes').innerHTML=cs.length
+    ? cs.map(c=>`<tr>
+        <td style="font-weight:700">${c.nombre}</td>
+        <td style="color:#555">${c.tel}</td>
+        <td style="text-align:center">${c.compras||0}</td>
+        <td class="total-gold">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="color:${(c.fiado||0)>0?'#f87171':'#333'}">$${(c.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="color:#444">${c.ultima?new Date(c.ultima).toLocaleDateString('es-MX'):'—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:#222;padding:28px">Sin clientes aún</td></tr>';
 }
-cargarHoy();
-setInterval(cargarHoy, 30000);
+
+// ── FIADO ─────────────────────────────────────────────────────────────────────
+async function loadFiado(){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const fiados=(db.remisiones||[]).filter(r=>r.metodo_pago==='fiado'&&!r.fiado_pagado);
+  const total=fiados.reduce((s,r)=>s+r.total,0);
+  document.getElementById('fiado-total').textContent='$'+total.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('body-fiado').innerHTML=fiados.length
+    ? fiados.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td style="color:#555">${new Date(r.fecha).toLocaleDateString('es-MX')}</td>
+        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#444">${r.tel}</div>`:''}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="display:flex;gap:5px">
+          <button class="btn bg bsm" onclick="pagarFiado(${r.id})">✓ Cobrar</button>
+          <button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button>
+        </td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:#222;padding:28px">Sin cuentas por cobrar</td></tr>';
+}
+async function pagarFiado(id){if(!confirm('¿Marcar como pagado?'))return;await H('/api/remisiones/'+id+'/pagar',{method:'PUT'});loadFiado();loadClientes();}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────────────
+let histCache=[];
+async function loadHistorial(){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const filtF=document.getElementById('filtro-fecha').value;
+  const filtP=document.getElementById('filtro-pago').value;
+  histCache=(db.remisiones||[]).filter(r=>{
+    if (filtF&&!r.fecha.startsWith(filtF)) return false;
+    if (filtP&&r.metodo_pago!==filtP) return false;
+    return true;
+  });
+  document.getElementById('body-hist').innerHTML=histCache.length
+    ? histCache.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td style="color:#555">${new Date(r.fecha).toLocaleDateString('es-MX')} ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#444">${r.tel}</div>`:''}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' '+i.medida+' ×'+i.qty).join(', ')}</td>
+        <td>${metBadge(r.metodo_pago)}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#222;padding:28px">Sin remisiones</td></tr>';
+}
+
+function exportCSV(){
+  if (!histCache.length){alert('No hay datos para exportar');return;}
+  const rows=[['N°','Fecha','Cliente','Tel','Productos','Método','Total']];
+  histCache.forEach(r=>{rows.push([r.id,new Date(r.fecha).toLocaleString('es-MX'),r.cliente,r.tel||'',r.items.map(i=>i.nombre+' '+i.medida+' x'+i.qty).join(' | '),r.metodo_pago,r.total]);});
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download='ventas-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+async function savePasswords(){
+  const body={};
+  const a=document.getElementById('pwd-a').value.trim();
+  const c=document.getElementById('pwd-c').value.trim();
+  const cl=document.getElementById('pwd-cl').value.trim();
+  if(a)body.admin=a; if(c)body.cajero=c; if(cl)body.cliente=cl;
+  if(!Object.keys(body).length)return;
+  await H('/api/config/passwords',{method:'PUT',body:JSON.stringify(body)});
+  document.getElementById('msg-cfg').textContent='Contraseñas actualizadas ✓';
+  ['pwd-a','pwd-c','pwd-cl'].forEach(id=>document.getElementById(id).value='');
+  setTimeout(()=>document.getElementById('msg-cfg').textContent='',3000);
+}
+
+loadHoy();
+setInterval(loadHoy,30000);
 </script>
 </body>
 </html>
