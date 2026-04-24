@@ -7,38 +7,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#c9a84c0a 0%,transparent 60%);pointer-events:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#c9a84c14 0%,transparent 60%);pointer-events:none}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glow{0%,100%{text-shadow:0 0 30px #c9a84c33}50%{text-shadow:0 0 60px #c9a84c66}}
+@keyframes glow{0%,100%{text-shadow:0 0 30px #c9a84c44}50%{text-shadow:0 0 60px #c9a84c88}}
 .logo{text-align:center;margin-bottom:48px;animation:fadeUp .6s ease}
 .logo-t{font-family:'Playfair Display',serif;font-size:clamp(42px,8vw,68px);font-weight:900;color:#c9a84c;letter-spacing:6px;line-height:1;animation:glow 3s ease-in-out infinite}
-.logo-s{font-family:'Playfair Display',serif;font-size:clamp(13px,2vw,18px);color:#333;letter-spacing:4px;margin-top:10px;font-style:italic}
+.logo-s{font-family:'Playfair Display',serif;font-size:clamp(13px,2vw,18px);color:#aaa;letter-spacing:4px;margin-top:10px;font-style:italic}
 .roles{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;animation:fadeUp .7s ease}
-.role-card{width:160px;background:#111;border:1px solid #1e1e1e;border-radius:20px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .25s;user-select:none;position:relative;overflow:hidden}
-.role-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#c9a84c0d,transparent);opacity:0;transition:opacity .25s}
-.role-card:hover{border-color:#c9a84c55;transform:translateY(-8px);box-shadow:0 16px 40px #c9a84c18}
+.role-card{width:160px;background:#fff;border:2px solid #e8e0d0;border-radius:20px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .25s;user-select:none;position:relative;overflow:hidden;box-shadow:0 2px 12px #00000008}
+.role-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#c9a84c10,transparent);opacity:0;transition:opacity .25s}
+.role-card:hover{border-color:#c9a84c;transform:translateY(-8px);box-shadow:0 16px 40px #c9a84c22}
 .role-card:hover::before{opacity:1}
 .role-card:active{transform:scale(.97)}
 .role-icon{font-size:38px;margin-bottom:14px}
-.role-name{font-size:13px;font-weight:900;letter-spacing:3px;color:#fff}
-.role-desc{font-size:11px;color:#444;margin-top:6px}
+.role-name{font-size:13px;font-weight:900;letter-spacing:3px;color:#1a1a1a}
+.role-desc{font-size:11px;color:#aaa;margin-top:6px}
 .catalogo-link{margin-top:32px;animation:fadeUp .8s ease}
-.catalogo-link a{color:#c9a84c55;font-size:12px;letter-spacing:2px;text-decoration:none;transition:color .2s}
+.catalogo-link a{color:#c9a84c99;font-size:12px;letter-spacing:2px;text-decoration:none;transition:color .2s}
 .catalogo-link a:hover{color:#c9a84c}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10;align-items:center;justify-content:center;padding:20px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;align-items:center;justify-content:center;padding:20px}
 .overlay.open{display:flex}
-.modal{background:#111;border:1px solid #2a2a2a;border-radius:20px;padding:36px 28px;width:100%;max-width:320px;text-align:center;animation:fadeUp .3s ease}
+.modal{background:#fff;border:2px solid #e8e0d0;border-radius:20px;padding:36px 28px;width:100%;max-width:320px;text-align:center;animation:fadeUp .3s ease;box-shadow:0 24px 60px #0000001a}
 .modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#c9a84c;letter-spacing:2px;margin-bottom:4px}
-.modal-sub{font-size:12px;color:#444;margin-bottom:24px}
-.pwd-input{width:100%;background:#0a0a0a;border:1px solid #252525;border-radius:12px;padding:14px;color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;margin-bottom:14px;transition:border-color .2s}
+.modal-sub{font-size:12px;color:#aaa;margin-bottom:24px}
+.pwd-input{width:100%;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:12px;padding:14px;color:#1a1a1a;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;margin-bottom:14px;transition:border-color .2s}
 .pwd-input:focus{border-color:#c9a84c}
-.btn-enter{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c060);color:#000;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:all .2s}
-.btn-enter:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.btn-cancel{width:100%;background:none;border:none;color:#333;padding:10px;cursor:pointer;font-size:13px;font-family:inherit;margin-top:4px;transition:color .2s}
-.btn-cancel:hover{color:#666}
+.btn-enter{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c060);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:all .2s;box-shadow:0 4px 14px #c9a84c33}
+.btn-enter:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-cancel{width:100%;background:none;border:none;color:#bbb;padding:10px;cursor:pointer;font-size:13px;font-family:inherit;margin-top:4px;transition:color .2s}
+.btn-cancel:hover{color:#888}
 .err{color:#ef4444;font-size:12px;margin-top:10px;min-height:18px}
-.footer{position:fixed;bottom:16px;font-size:10px;color:#1e1e1e;letter-spacing:2px;text-align:center}
+.footer{position:fixed;bottom:16px;font-size:10px;color:#ccc;letter-spacing:2px;text-align:center}
 </style>
 </head>
 <body>

@@ -53,6 +53,10 @@ function readDB() {
   if (!db.contador)        db.contador = 1;
   if (!db.gastos)          db.gastos = [];
   if (!db.gastos_cnt)      db.gastos_cnt = 1;
+  if (!db.pedidos)         db.pedidos = [];
+  if (!db.pedidos_cnt)     db.pedidos_cnt = 1;
+  if (!db.proveedores)     db.proveedores = [];
+  if (!db.proveedores_cnt) db.proveedores_cnt = 1;
   db.productos.forEach(function(p) { if (!p.categoria) p.categoria = CAT_MAP[p.nombre] || 'General'; });
   return db;
 }
@@ -101,7 +105,7 @@ app.post('/api/verify-admin', auth('admin','cajero'), function(req, res) {
 // ── Productos ─────────────────────────────────────────────────────────────────
 app.get('/api/productos', auth('admin','cajero'), function(req, res) { res.json(readDB().productos); });
 
-app.post('/api/productos', auth('admin'), function(req, res) {
+app.post('/api/productos', auth('admin','cajero'), function(req, res) {
   const db = readDB();
   const id = db.productos.reduce(function(m,p) { return Math.max(m,p.id); }, 0) + 1;
   const p = Object.assign({}, req.body, { id: id, stock: true });
@@ -112,7 +116,7 @@ app.post('/api/productos', auth('admin'), function(req, res) {
   res.json(p);
 });
 
-app.put('/api/productos/:id', auth('admin'), function(req, res) {
+app.put('/api/productos/:id', auth('admin','cajero'), function(req, res) {
   const db = readDB();
   const i = db.productos.findIndex(function(p) { return p.id === Number(req.params.id); });
   if (i < 0) return res.status(404).json({ error: 'No encontrado' });
@@ -147,12 +151,22 @@ app.post('/api/remisiones', auth('admin','cajero'), function(req, res) {
     if (metodo === 'fiado') { c.fiado = (c.fiado || 0) + total; }
     else { c.total = (c.total || 0) + total; }
     c.ultima = new Date().toISOString();
+    if (req.body.direccion) c.direccion = req.body.direccion;
   }
   const rem = Object.assign({}, req.body, { id: db.contador++, fecha: new Date().toISOString() });
   db.remisiones.unshift(rem);
   writeDB(db);
   io.emit('nueva_remision', rem);
   res.json(rem);
+});
+
+app.put('/api/remisiones/:id', auth('admin'), function(req, res) {
+  const db = readDB();
+  const i = db.remisiones.findIndex(function(r) { return r.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  db.remisiones[i] = Object.assign({}, db.remisiones[i], req.body);
+  writeDB(db);
+  res.json(db.remisiones[i]);
 });
 
 app.delete('/api/remisiones/:id', auth('admin'), function(req, res) {
@@ -179,8 +193,49 @@ app.put('/api/remisiones/:id/pagar', auth('admin'), function(req, res) {
   res.json(rem);
 });
 
+// ── Fotos de productos ────────────────────────────────────────────────────────
+app.post('/api/productos/:id/foto', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const i = db.productos.findIndex(function(p) { return p.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  const base64 = req.body.foto;
+  if (!base64 || !base64.startsWith('data:image')) return res.status(400).json({ error: 'Imagen inválida' });
+  const ext = base64.includes('image/png') ? 'png' : 'jpg';
+  const uploadsDir = path.join(__dirname, 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  const filename = 'prod-' + db.productos[i].id + '.' + ext;
+  fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(base64.split(',')[1], 'base64'));
+  db.productos[i].foto = '/uploads/' + filename;
+  writeDB(db);
+  io.emit('productos_actualizados', db.productos);
+  res.json(db.productos[i]);
+});
+
+app.delete('/api/productos/:id/foto', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const i = db.productos.findIndex(function(p) { return p.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  if (db.productos[i].foto) {
+    const fp = path.join(__dirname, 'public', db.productos[i].foto);
+    if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    delete db.productos[i].foto;
+    writeDB(db);
+    io.emit('productos_actualizados', db.productos);
+  }
+  res.json({ ok: true });
+});
+
 // ── Clientes ──────────────────────────────────────────────────────────────────
-app.get('/api/clientes', auth('admin'), function(req, res) { res.json(readDB().clientes); });
+app.get('/api/clientes', auth('admin','cajero'), function(req, res) { res.json(readDB().clientes); });
+
+app.put('/api/clientes/:id', auth('admin'), function(req, res) {
+  const db = readDB();
+  const i = db.clientes.findIndex(function(c) { return c.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  db.clientes[i] = Object.assign({}, db.clientes[i], req.body);
+  writeDB(db);
+  res.json(db.clientes[i]);
+});
 
 // ── Gastos ────────────────────────────────────────────────────────────────────
 app.get('/api/gastos', auth('admin','cajero'), function(req, res) { res.json(readDB().gastos || []); });
@@ -196,6 +251,60 @@ app.post('/api/gastos', auth('admin','cajero'), function(req, res) {
 app.delete('/api/gastos/:id', auth('admin'), function(req, res) {
   const db = readDB();
   db.gastos = db.gastos.filter(function(g) { return g.id !== Number(req.params.id); });
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// ── Pedidos ───────────────────────────────────────────────────────────────────
+app.get('/api/pedidos', auth('admin','cajero'), function(req, res) { res.json(readDB().pedidos || []); });
+
+app.post('/api/pedidos', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const p = Object.assign({}, req.body, { id: db.pedidos_cnt++, fecha: new Date().toISOString(), estado: req.body.estado || 'pendiente' });
+  db.pedidos.unshift(p);
+  writeDB(db);
+  res.json(p);
+});
+
+app.put('/api/pedidos/:id', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const i = db.pedidos.findIndex(function(p) { return p.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  db.pedidos[i] = Object.assign({}, db.pedidos[i], req.body);
+  writeDB(db);
+  res.json(db.pedidos[i]);
+});
+
+app.delete('/api/pedidos/:id', auth('admin'), function(req, res) {
+  const db = readDB();
+  db.pedidos = db.pedidos.filter(function(p) { return p.id !== Number(req.params.id); });
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// ── Proveedores ───────────────────────────────────────────────────────────────
+app.get('/api/proveedores', auth('admin','cajero'), function(req, res) { res.json(readDB().proveedores || []); });
+
+app.post('/api/proveedores', auth('admin'), function(req, res) {
+  const db = readDB();
+  const p = Object.assign({}, req.body, { id: db.proveedores_cnt++, fecha: new Date().toISOString() });
+  db.proveedores.push(p);
+  writeDB(db);
+  res.json(p);
+});
+
+app.put('/api/proveedores/:id', auth('admin'), function(req, res) {
+  const db = readDB();
+  const i = db.proveedores.findIndex(function(p) { return p.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  db.proveedores[i] = Object.assign({}, db.proveedores[i], req.body);
+  writeDB(db);
+  res.json(db.proveedores[i]);
+});
+
+app.delete('/api/proveedores/:id', auth('admin'), function(req, res) {
+  const db = readDB();
+  db.proveedores = db.proveedores.filter(function(p) { return p.id !== Number(req.params.id); });
   writeDB(db);
   res.json({ ok: true });
 });
@@ -256,7 +365,7 @@ server.listen(PORT, '0.0.0.0', function() {
   Object.values(nets).forEach(function(list) {
     list.forEach(function(i) { if (i.family==='IPv4'&&!i.internal) ip=i.address; });
   });
-  console.log('POS La Jardin v3 — Puerto ' + PORT);
+  console.log('POS La Jardin v4 — Puerto ' + PORT);
   console.log('Local: http://localhost:' + PORT);
   console.log('Red:   http://' + ip + ':' + PORT);
 });
