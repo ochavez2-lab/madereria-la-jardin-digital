@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Catálogo — Maderería La Jardín</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.header{background:#000;border-bottom:2px solid #c9a84c22;padding:20px 24px;text-align:center;position:sticky;top:0;z-index:10}
+.logo{font-family:'Playfair Display',serif;font-size:clamp(24px,5vw,42px);font-weight:900;color:#c9a84c;letter-spacing:4px}
+.logo-sub{font-family:'Playfair Display',serif;font-size:clamp(12px,2vw,16px);color:#444;font-style:italic;margin-top:4px}
+.wa-btn{display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;border-radius:50px;padding:10px 22px;font-size:14px;font-weight:700;text-decoration:none;margin-top:14px;transition:all .2s}
+.wa-btn:hover{background:#22c55e;transform:translateY(-2px)}
+.cats-bar{display:flex;gap:8px;overflow-x:auto;padding:14px 20px;scrollbar-width:none;background:#000;border-bottom:1px solid #111;position:sticky;top:89px;z-index:9}
+.cats-bar::-webkit-scrollbar{display:none}
+.cat-pill{padding:6px 18px;border-radius:50px;border:1px solid #2a2a2a;background:none;color:#555;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s}
+.cat-pill.on{background:#c9a84c;color:#000;border-color:#c9a84c}
+.contenido{padding:20px;max-width:1200px;margin:0 auto}
+.sec-titulo{font-family:'Playfair Display',serif;font-size:20px;color:#c9a84c;margin:24px 0 14px;display:flex;align-items:center;gap:10px}
+.sec-titulo::after{content:'';flex:1;height:1px;background:#1a1a1a}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:8px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
+.card{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:18px 16px;animation:fadeUp .3s ease;transition:all .2s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#c9a84c08,transparent);opacity:0;transition:opacity .2s}
+.card:hover{border-color:#c9a84c44;transform:translateY(-3px);box-shadow:0 8px 24px #c9a84c11}
+.card:hover::before{opacity:1}
+.card-cat{font-size:9px;color:#c9a84c55;font-weight:700;letter-spacing:2px;margin-bottom:6px;text-transform:uppercase}
+.card-nom{font-size:14px;font-weight:700;margin-bottom:4px;color:#fff}
+.card-med{font-size:12px;color:#555;margin-bottom:12px}
+.card-pre{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#c9a84c}
+.card-pre span{font-size:13px;font-weight:400;color:#444}
+.no-stock{opacity:.3;pointer-events:none}
+.footer{background:#000;border-top:1px solid #111;padding:28px 20px;text-align:center}
+.footer-brand{font-family:'Playfair Display',serif;font-size:20px;color:#c9a84c;margin-bottom:6px}
+.footer-info{font-size:12px;color:#333;line-height:2}
+.loader{text-align:center;padding:60px;color:#333;font-size:14px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">MADERERÍA LA JARDÍN</div>
+  <div class="logo-sub">Catálogo de productos — Precios actualizados</div>
+  <div><a class="wa-btn" href="https://wa.me/526647093835" target="_blank">📱 Cotizar por WhatsApp</a></div>
+</div>
+<div class="cats-bar" id="cats-bar">
+  <button class="cat-pill on" onclick="filtrar('',this)">TODOS</button>
+</div>
+<div class="contenido" id="contenido"><div class="loader">Cargando productos...</div></div>
+<div class="footer">
+  <div class="footer-brand">LA JARDÍN</div>
+  <div class="footer-info">
+    📍 Calle Nogal #3516, Col. Ciudad Jardín, Tijuana B.C.<br>
+    📱 WhatsApp: 664 709 3835<br>
+    🏪 Atención en Tijuana & Rosarito
+  </div>
+</div>
+<script>
+let todos=[], catAct='';
+async function init(){
+  try {
+    const r = await fetch('/api/catalogo');
+    todos = await r.json();
+    const cats = [...new Set(todos.map(p=>p.categoria).filter(Boolean))];
+    const bar = document.getElementById('cats-bar');
+    cats.forEach(c=>{
+      const b=document.createElement('button');
+      b.className='cat-pill'; b.textContent=c.toUpperCase();
+      b.onclick=()=>filtrar(c,b); bar.appendChild(b);
+    });
+    render();
+  } catch(e){document.getElementById('contenido').innerHTML='<div class="loader">Sin conexión</div>';}
+}
+function filtrar(c,btn){
+  catAct=c;
+  document.querySelectorAll('.cat-pill').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); render();
+}
+function render(){
+  const lista=todos.filter(p=>!catAct||p.categoria===catAct);
+  if(!lista.length){document.getElementById('contenido').innerHTML='<div class="loader">Sin productos</div>';return;}
+  const grupos={};
+  lista.forEach(p=>{const c=p.categoria||'General';if(!grupos[c])grupos[c]=[];grupos[c].push(p);});
+  document.getElementById('contenido').innerHTML=Object.entries(grupos).map(([cat,prods])=>`
+    <div class="sec-titulo">${cat}</div>
+    <div class="grid">${prods.map(p=>`
+      <div class="card ${p.stock?'':'no-stock'}">
+        <div class="card-cat">${p.categoria||''}</div>
+        <div class="card-nom">${p.nombre}</div>
+        <div class="card-med">${p.medida}</div>
+        <div class="card-pre">$${p.precio.toLocaleString('es-MX')} <span>MXN</span></div>
+      </div>`).join('')}
+    </div>`).join('');
+}
+init();
+</script>
+</body>
+</html>

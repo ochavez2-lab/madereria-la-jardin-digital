@@ -227,6 +227,14 @@ app.get('/api/reportes/semana', auth('admin','cajero'), function(req, res) {
   res.json(dias);
 });
 
+// ── Catálogo público (sin auth) ───────────────────────────────────────────────
+app.get('/api/catalogo', function(req, res) {
+  const db = readDB();
+  res.json(db.productos.filter(function(p) { return p.stock; }).map(function(p) {
+    return { id:p.id, nombre:p.nombre, medida:p.medida, precio:p.precio, categoria:p.categoria, stock:p.stock };
+  }));
+});
+
 // ── Config ────────────────────────────────────────────────────────────────────
 app.put('/api/config/passwords', auth('admin'), function(req, res) {
   const db = readDB();

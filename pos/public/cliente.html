@@ -4,100 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>La Jardín — Pantalla Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column}
-
-.header{background:#000;border-bottom:1px solid #222;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
-.brand{font-size:22px;font-weight:900;color:#c9a84c;letter-spacing:2px}
-.header-sub{font-size:12px;color:#444;letter-spacing:1px}
-
-.pantalla-espera{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.logo-grande{font-size:64px;font-weight:900;color:#c9a84c;letter-spacing:4px;text-align:center;line-height:1}
-.logo-sub{font-size:24px;font-weight:700;font-style:italic;color:#333;letter-spacing:2px}
-.direccion{font-size:14px;color:#333;text-align:center;margin-top:8px}
-
-.pantalla-venta{flex:1;display:none;flex-direction:column}
-.items-lista{flex:1;padding:20px 24px;overflow-y:auto}
-.item-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #1a1a1a}
-.item-row:last-child{border-bottom:none}
-.item-left .nombre{font-size:16px;font-weight:700}
-.item-left .detalle{font-size:12px;color:#555;margin-top:2px}
-.item-right{text-align:right}
-.item-right .qty{font-size:12px;color:#555;margin-bottom:2px}
-.item-right .importe{font-size:18px;font-weight:900;color:#c9a84c}
-
-.total-bar{background:#111;border-top:1px solid #222;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
-.total-lbl{font-size:18px;font-weight:700;color:#666;letter-spacing:2px}
-.total-num{font-size:48px;font-weight:900;color:#c9a84c}
-
-.footer{background:#000;padding:10px 24px;text-align:center;font-size:11px;color:#333;letter-spacing:1px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#050505;color:#fff;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+@keyframes glow{0%,100%{text-shadow:0 0 20px #c9a84c44}50%{text-shadow:0 0 60px #c9a84caa}}
+@keyframes slideProm{0%{opacity:0;transform:translateY(8px)}10%{opacity:1;transform:translateY(0)}85%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes totalPop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.topbar{background:#000;border-bottom:1px solid #c9a84c22;padding:12px 28px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.brand{font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:#c9a84c;letter-spacing:3px}
+.hora-top{font-size:13px;color:#333;font-weight:600}
+.idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.idle::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,#c9a84c08 0%,transparent 70%);pointer-events:none}
+.logo-main{font-family:'Playfair Display',serif;font-size:clamp(64px,10vw,120px);font-weight:900;color:#c9a84c;line-height:.9;animation:glow 3s ease-in-out infinite;text-align:center}
+.logo-sub{font-family:'Playfair Display',serif;font-size:clamp(18px,2.5vw,30px);color:#444;font-style:italic;margin-top:10px;letter-spacing:3px;text-align:center}
+.promo-box{height:44px;display:flex;align-items:center;justify-content:center;margin:28px 0}
+.promo{font-size:clamp(12px,1.6vw,16px);color:#555;letter-spacing:2px;text-align:center;text-transform:uppercase;animation:slideProm 5s ease-in-out infinite}
+.info-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center}
+.info-item{font-size:11px;color:#252525;letter-spacing:1px;display:flex;align-items:center;gap:5px}
+.vr{width:1px;height:12px;background:#1a1a1a}
+.venta{flex:1;display:none;flex-direction:column}
+.items-wrap{flex:1;overflow-y:auto;padding:16px 28px}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #0d0d0d;animation:fadeUp .25s ease}
+.item-row:last-child{border:none}
+.item-nombre{font-size:clamp(15px,2vw,20px);font-weight:700}
+.item-det{font-size:12px;color:#444;margin-top:3px}
+.item-qty{font-size:12px;color:#555;margin-bottom:2px;text-align:right}
+.item-imp{font-size:clamp(18px,2.5vw,24px);font-weight:900;color:#c9a84c}
+.total-bar{background:#080808;border-top:2px solid #c9a84c22;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.total-lbl{font-size:16px;font-weight:700;color:#333;letter-spacing:4px}
+.total-num{font-family:'Playfair Display',serif;font-size:clamp(44px,6vw,80px);font-weight:900;color:#c9a84c}
+.total-num.pop{animation:totalPop .25s ease}
+.footer{background:#000;padding:8px;text-align:center;font-size:10px;color:#1a1a1a;letter-spacing:2px;flex-shrink:0}
 </style>
 </head>
 <body>
-
-<div class="header">
+<div class="topbar">
   <div class="brand">MADERERÍA LA JARDÍN</div>
-  <div class="header-sub" id="hora"></div>
+  <div class="hora-top" id="hora"></div>
 </div>
-
-<div class="pantalla-espera" id="espera">
-  <div>
-    <div class="logo-grande">LA<br>JARDÍN</div>
-    <div class="logo-sub">Maderería</div>
+<div class="idle" id="idle">
+  <div class="logo-main">LA<br>JARDÍN</div>
+  <div class="logo-sub">Maderería</div>
+  <div class="promo-box"><div class="promo" id="promo"></div></div>
+  <div class="info-row">
+    <div class="info-item">📍 Nogal 3516, Col. Ciudad Jardín, Tijuana B.C.</div>
+    <div class="vr"></div>
+    <div class="info-item">📱 WhatsApp 664 709 3835</div>
+    <div class="vr"></div>
+    <div class="info-item">🏪 Tijuana & Rosarito</div>
   </div>
-  <div class="direccion">Nogal 3516, Col. Ciudad Jardín, Tijuana, B.C.<br>WhatsApp 664 709 3835</div>
 </div>
-
-<div class="pantalla-venta" id="venta">
-  <div class="items-lista" id="items-lista"></div>
+<div class="venta" id="venta">
+  <div class="items-wrap" id="items"></div>
   <div class="total-bar">
     <div class="total-lbl">TOTAL</div>
-    <div class="total-num" id="total-num">$0.00</div>
+    <div class="total-num" id="total">$0.00</div>
   </div>
 </div>
-
 <div class="footer">GRACIAS POR SU PREFERENCIA — TIJUANA & ROSARITO</div>
-
 <script>
 const socket = io();
-
-socket.on('carrito_cliente', data => {
-  if (!data.items || !data.items.length) {
-    mostrarEspera();
-    return;
-  }
-  document.getElementById('espera').style.display = 'none';
-  const venta = document.getElementById('venta');
-  venta.style.display = 'flex';
-
-  document.getElementById('items-lista').innerHTML = data.items.map(i => `
+const PROMOS = ['Barrotes desde $45 por pieza','Triplay en todas las medidas','Precios de mayoreo disponibles','Envío a Rosarito — consulta condiciones','WhatsApp: 664 709 3835','Madera de calidad garantizada','Más de 15 productos en catálogo','Atención personalizada para constructores'];
+let pi=0;
+function rotateProm(){const el=document.getElementById('promo');el.style.animation='none';el.textContent=PROMOS[pi++%PROMOS.length];void el.offsetHeight;el.style.animation='slideProm 5s ease-in-out infinite';}
+rotateProm();setInterval(rotateProm,5000);
+socket.on('carrito_cliente',data=>{
+  if(!data.items||!data.items.length){mostrarIdle();return;}
+  document.getElementById('idle').style.display='none';
+  document.getElementById('venta').style.display='flex';
+  document.getElementById('items').innerHTML=data.items.map(i=>`
     <div class="item-row">
-      <div class="item-left">
-        <div class="nombre">${i.nombre}</div>
-        <div class="detalle">${i.medida} — $${i.precio.toLocaleString('es-MX',{minimumFractionDigits:2})} c/u</div>
-      </div>
-      <div class="item-right">
-        <div class="qty">× ${i.qty}</div>
-        <div class="importe">$${(i.precio*i.qty).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-      </div>
-    </div>
-  `).join('');
-
-  document.getElementById('total-num').textContent = '$' + data.total.toLocaleString('es-MX',{minimumFractionDigits:2});
+      <div><div class="item-nombre">${i.nombre}</div><div class="item-det">${i.medida} — $${i.precio.toLocaleString('es-MX',{minimumFractionDigits:2})} c/u</div></div>
+      <div style="text-align:right"><div class="item-qty">× ${i.qty}</div><div class="item-imp">$${(i.precio*i.qty).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    </div>`).join('');
+  const t=document.getElementById('total');
+  t.textContent='$'+data.total.toLocaleString('es-MX',{minimumFractionDigits:2});
+  t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
 });
-
-socket.on('limpiar_cliente', mostrarEspera);
-
-function mostrarEspera() {
-  document.getElementById('espera').style.display = 'flex';
-  document.getElementById('venta').style.display = 'none';
-}
-
-setInterval(() => {
-  document.getElementById('hora').textContent = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-}, 1000);
+socket.on('limpiar_cliente',mostrarIdle);
+function mostrarIdle(){document.getElementById('idle').style.display='flex';document.getElementById('venta').style.display='none';}
+setInterval(()=>{document.getElementById('hora').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});},1000);
+document.getElementById('hora').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 </script>
 </body>
 </html>
