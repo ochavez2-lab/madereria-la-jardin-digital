@@ -57,13 +57,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="role-name">CAJERO</div>
     <div class="role-desc">Ventas y cobros</div>
   </div>
-  <div class="role-card" onclick="abrir('cliente')">
-    <div class="role-icon">📺</div>
-    <div class="role-name">CLIENTE</div>
-    <div class="role-desc">Pantalla de compra</div>
-  </div>
 </div>
-<div class="catalogo-link"><a href="/catalogo.html">VER CATÁLOGO PÚBLICO →</a></div>
+<div class="catalogo-link" style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap">
+  <a href="/catalogo.html">📋 VER CATÁLOGO →</a>
+  <a href="/cliente.html">📺 PANTALLA CLIENTE →</a>
+</div>
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-title" id="modal-title">ADMIN</div>

@@ -6,7 +6,19 @@
 <title>Admin — La Jardín</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh;transition:background .2s,color .2s}
+body.dark{background:#111;color:#e8e0d0}
+body.dark .kpi,body.dark .chart-wrap,body.dark .cs,body.dark .modal{background:#1e1e1e;border-color:#333}
+body.dark th{background:#252525;color:#888}
+body.dark td{border-color:#252525}
+body.dark tr:hover td{background:#1a1a1a}
+body.dark .ei,body.dark .fi{background:#252525;border-color:#333;color:#e8e0d0}
+body.dark .tab:hover{background:#252525;color:#e8e0d0}
+body.dark .tab.on{background:#c9a84c22}
+body.dark .gasto-item{background:#252525;border-color:#333}
+body.dark .fiado-total{background:#1a1500;border-color:#c9a84c33}
+body.dark .panel{color:#e8e0d0}
+body.dark .foto-drop-a{background:#252525;border-color:#444}
 .topbar{background:#1a1a1a;border-bottom:3px solid #c9a84c;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:10}
 .brand{font-size:14px;font-weight:900;color:#c9a84c;letter-spacing:3px}
 .tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -105,6 +117,7 @@ tr:hover td{background:#faf6f0}
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
     <div id="admin-clock" style="font-size:13px;font-weight:700;color:#c9a84c;letter-spacing:1px;font-variant-numeric:tabular-nums"></div>
+    <button class="logout" onclick="toggleDark()" id="btn-dark" title="Tema oscuro/claro">🌙</button>
     <button class="logout" onclick="salir()">Salir</button>
   </div>
 </div>
@@ -814,6 +827,8 @@ loadHoy();
 setInterval(loadHoy,30000);
 function tickClock(){document.getElementById('admin-clock').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 tickClock();setInterval(tickClock,1000);
+function toggleDark(){const d=document.body.classList.toggle('dark');localStorage.setItem('adm-dark',d?'1':'');document.getElementById('btn-dark').textContent=d?'☀️':'🌙';}
+if(localStorage.getItem('adm-dark')==='1'){document.body.classList.add('dark');document.getElementById('btn-dark').textContent='☀️';}
 </script>
 </body>
 </html>
