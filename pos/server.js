@@ -177,7 +177,7 @@ app.delete('/api/remisiones/:id', auth('admin'), function(req, res) {
   res.json({ ok: true });
 });
 
-app.put('/api/remisiones/:id/pagar', auth('admin'), function(req, res) {
+app.put('/api/remisiones/:id/pagar', auth('admin','cajero'), function(req, res) {
   const db = readDB();
   const i = db.remisiones.findIndex(function(r) { return r.id === Number(req.params.id); });
   if (i < 0) return res.status(404).json({ error: 'No encontrado' });

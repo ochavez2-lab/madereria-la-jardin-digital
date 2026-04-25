@@ -115,6 +115,15 @@ canvas{display:block;width:100%;touch-action:none}
 /* MODAL FOTO */
 .foto-drop{border:2px dashed #e0d8c8;border-radius:10px;height:90px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:12px;overflow:hidden;position:relative;background:#faf6f0}
 .foto-drop:hover{border-color:#c9a84c}
+/* MODAL ANCHO */
+.modal-wide{max-width:640px}
+.sec-lbl{font-size:10px;font-weight:700;color:#aaa;letter-spacing:2px;margin:14px 0 8px;text-transform:uppercase}
+.fiado-row{background:#faf6f0;border:1px solid #f0e8d8;border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fiado-row-info{flex:1}
+.kpi-mini{background:#fff;border:1.5px solid #e8e0d0;border-radius:12px;padding:12px 16px;text-align:center;flex:1}
+.kpi-mini-v{font-size:22px;font-weight:900;color:#c9a84c}
+.kpi-mini-l{font-size:10px;color:#aaa;letter-spacing:1px;margin-top:2px}
+.ped-row{background:#faf6f0;border:1px solid #f0e8d8;border-radius:10px;padding:10px 12px;margin-bottom:6px}
 /* CLIENTE MATCH */
 .cli-match{background:#fffbf0;border:1.5px solid #c9a84c55;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;cursor:pointer;display:none}
 .cli-match:hover{border-color:#c9a84c}
@@ -124,8 +133,11 @@ canvas{display:block;width:100%;touch-action:none}
 <body>
 <div class="topbar">
   <div class="brand">LA JARDÍN — CAJERO</div>
-  <div style="display:flex;align-items:center;gap:12px">
+  <div style="display:flex;align-items:center;gap:8px">
     <span class="hora" id="hora"></span>
+    <button class="btn-salir" onclick="abrirHoy()">📊 Hoy</button>
+    <button class="btn-salir" onclick="abrirFiado()">📋 Fiado</button>
+    <button class="btn-salir" onclick="abrirPedidosCaj()">📦 Pedidos</button>
     <button class="btn-salir" onclick="salir()">Salir</button>
   </div>
 </div>
@@ -227,6 +239,72 @@ canvas{display:block;width:100%;touch-action:none}
       <button class="btn bgr" style="flex:none;padding:10px 14px" onclick="whatsapp()">📱 WhatsApp</button>
       <button class="btn bg" onclick="nuevaVenta()">+ Nueva venta</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL HOY -->
+<div class="ov" id="ov-hoy">
+  <div class="modal modal-wide">
+    <div class="mh"><h3>📊 VENTAS DE HOY</h3><div class="msub" id="hoy-fecha"></div></div>
+    <div class="mb">
+      <div style="display:flex;gap:8px;margin-bottom:14px" id="hoy-kpis"></div>
+      <div class="sec-lbl">VENTAS DEL DÍA</div>
+      <div id="hoy-lista"></div>
+    </div>
+    <div class="mf"><button class="btn bo" onclick="document.getElementById('ov-hoy').classList.remove('on')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL FIADO -->
+<div class="ov" id="ov-fiado">
+  <div class="modal modal-wide">
+    <div class="mh"><h3>📋 CUENTAS POR COBRAR</h3><div class="msub" id="fiado-total-lbl"></div></div>
+    <div class="mb">
+      <div id="fiado-lista"></div>
+    </div>
+    <div class="mf"><button class="btn bo" onclick="document.getElementById('ov-fiado').classList.remove('on')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDOS CAJERO -->
+<div class="ov" id="ov-pedidos-caj">
+  <div class="modal modal-wide">
+    <div class="mh"><h3>📦 PEDIDOS</h3><div class="msub">Órdenes de clientes y proveedores</div></div>
+    <div class="mb">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select class="opt-in" id="caj-ped-filtro" style="flex:1;margin:0" onchange="renderPedidosCaj()">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_camino">En camino</option>
+          <option value="listo">Listo</option>
+          <option value="entregado">Entregado</option>
+        </select>
+        <button class="btn bg" style="flex:none" onclick="abrirNuevoPedCaj()">+ Nuevo</button>
+      </div>
+      <div id="pedidos-caj-lista"></div>
+      <div id="ov-nped-caj" style="display:none;margin-top:14px;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:12px;padding:14px">
+        <div class="sec-lbl" style="margin-top:0">NUEVO PEDIDO</div>
+        <label class="lbl">Tipo</label>
+        <select class="inp" id="npc-tipo"><option value="cliente">Cliente (nos pide a nosotros)</option><option value="proveedor">Proveedor (nosotros pedimos)</option></select>
+        <label class="lbl">Para / De</label>
+        <input class="inp" id="npc-ref" placeholder="Nombre cliente o proveedor">
+        <label class="lbl">Teléfono</label>
+        <input class="inp" id="npc-tel" type="tel" placeholder="664 xxx xxxx">
+        <label class="lbl">Descripción del pedido</label>
+        <textarea class="inp" id="npc-desc" rows="2" style="resize:vertical" placeholder="Productos, medidas, cantidades..."></textarea>
+        <label class="lbl">Monto total ($MXN)</label>
+        <input class="inp" id="npc-monto" type="number" placeholder="0">
+        <label class="lbl">Adelanto pagado ($MXN)</label>
+        <input class="inp" id="npc-adelanto" type="number" placeholder="0">
+        <label class="lbl">Fecha prometida</label>
+        <input class="inp" id="npc-fecha" type="date">
+        <div style="display:flex;gap:8px">
+          <button class="btn bg" style="flex:1" onclick="guardarPedCaj()">Guardar pedido</button>
+          <button class="btn bo" style="flex:none" onclick="cerrarNuevoPedCaj()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn bo" onclick="document.getElementById('ov-pedidos-caj').classList.remove('on')">Cerrar</button></div>
   </div>
 </div>
 
@@ -560,6 +638,73 @@ function nuevaVenta() {
   document.getElementById('desc-in').value='';
   document.getElementById('notas-in').value='';
   renderCarrito();
+}
+
+// HOY
+async function abrirHoy(){
+  const [rep,db]=await Promise.all([H('/api/reportes/hoy').then(r=>r.json()),H('/api/remisiones').then(r=>r.json())]);
+  document.getElementById('hoy-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('hoy-kpis').innerHTML=`
+    <div class="kpi-mini"><div class="kpi-mini-v">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div><div class="kpi-mini-l">COBRADO</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-v">${rep.count}</div><div class="kpi-mini-l">VENTAS</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-v" style="color:#ef4444">$${(rep.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div><div class="kpi-mini-l">FIADO HOY</div></div>`;
+  const hoy=new Date().toDateString();
+  const rHoy=(db.remisiones||[]).filter(r=>new Date(r.fecha).toDateString()===hoy);
+  const metIco={efectivo:'💵',tarjeta:'💳',transferencia:'📱',fiado:'📋'};
+  document.getElementById('hoy-lista').innerHTML=rHoy.length
+    ?rHoy.map(r=>`<div class="fiado-row"><div class="fiado-row-info"><div style="font-weight:700">N°${String(r.id).padStart(4,'0')} — ${r.cliente}</div><div style="font-size:11px;color:#aaa">${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})} · ${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</div></div><div style="text-align:right"><div style="font-size:16px;font-weight:900;color:#c9a84c">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div><div style="font-size:12px">${metIco[r.metodo_pago]||''} ${r.metodo_pago}</div></div></div>`).join('')
+    :'<div style="text-align:center;color:#bbb;padding:20px">Sin ventas hoy</div>';
+  document.getElementById('ov-hoy').classList.add('on');
+}
+
+// FIADO
+async function abrirFiado(){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const fiados=(db.remisiones||[]).filter(r=>r.metodo_pago==='fiado'&&!r.fiado_pagado);
+  const total=fiados.reduce((s,r)=>s+r.total,0);
+  document.getElementById('fiado-total-lbl').textContent='Total pendiente: $'+total.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('fiado-lista').innerHTML=fiados.length
+    ?fiados.map(r=>`<div class="fiado-row"><div class="fiado-row-info"><div style="font-weight:700">${r.cliente}</div><div style="font-size:11px;color:#aaa">${new Date(r.fecha).toLocaleDateString('es-MX')}${r.tel?' · '+r.tel:''}</div><div style="font-size:11px;color:#888;margin-top:2px">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</div></div><div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div style="font-size:16px;font-weight:900;color:#ef4444">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div><button class="btn bg bsm" onclick="cobrarFiado(${r.id})">✓ Cobrar</button></div></div>`).join('')
+    :'<div style="text-align:center;color:#bbb;padding:20px">Sin cuentas pendientes</div>';
+  document.getElementById('ov-fiado').classList.add('on');
+}
+async function cobrarFiado(id){
+  if(!confirm('¿Marcar como pagado?'))return;
+  await H('/api/remisiones/'+id+'/pagar',{method:'PUT'});
+  abrirFiado();
+}
+
+// PEDIDOS CAJERO
+let pedidosCajCache=[];
+async function abrirPedidosCaj(){
+  pedidosCajCache=await H('/api/pedidos').then(r=>r.json());
+  renderPedidosCaj();
+  cerrarNuevoPedCaj();
+  document.getElementById('ov-pedidos-caj').classList.add('on');
+}
+const EST_COL={pendiente:'#ea580c',en_camino:'#2563eb',listo:'#7c3aed',entregado:'#16a34a',cancelado:'#dc2626'};
+const EST_LBL={pendiente:'Pendiente',en_camino:'En camino',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
+function renderPedidosCaj(){
+  const f=document.getElementById('caj-ped-filtro').value;
+  const lista=f?pedidosCajCache.filter(p=>p.estado===f):pedidosCajCache;
+  document.getElementById('pedidos-caj-lista').innerHTML=lista.length
+    ?lista.map(p=>`<div class="ped-row"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:700">${p.referencia||'—'} <span style="font-size:10px;color:#aaa">(${p.tipo==='cliente'?'Cliente':'Proveedor'})</span></div><div style="font-size:11px;color:#888;margin-top:2px">${p.descripcion||''}</div>${p.fecha_promesa?`<div style="font-size:11px;color:#aaa;margin-top:2px">Entrega: ${p.fecha_promesa}</div>`:''}</div><div style="text-align:right"><span style="font-size:10px;font-weight:700;color:${EST_COL[p.estado]||'#888'}">${EST_LBL[p.estado]||p.estado}</span>${p.monto?`<div style="font-size:14px;font-weight:900;color:#c9a84c;margin-top:4px">$${Number(p.monto).toLocaleString('es-MX')}</div>`:''}${p.adelanto?`<div style="font-size:11px;color:#16a34a">Adelanto: $${Number(p.adelanto).toLocaleString('es-MX')}</div>`:''}</div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${['pendiente','en_camino','listo','entregado'].map(e=>`<button class="btn bo bsm" style="${p.estado===e?'border-color:#c9a84c;color:#c9a84c':''}" onclick="cambiarEstPed(${p.id},'${e}')">${EST_LBL[e]}</button>`).join('')}</div></div>`).join('')
+    :'<div style="text-align:center;color:#bbb;padding:20px">Sin pedidos</div>';
+}
+async function cambiarEstPed(id,estado){
+  await H('/api/pedidos/'+id,{method:'PUT',body:JSON.stringify({estado})});
+  pedidosCajCache=await H('/api/pedidos').then(r=>r.json());
+  renderPedidosCaj();
+}
+function abrirNuevoPedCaj(){document.getElementById('ov-nped-caj').style.display='';['npc-ref','npc-tel','npc-desc','npc-monto','npc-adelanto','npc-fecha'].forEach(id=>document.getElementById(id).value='');document.getElementById('npc-tipo').value='cliente';}
+function cerrarNuevoPedCaj(){document.getElementById('ov-nped-caj').style.display='none';}
+async function guardarPedCaj(){
+  const ref=document.getElementById('npc-ref').value.trim();
+  if(!ref){alert('Escribe el nombre');return;}
+  const body={tipo:document.getElementById('npc-tipo').value,referencia:ref,tel:document.getElementById('npc-tel').value.trim(),descripcion:document.getElementById('npc-desc').value.trim(),monto:parseFloat(document.getElementById('npc-monto').value)||0,adelanto:parseFloat(document.getElementById('npc-adelanto').value)||0,fecha_promesa:document.getElementById('npc-fecha').value};
+  await H('/api/pedidos',{method:'POST',body:JSON.stringify(body)});
+  pedidosCajCache=await H('/api/pedidos').then(r=>r.json());
+  cerrarNuevoPedCaj();renderPedidosCaj();
 }
 
 // PRECIO Y CANTIDAD EDITABLES
