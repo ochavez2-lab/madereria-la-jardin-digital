@@ -285,6 +285,15 @@ canvas{display:block;width:100%;touch-action:none}
         <button class="btn bg" style="flex:none" onclick="abrirNuevoPedCaj()">+ Nuevo</button>
       </div>
       <div id="pedidos-caj-lista"></div>
+      <!-- Confirmar recepción de material -->
+      <div id="recibir-wrap" style="display:none;background:#fffbf0;border:2px solid #c9a84c;border-radius:12px;padding:14px;margin-top:12px">
+        <div style="font-weight:900;color:#c9a84c;margin-bottom:8px;font-size:13px">📥 CONFIRMAR MATERIAL RECIBIDO</div>
+        <div id="recibir-mats"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn bg" style="flex:1" onclick="confirmarRecibir()">✓ Recibido — actualizar stock</button>
+          <button class="btn bo" onclick="cancelarRecibir()">Cancelar</button>
+        </div>
+      </div>
       <div id="ov-nped-caj" style="display:none;margin-top:14px;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:12px;padding:14px">
         <div class="sec-lbl" style="margin-top:0">NUEVO PEDIDO</div>
         <label class="lbl">Tipo</label>
@@ -696,11 +705,37 @@ function renderPedidosCaj(){
     ?lista.map(p=>`<div class="ped-row"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:700">${p.referencia||'—'} <span style="font-size:10px;color:#aaa">(${p.tipo==='cliente'?'Cliente':'Proveedor'})</span></div><div style="font-size:11px;color:#888;margin-top:2px">${p.descripcion||''}</div>${p.fecha_promesa?`<div style="font-size:11px;color:#aaa;margin-top:2px">Entrega: ${p.fecha_promesa}</div>`:''}</div><div style="text-align:right"><span style="font-size:10px;font-weight:700;color:${EST_COL[p.estado]||'#888'}">${EST_LBL[p.estado]||p.estado}</span>${p.monto?`<div style="font-size:14px;font-weight:900;color:#c9a84c;margin-top:4px">$${Number(p.monto).toLocaleString('es-MX')}</div>`:''}${p.adelanto?`<div style="font-size:11px;color:#16a34a">Adelanto: $${Number(p.adelanto).toLocaleString('es-MX')}</div>`:''}</div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${['pendiente','en_camino','listo','entregado'].map(e=>`<button class="btn bo bsm" style="${p.estado===e?'border-color:#c9a84c;color:#c9a84c':''}" onclick="cambiarEstPed(${p.id},'${e}')">${EST_LBL[e]}</button>`).join('')}</div></div>`).join('')
     :'<div style="text-align:center;color:#bbb;padding:20px">Sin pedidos</div>';
 }
+let _recibirId=null,_recibirMats=[];
 async function cambiarEstPed(id,estado){
+  const ped=pedidosCajCache.find(p=>p.id===id);
+  if(estado==='entregado'&&ped&&ped.tipo==='proveedor'){
+    _recibirId=id;
+    const mats=(ped.materiales&&ped.materiales.length)?ped.materiales:[{nombre:'',medida:'',cantidad:1}];
+    _recibirMats=mats.map(m=>Object.assign({},m));
+    document.getElementById('recibir-mats').innerHTML=_recibirMats.map((m,i)=>`
+      <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+        <input value="${m.nombre}" placeholder="Producto (ej: Barrote 2x4)" onchange="_recibirMats[${i}].nombre=this.value" style="flex:2;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none">
+        <input value="${m.medida}" placeholder="Medida" onchange="_recibirMats[${i}].medida=this.value" style="flex:1;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none">
+        <input type="number" value="${m.cantidad||1}" min="1" onchange="_recibirMats[${i}].cantidad=parseInt(this.value)||1" style="width:60px;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:8px;padding:7px 8px;font-size:12px;font-family:inherit;outline:none">
+      </div>`).join('')+`<button onclick="_recibirMats.push({nombre:'',medida:'',cantidad:1});cambiarEstPed(_recibirId,'entregado')" class="btn bo bsm" style="margin-top:2px">+ Agregar línea</button>`;
+    document.getElementById('recibir-wrap').style.display='';
+    document.getElementById('recibir-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
   await H('/api/pedidos/'+id,{method:'PUT',body:JSON.stringify({estado})});
   pedidosCajCache=await H('/api/pedidos').then(r=>r.json());
   renderPedidosCaj();
 }
+async function confirmarRecibir(){
+  const mats=_recibirMats.filter(m=>m.nombre&&m.cantidad>0);
+  await H('/api/pedidos/'+_recibirId,{method:'PUT',body:JSON.stringify({estado:'entregado',materiales:mats})});
+  if(mats.length) await H('/api/pedidos/'+_recibirId+'/recibir',{method:'POST',body:JSON.stringify({materiales:mats})});
+  cancelarRecibir();
+  pedidosCajCache=await H('/api/pedidos').then(r=>r.json());
+  renderPedidosCaj();
+  mostrarToast('✓ Material recibido — stock actualizado');
+}
+function cancelarRecibir(){document.getElementById('recibir-wrap').style.display='none';_recibirId=null;}
 function abrirNuevoPedCaj(){document.getElementById('ov-nped-caj').style.display='';['npc-ref','npc-tel','npc-desc','npc-monto','npc-adelanto','npc-fecha'].forEach(id=>document.getElementById(id).value='');document.getElementById('npc-tipo').value='cliente';}
 function cerrarNuevoPedCaj(){document.getElementById('ov-nped-caj').style.display='none';}
 async function guardarPedCaj(){
@@ -786,6 +821,7 @@ socket.on('productos_actualizados',p=>{
   renderGrid();
 });
 init();
+function mostrarToast(msg){let t=document.getElementById('_toast');if(!t){t=document.createElement('div');t.id='_toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;transition:opacity .3s';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._to);t._to=setTimeout(()=>t.style.opacity='0',2500);}
 </script>
 </body>
 </html>
