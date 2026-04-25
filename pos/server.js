@@ -10,7 +10,9 @@ const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server);
 const PORT   = process.env.PORT || 3000;
-const DB     = path.join(__dirname, 'datos.json');
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DB     = path.join(DATA_DIR, 'datos.json');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '5mb' }));
