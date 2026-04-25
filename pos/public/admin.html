@@ -243,6 +243,7 @@ tr:hover td{background:#faf6f0}
       </select>
     </div>
     <div class="fr"><label class="fl">Precio ($MXN)</label><input class="fi" id="prod-pre" type="number" placeholder="0"></div>
+    <div class="fr"><label class="fl">Cantidad en almacén — dejar vacío si no se controla</label><input class="fi" id="prod-cant" type="number" placeholder="Ej: 50" min="0"></div>
     <div class="ma"><button class="btn bg" onclick="saveProd()">Guardar</button><button class="btn bo" onclick="closeProd()">Cancelar</button></div>
   </div>
 </div>
@@ -416,7 +417,7 @@ async function loadProds(){
     <td style="color:#555">${p.medida}</td>
     <td><span class="badge b-gray">${p.categoria||'—'}</span></td>
     <td class="total-gold">$${p.precio.toLocaleString('es-MX')}</td>
-    <td><span class="badge ${p.stock?'b-green':'b-red'}">${p.stock?'En stock':'Sin stock'}</span></td>
+    <td>${p.cantidad!=null?`<span class="badge ${p.cantidad>0?'b-green':'b-red'}">${p.cantidad>0?p.cantidad+' en almacén':'Sin stock'}</span>`:`<span class="badge ${p.stock?'b-green':'b-red'}">${p.stock?'En stock':'Sin stock'}</span>`}</td>
     <td style="display:flex;gap:5px">
       <button class="btn bo bsm" onclick="editProd(${p.id})">Editar</button>
       <button class="btn bo bsm" onclick="toggleStock(${p.id},${!p.stock})">${p.stock?'Ocultar':'Mostrar'}</button>
@@ -433,6 +434,7 @@ async function editProd(id){
   document.getElementById('prod-med').value=p.medida;
   document.getElementById('prod-cat').value=p.categoria||'General';
   document.getElementById('prod-pre').value=p.precio;
+  document.getElementById('prod-cant').value=p.cantidad!=null?p.cantidad:'';
   prodFotoData=null;
   document.getElementById('prod-foto-file').value='';
   if(p.foto){document.getElementById('prod-foto-prev').src=p.foto+'?v='+Date.now();document.getElementById('prod-foto-prev').style.display='block';document.getElementById('prod-foto-ph').style.display='none';}
@@ -441,7 +443,7 @@ async function editProd(id){
 }
 function openProd(){
   document.getElementById('prod-title').textContent='Nuevo producto';
-  ['prod-id','prod-nom','prod-med','prod-pre'].forEach(id=>document.getElementById(id).value='');
+  ['prod-id','prod-nom','prod-med','prod-pre','prod-cant'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('prod-cat').value='General';
   prodFotoData=null;
   document.getElementById('prod-foto-prev').style.display='none';
@@ -452,7 +454,9 @@ function openProd(){
 function closeProd(){document.getElementById('ov-prod').classList.remove('on');}
 async function saveProd(){
   const id=document.getElementById('prod-id').value;
-  const body={nombre:document.getElementById('prod-nom').value.trim(),medida:document.getElementById('prod-med').value.trim(),precio:parseFloat(document.getElementById('prod-pre').value),categoria:document.getElementById('prod-cat').value};
+  const cantVal=document.getElementById('prod-cant').value;
+  const cant=cantVal!==''?parseInt(cantVal):null;
+  const body={nombre:document.getElementById('prod-nom').value.trim(),medida:document.getElementById('prod-med').value.trim(),precio:parseFloat(document.getElementById('prod-pre').value),categoria:document.getElementById('prod-cat').value,cantidad:cant,stock:cant==null?true:cant>0};
   if (!body.nombre||!body.medida||isNaN(body.precio)){alert('Completa todos los campos');return;}
   let saved;
   if (id) saved=await H('/api/productos/'+id,{method:'PUT',body:JSON.stringify(body)}).then(r=>r.json());
