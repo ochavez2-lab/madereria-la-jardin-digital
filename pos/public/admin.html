@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — La Jardín</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh}
+.topbar{background:#1a1a1a;border-bottom:3px solid #c9a84c;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:10}
+.brand{font-size:14px;font-weight:900;color:#c9a84c;letter-spacing:3px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:8px;color:#aaa;border:none;background:none;font-family:inherit;white-space:nowrap;transition:all .15s}
+.tab:hover{color:#1a1a1a;background:#f0e8d8}
+.tab.on{color:#c9a84c;background:#c9a84c11}
+.logout{font-size:12px;cursor:pointer;padding:6px 12px;border:1px solid #555;border-radius:8px;background:none;color:#aaa;font-family:inherit}
+.logout:hover{color:#ef4444;border-color:#ef4444}
+.panel{display:none;padding:20px;max-width:1100px;margin:0 auto}
+.panel.on{display:block}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:#fff;border:1.5px solid #e8e0d0;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px #0000000a}
+.kpi-l{font-size:10px;color:#aaa;letter-spacing:1px;margin-bottom:6px}
+.kpi-v{font-size:26px;font-weight:900;color:#c9a84c}
+.kpi-s{font-size:11px;color:#bbb;margin-top:3px}
+.kpi.gold{border-color:#c9a84c55}
+/* CHART */
+.chart-wrap{background:#fff;border:1.5px solid #e8e0d0;border-radius:14px;padding:18px;margin-bottom:24px;box-shadow:0 1px 4px #0000000a}
+.chart-title{font-size:11px;color:#aaa;letter-spacing:1px;margin-bottom:14px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:80px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{background:linear-gradient(180deg,#c9a84c,#c9a84c88);border-radius:4px 4px 0 0;width:100%;min-height:2px;transition:height .3s}
+.bar-lbl{font-size:9px;color:#bbb;text-align:center}
+.bar-val{font-size:9px;color:#c9a84c;font-weight:700}
+/* TABLES */
+.sec-t{font-size:11px;font-weight:700;color:#aaa;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f5f0e8;color:#999;font-size:10px;font-weight:700;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid #e8e0d0}
+td{padding:10px 12px;border-bottom:1px solid #f0e8d8;vertical-align:middle;color:#1a1a1a}
+tr:hover td{background:#faf6f0}
+/* BADGES */
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.b-green{background:#dcfce7;color:#16a34a}
+.b-red{background:#fee2e2;color:#dc2626}
+.b-gold{background:#fef3c7;color:#b45309}
+.b-blue{background:#dbeafe;color:#2563eb}
+.b-purple{background:#ede9fe;color:#7c3aed}
+.b-gray{background:#f5f0e8;color:#888}
+.b-orange{background:#ffedd5;color:#ea580c}
+/* BUTTONS */
+.btn{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
+.bg{background:#c9a84c;color:#fff}.bg:hover{background:#b8963e}
+.bo{background:none;border:1.5px solid #ddd5c0;color:#888}.bo:hover{border-color:#c9a84c;color:#c9a84c}
+.bd{background:none;border:1.5px solid #ddd5c0;color:#aaa}.bd:hover{background:#fee2e2;border-color:#ef4444;color:#ef4444}
+.bsm{padding:4px 9px;font-size:11px}
+/* INPUTS */
+.ei{background:#faf6f0;border:1.5px solid #e0d8c8;border-radius:6px;padding:5px 8px;color:#1a1a1a;font-size:13px;font-family:inherit;outline:none}
+.ei:focus{border-color:#c9a84c}
+.ei.w{width:140px}
+.fi{width:100%;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:9px;padding:10px 13px;color:#1a1a1a;font-size:14px;font-family:inherit;outline:none}
+.fi:focus{border-color:#c9a84c}
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.modal{background:#fff;border:2px solid #e8e0d0;border-radius:16px;padding:28px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px #0000001a}
+.modal h3{font-size:15px;font-weight:900;color:#c9a84c;margin-bottom:18px}
+.fr{margin-bottom:12px}
+.fl{font-size:11px;color:#aaa;letter-spacing:.5px;margin-bottom:4px;display:block}
+.ma{display:flex;gap:8px;margin-top:16px}
+/* CONFIG */
+.cs{background:#fff;border:1.5px solid #e8e0d0;border-radius:14px;padding:20px;margin-bottom:16px;max-width:480px}
+.cs h4{font-size:12px;font-weight:700;color:#aaa;letter-spacing:1px;margin-bottom:14px}
+/* GASTOS */
+.gasto-form{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.gasto-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#faf6f0;border:1px solid #f0e8d8;border-radius:8px;margin-bottom:4px;font-size:13px}
+.total-gold{color:#c9a84c;font-weight:900}
+/* FIADO TOTAL */
+.fiado-total{background:#fffbf0;border:1.5px solid #c9a84c44;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+/* FOTO PROD */
+.foto-drop-a{border:2px dashed #e0d8c8;border-radius:10px;height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;background:#faf6f0;margin-bottom:12px}
+.foto-drop-a:hover{border-color:#c9a84c}
+/* ESTADO BADGE PEDIDO */
+.est-sel{width:100%;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:9px;padding:8px 13px;color:#1a1a1a;font-size:13px;font-family:inherit;outline:none}
+.est-sel:focus{border-color:#c9a84c}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">LA JARDÍN — ADMIN</div>
+  <div class="tabs">
+    <button class="tab on"  onclick="show('hoy',this)">HOY</button>
+    <button class="tab"     onclick="show('productos',this)">PRODUCTOS</button>
+    <button class="tab"     onclick="show('clientes',this)">CLIENTES</button>
+    <button class="tab"     onclick="show('fiado',this)">FIADO</button>
+    <button class="tab"     onclick="show('historial',this)">HISTORIAL</button>
+    <button class="tab"     onclick="show('pedidos',this)">PEDIDOS</button>
+    <button class="tab"     onclick="show('proveedores',this)">PROVEEDORES</button>
+    <button class="tab"     onclick="show('config',this)">CONFIG</button>
+  </div>
+  <button class="logout" onclick="salir()">Salir</button>
+</div>
+
+<!-- HOY -->
+<div class="panel on" id="panel-hoy">
+  <div style="padding-top:8px;margin-bottom:16px;font-size:11px;color:#333;letter-spacing:1px" id="fecha-hoy"></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="chart-wrap">
+    <div class="chart-title">VENTAS ÚLTIMOS 7 DÍAS</div>
+    <div class="bars" id="bars"></div>
+  </div>
+  <!-- GASTOS -->
+  <div class="sec-t" style="margin-bottom:10px">GASTOS DEL DÍA
+    <button class="btn bg bsm" onclick="toggleGastos()">+ Agregar</button>
+  </div>
+  <div id="gastos-form" style="display:none;margin-bottom:12px">
+    <div class="gasto-form">
+      <input class="fi" id="g-desc" placeholder="Descripción (flete, papelería...)" style="flex:1;min-width:160px">
+      <input class="fi" id="g-monto" type="number" placeholder="Monto $" style="width:110px">
+      <button class="btn bg" onclick="addGasto()">Guardar</button>
+    </div>
+  </div>
+  <div id="gastos-lista"></div>
+  <div style="margin-top:20px" class="sec-t">VENTAS DE HOY</div>
+  <table style="margin-top:10px"><thead><tr><th>N°</th><th>HORA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-hoy"></tbody></table>
+</div>
+
+<!-- PRODUCTOS -->
+<div class="panel" id="panel-productos">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:8px">
+    <div class="sec-t" style="margin:0">CATÁLOGO</div>
+    <button class="btn bg" onclick="openProd()">+ Nuevo producto</button>
+  </div>
+  <table><thead><tr><th>#</th><th>NOMBRE</th><th>MEDIDA</th><th>CATEGORÍA</th><th>PRECIO</th><th>STOCK</th><th>ACCIONES</th></tr></thead>
+  <tbody id="body-prods"></tbody></table>
+</div>
+
+<!-- CLIENTES -->
+<div class="panel" id="panel-clientes">
+  <div style="padding-top:8px;margin-bottom:14px" class="sec-t">CLIENTES REGISTRADOS</div>
+  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>COMPRAS</th><th>TOTAL GASTADO</th><th>FIADO</th><th>ÚLTIMA VISITA</th></tr></thead>
+  <tbody id="body-clientes"></tbody></table>
+</div>
+
+<!-- FIADO -->
+<div class="panel" id="panel-fiado">
+  <div style="padding-top:8px;margin-bottom:14px">
+    <div class="fiado-total"><span style="font-size:13px;color:#888;font-weight:700">TOTAL PENDIENTE POR COBRAR</span><span class="total-gold" id="fiado-total" style="font-size:22px">$0.00</span></div>
+    <div class="sec-t">CUENTAS POR COBRAR</div>
+  </div>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-fiado"></tbody></table>
+</div>
+
+<!-- HISTORIAL -->
+<div class="panel" id="panel-historial">
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;padding-top:8px;flex-wrap:wrap">
+    <div class="sec-t" style="margin:0">HISTORIAL</div>
+    <input type="date" id="filtro-fecha" class="ei w" onchange="loadHistorial()">
+    <select id="filtro-pago" class="ei" onchange="loadHistorial()">
+      <option value="">Todos los pagos</option>
+      <option value="efectivo">Efectivo</option>
+      <option value="tarjeta">Tarjeta</option>
+      <option value="transferencia">Transferencia</option>
+      <option value="fiado">Fiado</option>
+    </select>
+    <button class="btn bo bsm" onclick="exportCSV()">⬇ CSV</button>
+  </div>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <tbody id="body-hist"></tbody></table>
+</div>
+
+<!-- PEDIDOS -->
+<div class="panel" id="panel-pedidos">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:8px;flex-wrap:wrap;gap:8px">
+    <div class="sec-t" style="margin:0">PEDIDOS</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select class="ei" id="filtro-ped-tipo" onchange="loadPedidos()">
+        <option value="">Todos</option>
+        <option value="cliente">Clientes</option>
+        <option value="proveedor">Proveedores</option>
+      </select>
+      <select class="ei" id="filtro-ped-est" onchange="loadPedidos()">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en_camino">En camino</option>
+        <option value="listo">Listo</option>
+        <option value="entregado">Entregado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+      <button class="btn bg bsm" onclick="abrirPedido()">+ Nuevo pedido</button>
+    </div>
+  </div>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>TIPO</th><th>PARA</th><th>DESCRIPCIÓN</th><th>TOTAL</th><th>ADELANTO</th><th>SALDO</th><th>ESTADO</th><th>ENTREGA</th><th></th></tr></thead>
+  <tbody id="body-pedidos"></tbody></table>
+</div>
+
+<!-- PROVEEDORES -->
+<div class="panel" id="panel-proveedores">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:8px">
+    <div class="sec-t" style="margin:0">PROVEEDORES</div>
+    <button class="btn bg bsm" onclick="abrirProveedor()">+ Nuevo proveedor</button>
+  </div>
+  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>CONTACTO</th><th>PRODUCTOS</th><th>NOTAS</th><th></th></tr></thead>
+  <tbody id="body-proveedores"></tbody></table>
+</div>
+
+<!-- CONFIG -->
+<div class="panel" id="panel-config">
+  <div style="padding-top:8px;margin-bottom:16px" class="sec-t">CONFIGURACIÓN</div>
+  <div class="cs">
+    <h4>CONTRASEÑAS</h4>
+    <div class="fr"><label class="fl">Admin</label><input class="fi" id="pwd-a" type="password" placeholder="Nueva contraseña admin"></div>
+    <div class="fr"><label class="fl">Cajero</label><input class="fi" id="pwd-c" type="password" placeholder="Nueva contraseña cajero"></div>
+    <div class="fr"><label class="fl">Cliente (pantalla)</label><input class="fi" id="pwd-cl" type="password" placeholder="Nueva contraseña cliente"></div>
+    <button class="btn bg" style="margin-top:4px" onclick="savePasswords()">Guardar contraseñas</button>
+    <div id="msg-cfg" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="ov" id="ov-prod">
+  <div class="modal">
+    <h3 id="prod-title">Nuevo producto</h3>
+    <input type="hidden" id="prod-id">
+    <div class="fr">
+      <label class="fl">Foto del producto — opcional</label>
+      <div class="foto-drop-a" onclick="document.getElementById('prod-foto-file').click()">
+        <img id="prod-foto-prev" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <div id="prod-foto-ph" style="color:#bbb;font-size:11px;letter-spacing:1px">📷 SUBIR FOTO</div>
+      </div>
+      <input type="file" id="prod-foto-file" accept="image/*" style="display:none" onchange="prevFotoProd(this)">
+    </div>
+    <div class="fr"><label class="fl">Nombre</label><input class="fi" id="prod-nom" placeholder="Ej: Barrote 2x4"></div>
+    <div class="fr"><label class="fl">Medida</label><input class="fi" id="prod-med" placeholder="Ej: 16 pies"></div>
+    <div class="fr"><label class="fl">Categoría</label>
+      <select class="fi" id="prod-cat">
+        <option value="Madera">Madera</option>
+        <option value="Triplay">Triplay</option>
+        <option value="Cubiertas">Cubiertas</option>
+        <option value="General">General</option>
+      </select>
+    </div>
+    <div class="fr"><label class="fl">Precio ($MXN)</label><input class="fi" id="prod-pre" type="number" placeholder="0"></div>
+    <div class="fr"><label class="fl">Cantidad en almacén — dejar vacío si no se controla</label><input class="fi" id="prod-cant" type="number" placeholder="Ej: 50" min="0"></div>
+    <div class="ma"><button class="btn bg" onclick="saveProd()">Guardar</button><button class="btn bo" onclick="closeProd()">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="ov" id="ov-pedido">
+  <div class="modal">
+    <h3 id="ped-title">Nuevo Pedido</h3>
+    <input type="hidden" id="ped-id">
+    <div class="fr"><label class="fl">Tipo</label>
+      <select class="fi" id="ped-tipo">
+        <option value="cliente">Cliente (nos pide a nosotros)</option>
+        <option value="proveedor">Proveedor (nosotros pedimos)</option>
+      </select>
+    </div>
+    <div class="fr"><label class="fl">Para / De</label><input class="fi" id="ped-ref" placeholder="Nombre cliente o proveedor"></div>
+    <div class="fr"><label class="fl">Teléfono</label><input class="fi" id="ped-tel" type="tel" placeholder="664 xxx xxxx"></div>
+    <div class="fr"><label class="fl">Descripción del pedido</label><textarea class="fi" id="ped-desc" rows="3" placeholder="Qué productos, medidas, cantidades..." style="resize:vertical"></textarea></div>
+    <div class="fr"><label class="fl">Monto total ($MXN)</label><input class="fi" id="ped-monto" type="number" placeholder="0"></div>
+    <div class="fr"><label class="fl">Adelanto pagado ($MXN)</label><input class="fi" id="ped-adelanto" type="number" placeholder="0"></div>
+    <div class="fr"><label class="fl">Estado</label>
+      <select class="fi" id="ped-estado">
+        <option value="pendiente">Pendiente</option>
+        <option value="en_camino">En camino</option>
+        <option value="listo">Listo para entregar</option>
+        <option value="entregado">Entregado / Recibido</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <div class="fr"><label class="fl">Fecha prometida / entrega</label><input class="fi" id="ped-fecha" type="date"></div>
+    <div class="fr"><label class="fl">Notas</label><input class="fi" id="ped-notas" placeholder="Observaciones..."></div>
+    <div class="ma"><button class="btn bg" onclick="savePedido()">Guardar</button><button class="btn bo" onclick="document.getElementById('ov-pedido').classList.remove('on')">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- MODAL PROVEEDOR -->
+<div class="ov" id="ov-prov">
+  <div class="modal">
+    <h3 id="prov-title">Nuevo Proveedor</h3>
+    <input type="hidden" id="prov-id">
+    <div class="fr"><label class="fl">Nombre empresa / persona</label><input class="fi" id="prov-nom" placeholder="Ej: Maderas del Norte"></div>
+    <div class="fr"><label class="fl">Teléfono / WhatsApp</label><input class="fi" id="prov-tel" type="tel" placeholder="664 xxx xxxx"></div>
+    <div class="fr"><label class="fl">Contacto (persona)</label><input class="fi" id="prov-contacto" placeholder="Nombre del vendedor"></div>
+    <div class="fr"><label class="fl">Productos que suministra</label><input class="fi" id="prov-prods" placeholder="Ej: Triplay, Madera, OSB..."></div>
+    <div class="fr"><label class="fl">Días / tiempo de entrega</label><input class="fi" id="prov-dias" placeholder="Ej: 2-3 días hábiles"></div>
+    <div class="fr"><label class="fl">Notas</label><textarea class="fi" id="prov-notas" rows="2" style="resize:vertical" placeholder="Condiciones, crédito, etc."></textarea></div>
+    <div class="ma"><button class="btn bg" onclick="saveProveedor()">Guardar</button><button class="btn bo" onclick="document.getElementById('ov-prov').classList.remove('on')">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ANULAR -->
+<div class="ov" id="ov-anular">
+  <div class="modal">
+    <h3>CONFIRMAR ANULACIÓN</h3>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">Ingresa la contraseña de administrador para anular esta remisión.</p>
+    <div class="fr"><label class="fl">Contraseña admin</label><input class="fi" id="pwd-anular" type="password" placeholder="Contraseña"></div>
+    <div id="err-anular" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:8px"></div>
+    <div class="ma"><button class="btn bd" onclick="confirmarAnular()">Anular remisión</button><button class="btn bo" onclick="closeAnular()">Cancelar</button></div>
+  </div>
+</div>
+
+<script>
+const token = sessionStorage.getItem('token');
+if (!token) window.location.href = '/';
+const H = (u,o) => { o=o||{}; o.headers=Object.assign({'Content-Type':'application/json','x-token':token},o.headers||{}); return fetch(u,o); };
+
+function salir(){sessionStorage.clear();window.location.href='/';}
+
+function show(id,btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  btn.classList.add('on');
+  if (id==='hoy')         loadHoy();
+  if (id==='productos')   loadProds();
+  if (id==='clientes')    loadClientes();
+  if (id==='fiado')       loadFiado();
+  if (id==='historial')   loadHistorial();
+  if (id==='pedidos')     loadPedidos();
+  if (id==='proveedores') loadProveedores();
+}
+
+// ── HOY ───────────────────────────────────────────────────────────────────────
+const MET_BADGE = {
+  efectivo:'<span class="badge b-green">💵 Efectivo</span>',
+  tarjeta:'<span class="badge b-blue">💳 Tarjeta</span>',
+  transferencia:'<span class="badge b-purple">📱 Transfer</span>',
+  fiado:'<span class="badge b-gold">📋 Fiado</span>'
+};
+function metBadge(m){return MET_BADGE[m]||'<span class="badge b-gray">'+m+'</span>';}
+
+async function loadHoy() {
+  document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
+  const [rep, db, semana, gastos] = await Promise.all([
+    H('/api/reportes/hoy').then(r=>r.json()),
+    H('/api/remisiones').then(r=>r.json()),
+    H('/api/reportes/semana').then(r=>r.json()),
+    H('/api/gastos').then(r=>r.json())
+  ]);
+  // KPIs
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi gold"><div class="kpi-l">TOTAL DEL DÍA</div><div class="kpi-v">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">VENTAS</div><div class="kpi-v">${rep.count}</div><div class="kpi-s">remisiones</div></div>
+    <div class="kpi"><div class="kpi-l">FIADO HOY</div><div class="kpi-v" style="color:#f87171">$${(rep.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">GASTOS</div><div class="kpi-v" style="color:#f87171">$${(rep.gastos||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">UTILIDAD</div><div class="kpi-v" style="color:#4ade80">$${(rep.utilidad||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
+    <div class="kpi"><div class="kpi-l">TICKET PROM.</div><div class="kpi-v">$${rep.count?Math.round(rep.total/rep.count).toLocaleString('es-MX'):'0'}</div></div>
+    <div class="kpi"><div class="kpi-l">PRODUCTO TOP</div><div class="kpi-v" style="font-size:14px;line-height:1.3">${rep.top}</div><div class="kpi-s">${rep.topQty} piezas</div></div>`;
+  // Gráfica
+  const max = Math.max(...semana.map(d=>d.total),1);
+  document.getElementById('bars').innerHTML = semana.map(d=>`
+    <div class="bar-col">
+      <div class="bar-val">${d.total>0?'$'+Math.round(d.total/1000)+'k':''}</div>
+      <div class="bar" style="height:${Math.round(d.total/max*70)+2}px" title="$${d.total.toLocaleString('es-MX')}"></div>
+      <div class="bar-lbl">${d.label}</div>
+    </div>`).join('');
+  // Gastos hoy
+  const hoy = new Date().toDateString();
+  const gHoy = gastos.filter(g=>new Date(g.fecha).toDateString()===hoy);
+  document.getElementById('gastos-lista').innerHTML = gHoy.length
+    ? gHoy.map(g=>`<div class="gasto-item"><span>${g.descripcion}</span><span style="display:flex;align-items:center;gap:8px"><span class="total-gold">-$${g.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span><button class="btn bd bsm" onclick="delGasto(${g.id})">×</button></span></div>`).join('')
+    : '<div style="font-size:12px;color:#222;padding:8px 0">Sin gastos registrados hoy</div>';
+  // Ventas hoy
+  const rHoy = (db.remisiones||[]).filter(r=>new Date(r.fecha).toDateString()===hoy);
+  document.getElementById('body-hoy').innerHTML = rHoy.length
+    ? rHoy.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td>${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td>${r.cliente}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
+        <td>${metBadge(r.metodo_pago)}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:28px">Sin ventas hoy</td></tr>';
+}
+
+function toggleGastos(){const el=document.getElementById('gastos-form');el.style.display=el.style.display==='none'?'':'none';}
+async function addGasto(){
+  const desc=document.getElementById('g-desc').value.trim();
+  const monto=parseFloat(document.getElementById('g-monto').value);
+  if (!desc||isNaN(monto)||monto<=0) return;
+  await H('/api/gastos',{method:'POST',body:JSON.stringify({descripcion:desc,monto:monto})});
+  document.getElementById('g-desc').value='';
+  document.getElementById('g-monto').value='';
+  loadHoy();
+}
+async function delGasto(id){await H('/api/gastos/'+id,{method:'DELETE'});loadHoy();}
+
+// ── ANULAR (con contraseña) ───────────────────────────────────────────────────
+let anularId = null;
+function pedirAnular(id){anularId=id;document.getElementById('pwd-anular').value='';document.getElementById('err-anular').textContent='';document.getElementById('ov-anular').classList.add('on');}
+function closeAnular(){document.getElementById('ov-anular').classList.remove('on');anularId=null;}
+async function confirmarAnular(){
+  const pwd=document.getElementById('pwd-anular').value;
+  const vr=await H('/api/verify-admin',{method:'POST',body:JSON.stringify({password:pwd})});
+  if (!vr.ok){document.getElementById('err-anular').textContent='Contraseña incorrecta';return;}
+  await H('/api/remisiones/'+anularId,{method:'DELETE'});
+  closeAnular();
+  loadHoy();
+  if (document.getElementById('panel-historial').classList.contains('on')) loadHistorial();
+  if (document.getElementById('panel-fiado').classList.contains('on')) loadFiado();
+}
+
+// ── PRODUCTOS ─────────────────────────────────────────────────────────────────
+async function loadProds(){
+  const prods=await H('/api/productos').then(r=>r.json());
+  document.getElementById('body-prods').innerHTML=prods.map(p=>`<tr>
+    <td style="color:#333">${p.id}</td>
+    <td style="font-weight:700">${p.nombre}</td>
+    <td style="color:#555">${p.medida}</td>
+    <td><span class="badge b-gray">${p.categoria||'—'}</span></td>
+    <td class="total-gold">$${p.precio.toLocaleString('es-MX')}</td>
+    <td>${p.cantidad!=null?`<span class="badge ${p.cantidad>0?'b-green':'b-red'}">${p.cantidad>0?p.cantidad+' en almacén':'Sin stock'}</span>`:`<span class="badge ${p.stock?'b-green':'b-red'}">${p.stock?'En stock':'Sin stock'}</span>`}</td>
+    <td style="display:flex;gap:5px">
+      <button class="btn bo bsm" onclick="editProd(${p.id})">Editar</button>
+      <button class="btn bo bsm" onclick="toggleStock(${p.id},${!p.stock})">${p.stock?'Ocultar':'Mostrar'}</button>
+      <button class="btn bd bsm" onclick="delProd(${p.id})">Eliminar</button>
+    </td></tr>`).join('');
+}
+let prodsCache=[];
+async function editProd(id){
+  prodsCache=await H('/api/productos').then(r=>r.json());
+  const p=prodsCache.find(x=>x.id===id); if(!p) return;
+  document.getElementById('prod-title').textContent='Editar producto';
+  document.getElementById('prod-id').value=p.id;
+  document.getElementById('prod-nom').value=p.nombre;
+  document.getElementById('prod-med').value=p.medida;
+  document.getElementById('prod-cat').value=p.categoria||'General';
+  document.getElementById('prod-pre').value=p.precio;
+  document.getElementById('prod-cant').value=p.cantidad!=null?p.cantidad:'';
+  prodFotoData=null;
+  document.getElementById('prod-foto-file').value='';
+  if(p.foto){document.getElementById('prod-foto-prev').src=p.foto+'?v='+Date.now();document.getElementById('prod-foto-prev').style.display='block';document.getElementById('prod-foto-ph').style.display='none';}
+  else{document.getElementById('prod-foto-prev').style.display='none';document.getElementById('prod-foto-ph').style.display='';}
+  document.getElementById('ov-prod').classList.add('on');
+}
+function openProd(){
+  document.getElementById('prod-title').textContent='Nuevo producto';
+  ['prod-id','prod-nom','prod-med','prod-pre','prod-cant'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prod-cat').value='General';
+  prodFotoData=null;
+  document.getElementById('prod-foto-prev').style.display='none';
+  document.getElementById('prod-foto-ph').style.display='';
+  document.getElementById('prod-foto-file').value='';
+  document.getElementById('ov-prod').classList.add('on');
+}
+function closeProd(){document.getElementById('ov-prod').classList.remove('on');}
+async function saveProd(){
+  const id=document.getElementById('prod-id').value;
+  const cantVal=document.getElementById('prod-cant').value;
+  const cant=cantVal!==''?parseInt(cantVal):null;
+  const body={nombre:document.getElementById('prod-nom').value.trim(),medida:document.getElementById('prod-med').value.trim(),precio:parseFloat(document.getElementById('prod-pre').value),categoria:document.getElementById('prod-cat').value,cantidad:cant,stock:cant==null?true:cant>0};
+  if (!body.nombre||!body.medida||isNaN(body.precio)){alert('Completa todos los campos');return;}
+  let saved;
+  if (id) saved=await H('/api/productos/'+id,{method:'PUT',body:JSON.stringify(body)}).then(r=>r.json());
+  else    saved=await H('/api/productos',{method:'POST',body:JSON.stringify(body)}).then(r=>r.json());
+  if (prodFotoData) await H('/api/productos/'+saved.id+'/foto',{method:'POST',body:JSON.stringify({foto:prodFotoData})});
+  closeProd(); loadProds();
+}
+async function toggleStock(id,v){await H('/api/productos/'+id,{method:'PUT',body:JSON.stringify({stock:v})});loadProds();}
+async function delProd(id){if(!confirm('¿Eliminar producto?'))return;await H('/api/productos/'+id,{method:'DELETE'});loadProds();}
+
+// ── CLIENTES ──────────────────────────────────────────────────────────────────
+async function loadClientes(){
+  const cs=await H('/api/clientes').then(r=>r.json());
+  document.getElementById('body-clientes').innerHTML=cs.length
+    ? cs.map(c=>`<tr>
+        <td style="font-weight:700">${c.nombre}</td>
+        <td style="color:#555">${c.tel}</td>
+        <td style="text-align:center">${c.compras||0}</td>
+        <td class="total-gold">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="color:${(c.fiado||0)>0?'#f87171':'#333'}">$${(c.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="color:#444">${c.ultima?new Date(c.ultima).toLocaleDateString('es-MX'):'—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:28px">Sin clientes aún</td></tr>';
+}
+
+// ── FIADO ─────────────────────────────────────────────────────────────────────
+async function loadFiado(){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const fiados=(db.remisiones||[]).filter(r=>r.metodo_pago==='fiado'&&!r.fiado_pagado);
+  const total=fiados.reduce((s,r)=>s+r.total,0);
+  document.getElementById('fiado-total').textContent='$'+total.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('body-fiado').innerHTML=fiados.length
+    ? fiados.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td style="color:#555">${new Date(r.fecha).toLocaleDateString('es-MX')}</td>
+        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#444">${r.tel}</div>`:''}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td style="display:flex;gap:5px">
+          <button class="btn bg bsm" onclick="pagarFiado(${r.id})">✓ Cobrar</button>
+          <button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button>
+        </td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:28px">Sin cuentas por cobrar</td></tr>';
+}
+async function pagarFiado(id){if(!confirm('¿Marcar como pagado?'))return;await H('/api/remisiones/'+id+'/pagar',{method:'PUT'});loadFiado();loadClientes();}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────────────
+let histCache=[];
+async function loadHistorial(){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const filtF=document.getElementById('filtro-fecha').value;
+  const filtP=document.getElementById('filtro-pago').value;
+  histCache=(db.remisiones||[]).filter(r=>{
+    if (filtF&&!r.fecha.startsWith(filtF)) return false;
+    if (filtP&&r.metodo_pago!==filtP) return false;
+    return true;
+  });
+  document.getElementById('body-hist').innerHTML=histCache.length
+    ? histCache.map(r=>`<tr>
+        <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
+        <td style="color:#555">${new Date(r.fecha).toLocaleDateString('es-MX')} ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#444">${r.tel}</div>`:''}</td>
+        <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' '+i.medida+' ×'+i.qty).join(', ')}</td>
+        <td>${metBadge(r.metodo_pago)}</td>
+        <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:28px">Sin remisiones</td></tr>';
+}
+
+function exportCSV(){
+  if (!histCache.length){alert('No hay datos para exportar');return;}
+  const rows=[['N°','Fecha','Cliente','Tel','Productos','Método','Total']];
+  histCache.forEach(r=>{rows.push([r.id,new Date(r.fecha).toLocaleString('es-MX'),r.cliente,r.tel||'',r.items.map(i=>i.nombre+' '+i.medida+' x'+i.qty).join(' | '),r.metodo_pago,r.total]);});
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download='ventas-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── FOTO PRODUCTO ─────────────────────────────────────────────────────────────
+let prodFotoData=null;
+function prevFotoProd(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{prodFotoData=e.target.result;document.getElementById('prod-foto-prev').src=prodFotoData;document.getElementById('prod-foto-prev').style.display='block';document.getElementById('prod-foto-ph').style.display='none';};
+  reader.readAsDataURL(file);
+}
+
+// ── PEDIDOS ───────────────────────────────────────────────────────────────────
+const EST_BADGE={pendiente:'<span class="badge b-orange">Pendiente</span>',en_camino:'<span class="badge b-blue">En camino</span>',listo:'<span class="badge b-purple">Listo</span>',entregado:'<span class="badge b-green">Entregado</span>',cancelado:'<span class="badge b-red">Cancelado</span>'};
+const TIPO_BADGE={cliente:'<span class="badge b-gold">Cliente</span>',proveedor:'<span class="badge b-gray">Proveedor</span>'};
+
+async function loadPedidos(){
+  const filtTipo=document.getElementById('filtro-ped-tipo').value;
+  const filtEst=document.getElementById('filtro-ped-est').value;
+  let peds=await H('/api/pedidos').then(r=>r.json());
+  if(filtTipo) peds=peds.filter(p=>p.tipo===filtTipo);
+  if(filtEst)  peds=peds.filter(p=>p.estado===filtEst);
+  document.getElementById('body-pedidos').innerHTML=peds.length
+    ?peds.map(p=>{const saldo=((p.monto||0)-(p.adelanto||0));return`<tr>
+      <td style="color:#aaa">N°${String(p.id).padStart(3,'0')}</td>
+      <td style="color:#aaa">${new Date(p.fecha).toLocaleDateString('es-MX')}</td>
+      <td>${TIPO_BADGE[p.tipo]||p.tipo}</td>
+      <td><div style="font-weight:700">${p.referencia||'—'}</div>${p.tel?`<div style="font-size:11px;color:#aaa">${p.tel}</div>`:''}</td>
+      <td style="font-size:12px;color:#888;max-width:180px">${p.descripcion||'—'}</td>
+      <td class="total-gold">${p.monto?'$'+Number(p.monto).toLocaleString('es-MX'):'—'}</td>
+      <td style="color:#16a34a">${p.adelanto?'$'+Number(p.adelanto).toLocaleString('es-MX'):'—'}</td>
+      <td style="color:${saldo>0?'#ef4444':'#16a34a'}">${p.monto?'$'+saldo.toLocaleString('es-MX'):'—'}</td>
+      <td>${EST_BADGE[p.estado]||p.estado}</td>
+      <td style="color:#aaa">${p.fecha_promesa||'—'}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn bo bsm" onclick="editarPedido(${p.id})">Editar</button>
+        <button class="btn bd bsm" onclick="delPedido(${p.id})">×</button>
+      </td></tr>`}).join('')
+    :'<tr><td colspan="11" style="text-align:center;color:#bbb;padding:28px">Sin pedidos</td></tr>';
+}
+function abrirPedido(){
+  ['ped-id','ped-ref','ped-tel','ped-desc','ped-monto','ped-adelanto','ped-notas','ped-fecha'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ped-tipo').value='cliente';
+  document.getElementById('ped-estado').value='pendiente';
+  document.getElementById('ped-title').textContent='Nuevo Pedido';
+  document.getElementById('ov-pedido').classList.add('on');
+}
+async function editarPedido(id){
+  const peds=await H('/api/pedidos').then(r=>r.json());
+  const p=peds.find(x=>x.id===id);if(!p)return;
+  document.getElementById('ped-id').value=p.id;
+  document.getElementById('ped-tipo').value=p.tipo||'cliente';
+  document.getElementById('ped-ref').value=p.referencia||'';
+  document.getElementById('ped-tel').value=p.tel||'';
+  document.getElementById('ped-desc').value=p.descripcion||'';
+  document.getElementById('ped-monto').value=p.monto||'';
+  document.getElementById('ped-adelanto').value=p.adelanto||'';
+  document.getElementById('ped-estado').value=p.estado||'pendiente';
+  document.getElementById('ped-fecha').value=p.fecha_promesa||'';
+  document.getElementById('ped-notas').value=p.notas||'';
+  document.getElementById('ped-title').textContent='Editar Pedido';
+  document.getElementById('ov-pedido').classList.add('on');
+}
+async function savePedido(){
+  const id=document.getElementById('ped-id').value;
+  const body={tipo:document.getElementById('ped-tipo').value,referencia:document.getElementById('ped-ref').value.trim(),tel:document.getElementById('ped-tel').value.trim(),descripcion:document.getElementById('ped-desc').value.trim(),monto:parseFloat(document.getElementById('ped-monto').value)||0,adelanto:parseFloat(document.getElementById('ped-adelanto').value)||0,estado:document.getElementById('ped-estado').value,fecha_promesa:document.getElementById('ped-fecha').value,notas:document.getElementById('ped-notas').value.trim()};
+  if(!body.referencia){alert('Escribe para quién es el pedido');return;}
+  if(id) await H('/api/pedidos/'+id,{method:'PUT',body:JSON.stringify(body)});
+  else   await H('/api/pedidos',{method:'POST',body:JSON.stringify(body)});
+  document.getElementById('ov-pedido').classList.remove('on');
+  loadPedidos();
+}
+async function delPedido(id){if(!confirm('¿Eliminar pedido?'))return;await H('/api/pedidos/'+id,{method:'DELETE'});loadPedidos();}
+
+// ── PROVEEDORES ───────────────────────────────────────────────────────────────
+async function loadProveedores(){
+  const provs=await H('/api/proveedores').then(r=>r.json());
+  document.getElementById('body-proveedores').innerHTML=provs.length
+    ?provs.map(p=>`<tr>
+      <td style="font-weight:700">${p.nombre}</td>
+      <td>${p.tel||'—'}</td>
+      <td style="color:#888">${p.contacto||'—'}</td>
+      <td style="font-size:12px;color:#888">${p.productos||'—'}</td>
+      <td style="font-size:12px;color:#aaa">${p.notas||'—'}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn bo bsm" onclick="editarProveedor(${p.id})">Editar</button>
+        <button class="btn bd bsm" onclick="delProveedor(${p.id})">×</button>
+      </td></tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;color:#bbb;padding:28px">Sin proveedores registrados</td></tr>';
+}
+function abrirProveedor(){
+  ['prov-id','prov-nom','prov-tel','prov-contacto','prov-prods','prov-dias','prov-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prov-title').textContent='Nuevo Proveedor';
+  document.getElementById('ov-prov').classList.add('on');
+}
+async function editarProveedor(id){
+  const provs=await H('/api/proveedores').then(r=>r.json());
+  const p=provs.find(x=>x.id===id);if(!p)return;
+  document.getElementById('prov-id').value=p.id;
+  document.getElementById('prov-nom').value=p.nombre||'';
+  document.getElementById('prov-tel').value=p.tel||'';
+  document.getElementById('prov-contacto').value=p.contacto||'';
+  document.getElementById('prov-prods').value=p.productos||'';
+  document.getElementById('prov-dias').value=p.dias||'';
+  document.getElementById('prov-notas').value=p.notas||'';
+  document.getElementById('prov-title').textContent='Editar Proveedor';
+  document.getElementById('ov-prov').classList.add('on');
+}
+async function saveProveedor(){
+  const id=document.getElementById('prov-id').value;
+  const body={nombre:document.getElementById('prov-nom').value.trim(),tel:document.getElementById('prov-tel').value.trim(),contacto:document.getElementById('prov-contacto').value.trim(),productos:document.getElementById('prov-prods').value.trim(),dias:document.getElementById('prov-dias').value.trim(),notas:document.getElementById('prov-notas').value.trim()};
+  if(!body.nombre){alert('El nombre es obligatorio');return;}
+  if(id) await H('/api/proveedores/'+id,{method:'PUT',body:JSON.stringify(body)});
+  else   await H('/api/proveedores',{method:'POST',body:JSON.stringify(body)});
+  document.getElementById('ov-prov').classList.remove('on');
+  loadProveedores();
+}
+async function delProveedor(id){if(!confirm('¿Eliminar proveedor?'))return;await H('/api/proveedores/'+id,{method:'DELETE'});loadProveedores();}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+async function savePasswords(){
+  const body={};
+  const a=document.getElementById('pwd-a').value.trim();
+  const c=document.getElementById('pwd-c').value.trim();
+  const cl=document.getElementById('pwd-cl').value.trim();
+  if(a)body.admin=a; if(c)body.cajero=c; if(cl)body.cliente=cl;
+  if(!Object.keys(body).length)return;
+  await H('/api/config/passwords',{method:'PUT',body:JSON.stringify(body)});
+  document.getElementById('msg-cfg').textContent='Contraseñas actualizadas ✓';
+  ['pwd-a','pwd-c','pwd-cl'].forEach(id=>document.getElementById(id).value='');
+  setTimeout(()=>document.getElementById('msg-cfg').textContent='',3000);
+}
+
+loadHoy();
+setInterval(loadHoy,30000);
+</script>
+</body>
+</html>
