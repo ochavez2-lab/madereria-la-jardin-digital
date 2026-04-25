@@ -360,6 +360,17 @@ io.on('connection', function(socket) {
   socket.on('limpiar_cliente',    function()     { socket.broadcast.emit('limpiar_cliente'); });
 });
 
+// ── Backup / Restore ─────────────────────────────────────────────────────────
+app.get('/api/backup/export', auth('admin'), function(req, res) {
+  res.json(readDB());
+});
+app.post('/api/backup/import', auth('admin'), function(req, res) {
+  const data = req.body;
+  if (!data || typeof data !== 'object') return res.status(400).json({ error: 'invalid' });
+  writeDB(data);
+  res.json({ ok: true });
+});
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, '0.0.0.0', function() {
   const nets = os.networkInterfaces();

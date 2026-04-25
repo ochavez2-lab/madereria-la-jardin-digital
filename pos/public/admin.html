@@ -209,6 +209,16 @@ tr:hover td{background:#faf6f0}
 <!-- CONFIG -->
 <div class="panel" id="panel-config">
   <div style="padding-top:8px;margin-bottom:16px" class="sec-t">CONFIGURACIÓN</div>
+  <div class="cs" style="margin-bottom:16px">
+    <h4>RESPALDO DE DATOS</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Descarga una copia de todos tus datos antes de actualizaciones. Si se pierden, usa "Restaurar" para subirlos de nuevo.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn bg" onclick="exportarDatos()">⬇ Exportar datos</button>
+      <button class="btn bo" onclick="document.getElementById('import-file').click()">⬆ Restaurar datos</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(this)">
+    </div>
+    <div id="msg-backup" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
+  </div>
   <div class="cs">
     <h4>CONTRASEÑAS</h4>
     <div class="fr"><label class="fl">Admin</label><input class="fi" id="pwd-a" type="password" placeholder="Nueva contraseña admin"></div>
@@ -311,6 +321,34 @@ if (!token) window.location.href = '/';
 const H = (u,o) => { o=o||{}; o.headers=Object.assign({'Content-Type':'application/json','x-token':token},o.headers||{}); return fetch(u,o); };
 
 function salir(){sessionStorage.clear();window.location.href='/';}
+
+async function exportarDatos(){
+  try{
+    const r=await H('/api/backup/export');
+    if(!r.ok) throw new Error();
+    const data=await r.json();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='jardin-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    document.getElementById('msg-backup').textContent='✓ Backup descargado';
+    setTimeout(()=>document.getElementById('msg-backup').textContent='',3000);
+  }catch{document.getElementById('msg-backup').style.color='#ef4444';document.getElementById('msg-backup').textContent='Error al exportar';}
+}
+async function importarDatos(input){
+  const file=input.files[0]; if(!file) return;
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+    const r=await H('/api/backup/import',{method:'POST',body:JSON.stringify(data)});
+    if(!r.ok) throw new Error();
+    document.getElementById('msg-backup').style.color='#4ade80';
+    document.getElementById('msg-backup').textContent='✓ Datos restaurados correctamente';
+    setTimeout(()=>{document.getElementById('msg-backup').textContent='';init();},2000);
+  }catch{document.getElementById('msg-backup').style.color='#ef4444';document.getElementById('msg-backup').textContent='Error al restaurar — archivo inválido';}
+  input.value='';
+}
 
 function show(id,btn) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
