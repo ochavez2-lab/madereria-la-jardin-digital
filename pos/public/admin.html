@@ -87,7 +87,10 @@ tr:hover td{background:#faf6f0}
 </head>
 <body>
 <div class="topbar">
-  <div class="brand">LA JARDÍN — ADMIN</div>
+  <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+    <div class="brand">LA JARDÍN — ADMIN</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#4ade80;font-weight:700"><span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block;box-shadow:0 0 6px #4ade80aa"></span>EN LÍNEA</div>
+  </div>
   <div class="tabs">
     <button class="tab on"  onclick="show('hoy',this)">HOY</button>
     <button class="tab"     onclick="show('productos',this)">PRODUCTOS</button>
@@ -98,7 +101,10 @@ tr:hover td{background:#faf6f0}
     <button class="tab"     onclick="show('proveedores',this)">PROVEEDORES</button>
     <button class="tab"     onclick="show('config',this)">CONFIG</button>
   </div>
-  <button class="logout" onclick="salir()">Salir</button>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div id="admin-clock" style="font-size:13px;font-weight:700;color:#c9a84c;letter-spacing:1px;font-variant-numeric:tabular-nums"></div>
+    <button class="logout" onclick="salir()">Salir</button>
+  </div>
 </div>
 
 <!-- HOY -->
@@ -132,7 +138,7 @@ tr:hover td{background:#faf6f0}
     <div class="sec-t" style="margin:0">CATÁLOGO</div>
     <button class="btn bg" onclick="openProd()">+ Nuevo producto</button>
   </div>
-  <table><thead><tr><th>#</th><th>NOMBRE</th><th>MEDIDA</th><th>CATEGORÍA</th><th>PRECIO</th><th>STOCK</th><th>ACCIONES</th></tr></thead>
+  <table><thead><tr><th></th><th>PRODUCTO</th><th>MEDIDA</th><th>CATEGORÍA</th><th>PRECIO</th><th>STOCK</th><th>ACCIONES</th></tr></thead>
   <tbody id="body-prods"></tbody></table>
 </div>
 
@@ -383,13 +389,13 @@ async function loadHoy() {
   ]);
   // KPIs
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi gold"><div class="kpi-l">TOTAL DEL DÍA</div><div class="kpi-v">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
-    <div class="kpi"><div class="kpi-l">VENTAS</div><div class="kpi-v">${rep.count}</div><div class="kpi-s">remisiones</div></div>
-    <div class="kpi"><div class="kpi-l">FIADO HOY</div><div class="kpi-v" style="color:#f87171">$${(rep.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
-    <div class="kpi"><div class="kpi-l">GASTOS</div><div class="kpi-v" style="color:#f87171">$${(rep.gastos||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
-    <div class="kpi"><div class="kpi-l">UTILIDAD</div><div class="kpi-v" style="color:#4ade80">$${(rep.utilidad||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div>
-    <div class="kpi"><div class="kpi-l">TICKET PROM.</div><div class="kpi-v">$${rep.count?Math.round(rep.total/rep.count).toLocaleString('es-MX'):'0'}</div></div>
-    <div class="kpi"><div class="kpi-l">PRODUCTO TOP</div><div class="kpi-v" style="font-size:14px;line-height:1.3">${rep.top}</div><div class="kpi-s">${rep.topQty} piezas</div></div>`;
+    <div class="kpi gold"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">TOTAL DEL DÍA</div><div class="kpi-v">$${rep.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div><span style="font-size:26px;opacity:.4">💰</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">VENTAS</div><div class="kpi-v">${rep.count}</div><div class="kpi-s">remisiones hoy</div></div><span style="font-size:26px;opacity:.4">🧾</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">FIADO HOY</div><div class="kpi-v" style="color:#f87171">$${(rep.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div><span style="font-size:26px;opacity:.4">⏳</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">GASTOS</div><div class="kpi-v" style="color:#f87171">$${(rep.gastos||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div><span style="font-size:26px;opacity:.4">📤</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">UTILIDAD NETA</div><div class="kpi-v" style="color:#4ade80">$${(rep.utilidad||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div></div><span style="font-size:26px;opacity:.4">📈</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">TICKET PROM.</div><div class="kpi-v">$${rep.count?Math.round(rep.total/rep.count).toLocaleString('es-MX'):'0'}</div></div><span style="font-size:26px;opacity:.4">🎫</span></div></div>
+    <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">PRODUCTO TOP</div><div class="kpi-v" style="font-size:14px;line-height:1.4">${rep.top}</div><div class="kpi-s">${rep.topQty} piezas</div></div><span style="font-size:26px;opacity:.4">🏆</span></div></div>`;
   // Gráfica
   const max = Math.max(...semana.map(d=>d.total),1);
   document.getElementById('bars').innerHTML = semana.map(d=>`
@@ -450,7 +456,7 @@ async function confirmarAnular(){
 async function loadProds(){
   const prods=await H('/api/productos').then(r=>r.json());
   document.getElementById('body-prods').innerHTML=prods.map(p=>`<tr>
-    <td style="color:#333">${p.id}</td>
+    <td style="width:44px;padding:6px 8px">${p.foto?`<img src="${p.foto}" style="width:38px;height:38px;object-fit:cover;border-radius:7px;border:1px solid #e8e0d0">`:`<div style="width:38px;height:38px;border-radius:7px;background:#f5f0e8;display:flex;align-items:center;justify-content:center;font-size:18px">🪵</div>`}</td>
     <td style="font-weight:700">${p.nombre}</td>
     <td style="color:#555">${p.medida}</td>
     <td><span class="badge b-gray">${p.categoria||'—'}</span></td>
@@ -708,6 +714,8 @@ async function savePasswords(){
 
 loadHoy();
 setInterval(loadHoy,30000);
+function tickClock(){document.getElementById('admin-clock').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+tickClock();setInterval(tickClock,1000);
 </script>
 </body>
 </html>
