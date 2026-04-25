@@ -43,11 +43,11 @@ const PRODUCTOS_DEFAULT = [
   {id:15, nombre:'Membrana granular', medida:'por rollo', precio:580, stock:true, categoria:'Cubiertas'},
 ];
 
-function readDB() {
-  let db = {};
-  if (fs.existsSync(DB)) {
-    try { db = JSON.parse(fs.readFileSync(DB, 'utf8')); } catch(e) { db = {}; }
-  }
+// ── Database (PostgreSQL persistent + file fallback) ──────────────────────────
+let _cache = null;
+let _pgPool = null;
+
+function _defaults(db) {
   if (!db.config)          db.config = { passwords: { admin: 'admin123', cajero: 'cajero123', cliente: 'cliente' } };
   if (!db.productos)       db.productos = PRODUCTOS_DEFAULT;
   if (!db.remisiones)      db.remisiones = [];
@@ -63,7 +63,37 @@ function readDB() {
   return db;
 }
 
-function writeDB(data) { fs.writeFileSync(DB, JSON.stringify(data, null, 2)); }
+function readDB() { return _cache; }
+
+function writeDB(data) {
+  _cache = data;
+  if (_pgPool) {
+    _pgPool.query(
+      'INSERT INTO store(id,data) VALUES(1,$1) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data',
+      [JSON.stringify(data)]
+    ).catch(function(e) { console.error('PG write:', e.message); });
+  } else {
+    try { fs.writeFileSync(DB, JSON.stringify(data, null, 2)); } catch(e) {}
+  }
+}
+
+async function initStorage() {
+  if (process.env.DATABASE_URL) {
+    try {
+      const { Pool } = require('pg');
+      _pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+      await _pgPool.query('CREATE TABLE IF NOT EXISTS store (id INT PRIMARY KEY, data JSONB)');
+      const r = await _pgPool.query('SELECT data FROM store WHERE id=1');
+      _cache = _defaults(r.rows.length ? r.rows[0].data : {});
+      console.log('Storage: PostgreSQL');
+      return;
+    } catch(e) { console.error('PG init failed:', e.message); _pgPool = null; }
+  }
+  let raw = {};
+  if (fs.existsSync(DB)) { try { raw = JSON.parse(fs.readFileSync(DB, 'utf8')); } catch(e) {} }
+  _cache = _defaults(raw);
+  console.log('Storage: archivo local');
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const sessions = {};
@@ -372,13 +402,15 @@ app.post('/api/backup/import', auth('admin'), function(req, res) {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-server.listen(PORT, '0.0.0.0', function() {
-  const nets = os.networkInterfaces();
-  let ip = 'localhost';
-  Object.values(nets).forEach(function(list) {
-    list.forEach(function(i) { if (i.family==='IPv4'&&!i.internal) ip=i.address; });
+initStorage().then(function() {
+  server.listen(PORT, '0.0.0.0', function() {
+    const nets = os.networkInterfaces();
+    let ip = 'localhost';
+    Object.values(nets).forEach(function(list) {
+      list.forEach(function(i) { if (i.family==='IPv4'&&!i.internal) ip=i.address; });
+    });
+    console.log('POS La Jardin v4 — Puerto ' + PORT);
+    console.log('Local: http://localhost:' + PORT);
+    console.log('Red:   http://' + ip + ':' + PORT);
   });
-  console.log('POS La Jardin v4 — Puerto ' + PORT);
-  console.log('Local: http://localhost:' + PORT);
-  console.log('Red:   http://' + ip + ':' + PORT);
 });
