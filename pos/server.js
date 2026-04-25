@@ -213,6 +213,16 @@ app.delete('/api/remisiones/:id', auth('admin'), function(req, res) {
   res.json({ ok: true });
 });
 
+app.put('/api/remisiones/:id/editar', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const i = db.remisiones.findIndex(function(r) { return r.id === Number(req.params.id); });
+  if (i < 0) return res.status(404).json({ error: 'No encontrado' });
+  const allowed = ['cliente','tel','metodo_pago','notas'];
+  allowed.forEach(function(k) { if (req.body[k] !== undefined) db.remisiones[i][k] = req.body[k]; });
+  writeDB(db);
+  res.json({ ok: true });
+});
+
 app.put('/api/remisiones/:id/pagar', auth('admin','cajero'), function(req, res) {
   const db = readDB();
   const i = db.remisiones.findIndex(function(r) { return r.id === Number(req.params.id); });

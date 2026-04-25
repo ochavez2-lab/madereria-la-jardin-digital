@@ -28,11 +28,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* CHART */
 .chart-wrap{background:#fff;border:1.5px solid #e8e0d0;border-radius:14px;padding:18px;margin-bottom:24px;box-shadow:0 1px 4px #0000000a}
 .chart-title{font-size:11px;color:#aaa;letter-spacing:1px;margin-bottom:14px}
-.bars{display:flex;align-items:flex-end;gap:8px;height:80px}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.bar{background:linear-gradient(180deg,#c9a84c,#c9a84c88);border-radius:4px 4px 0 0;width:100%;min-height:2px;transition:height .3s}
-.bar-lbl{font-size:9px;color:#bbb;text-align:center}
-.bar-val{font-size:9px;color:#c9a84c;font-weight:700}
+.bars{display:flex;align-items:flex-end;gap:6px;height:100px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default}
+.bar-col.hoy .bar{background:linear-gradient(180deg,#c9a84c,#e0c060)}
+.bar{background:linear-gradient(180deg,#c9a84c88,#c9a84c44);border-radius:5px 5px 0 0;width:100%;min-height:3px;transition:height .4s ease}
+.bar-lbl{font-size:9px;color:#bbb;text-align:center;white-space:nowrap}
+.bar-val{font-size:9px;color:#c9a84c;font-weight:700;text-align:center;white-space:nowrap}
+.bar-pct{font-size:8px;color:#aaa;text-align:center}
 /* TABLES */
 .sec-t{font-size:11px;font-weight:700;color:#aaa;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -319,6 +321,27 @@ tr:hover td{background:#faf6f0}
   </div>
 </div>
 
+<!-- MODAL EDITAR VENTA -->
+<div class="ov" id="ov-edit-venta">
+  <div class="modal">
+    <h3>EDITAR VENTA</h3>
+    <input type="hidden" id="ev-id">
+    <div class="fr"><label class="fl">Cliente</label><input class="fi" id="ev-cliente" placeholder="Nombre del cliente"></div>
+    <div class="fr"><label class="fl">Teléfono</label><input class="fi" id="ev-tel" type="tel" placeholder="664 xxx xxxx"></div>
+    <div class="fr"><label class="fl">Método de pago</label>
+      <select class="fi" id="ev-pago">
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="fiado">Fiado</option>
+      </select>
+    </div>
+    <div class="fr"><label class="fl">Notas / observaciones</label><input class="fi" id="ev-notas" placeholder="Ej: pago parcial, entrega pendiente..."></div>
+    <div id="ev-items-preview" style="background:#faf6f0;border:1px solid #e8e0d0;border-radius:9px;padding:10px;margin-bottom:12px;font-size:12px;color:#666"></div>
+    <div class="ma"><button class="btn bg" onclick="guardarEditVenta()">Guardar cambios</button><button class="btn bo" onclick="document.getElementById('ov-edit-venta').classList.remove('on')">Cancelar</button></div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAR ANULAR -->
 <div class="ov" id="ov-anular">
   <div class="modal">
@@ -407,12 +430,17 @@ async function loadHoy() {
     <div class="kpi"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="kpi-l">PRODUCTO TOP</div><div class="kpi-v" style="font-size:14px;line-height:1.4">${rep.top}</div><div class="kpi-s">${rep.topQty} piezas</div></div><span style="font-size:26px;opacity:.4">🏆</span></div></div>`;
   // Gráfica
   const max = Math.max(...semana.map(d=>d.total),1);
-  document.getElementById('bars').innerHTML = semana.map(d=>`
-    <div class="bar-col">
-      <div class="bar-val">${d.total>0?'$'+Math.round(d.total/1000)+'k':''}</div>
-      <div class="bar" style="height:${Math.round(d.total/max*70)+2}px" title="$${d.total.toLocaleString('es-MX')}"></div>
-      <div class="bar-lbl">${d.label}</div>
-    </div>`).join('');
+  const totalSemana=semana.reduce((s,d)=>s+d.total,0);
+  const hoyLabel=new Date().toLocaleDateString('es-MX',{weekday:'short'}).slice(0,3);
+  document.getElementById('bars').innerHTML = semana.map(d=>{
+    const pct=totalSemana>0?Math.round(d.total/totalSemana*100):0;
+    const isHoy=d.label.toLowerCase()===hoyLabel.toLowerCase();
+    return`<div class="bar-col${isHoy?' hoy':''}">
+      <div class="bar-val">${d.total>0?'$'+(d.total>=1000?Math.round(d.total/1000)+'k':d.total.toLocaleString('es-MX')):''}</div>
+      <div class="bar" style="height:${Math.round(d.total/max*88)+3}px" title="$${d.total.toLocaleString('es-MX')}"></div>
+      <div class="bar-pct">${pct>0?pct+'%':''}</div>
+      <div class="bar-lbl">${d.label}${isHoy?' ◀':''}</div>
+    </div>`;}).join('');
   // Gastos hoy
   const hoy = new Date().toDateString();
   const gHoy = gastos.filter(g=>new Date(g.fecha).toDateString()===hoy);
@@ -429,7 +457,7 @@ async function loadHoy() {
         <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
         <td>${metBadge(r.metodo_pago)}</td>
         <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+        <td style="display:flex;gap:4px"><button class="btn bo bsm" onclick="editarVenta(${r.id})">Editar</button><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
       </tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:28px">Sin ventas hoy</td></tr>';
 }
@@ -450,6 +478,25 @@ async function delGasto(id){await H('/api/gastos/'+id,{method:'DELETE'});loadHoy
 let anularId = null;
 function pedirAnular(id){anularId=id;document.getElementById('pwd-anular').value='';document.getElementById('err-anular').textContent='';document.getElementById('ov-anular').classList.add('on');}
 function closeAnular(){document.getElementById('ov-anular').classList.remove('on');anularId=null;}
+
+async function editarVenta(id){
+  const db=await H('/api/remisiones').then(r=>r.json());
+  const r=(db.remisiones||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('ev-id').value=r.id;
+  document.getElementById('ev-cliente').value=r.cliente||'';
+  document.getElementById('ev-tel').value=r.tel||'';
+  document.getElementById('ev-pago').value=r.metodo_pago||'efectivo';
+  document.getElementById('ev-notas').value=r.notas||'';
+  document.getElementById('ev-items-preview').innerHTML='<b style="color:#aaa;font-size:10px;letter-spacing:1px">PRODUCTOS (no editables)</b><br>'+r.items.map(i=>`${i.nombre} ${i.medida} ×${i.qty} — $${(i.precio*i.qty).toLocaleString('es-MX')}`).join('<br>')+`<br><b style="color:#c9a84c">Total: $${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b>`;
+  document.getElementById('ov-edit-venta').classList.add('on');
+}
+async function guardarEditVenta(){
+  const id=document.getElementById('ev-id').value;
+  const body={cliente:document.getElementById('ev-cliente').value.trim(),tel:document.getElementById('ev-tel').value.trim(),metodo_pago:document.getElementById('ev-pago').value,notas:document.getElementById('ev-notas').value.trim()};
+  await H('/api/remisiones/'+id+'/editar',{method:'PUT',body:JSON.stringify(body)});
+  document.getElementById('ov-edit-venta').classList.remove('on');
+  loadHoy();if(document.getElementById('panel-historial').classList.contains('on'))loadHistorial();
+}
 async function confirmarAnular(){
   const pwd=document.getElementById('pwd-anular').value;
   const vr=await H('/api/verify-admin',{method:'POST',body:JSON.stringify({password:pwd})});
@@ -577,11 +624,11 @@ async function loadHistorial(){
     ? histCache.map(r=>`<tr>
         <td style="color:#444">N°${String(r.id).padStart(4,'0')}</td>
         <td style="color:#555">${new Date(r.fecha).toLocaleDateString('es-MX')} ${new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
-        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#444">${r.tel}</div>`:''}</td>
+        <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#aaa">${r.tel}</div>`:''}</td>
         <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' '+i.medida+' ×'+i.qty).join(', ')}</td>
         <td>${metBadge(r.metodo_pago)}</td>
         <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-        <td><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
+        <td style="display:flex;gap:4px"><button class="btn bo bsm" onclick="editarVenta(${r.id})">Editar</button><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
       </tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:28px">Sin remisiones</td></tr>';
 }
