@@ -3,93 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Maderería La Jardín — Acceso</title>
+<title>Maderería La Jardín — Catálogo</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#c9a84c14 0%,transparent 60%);pointer-events:none}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glow{0%,100%{text-shadow:0 0 30px #c9a84c44}50%{text-shadow:0 0 60px #c9a84c88}}
-.logo{text-align:center;margin-bottom:48px;animation:fadeUp .6s ease}
-.logo-t{font-family:'Playfair Display',serif;font-size:clamp(42px,8vw,68px);font-weight:900;color:#c9a84c;letter-spacing:6px;line-height:1;animation:glow 3s ease-in-out infinite}
-.logo-s{font-family:'Playfair Display',serif;font-size:clamp(13px,2vw,18px);color:#aaa;letter-spacing:4px;margin-top:10px;font-style:italic}
-.roles{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;animation:fadeUp .7s ease}
-.role-card{width:160px;background:#fff;border:2px solid #e8e0d0;border-radius:20px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .25s;user-select:none;position:relative;overflow:hidden;box-shadow:0 2px 12px #00000008}
-.role-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#c9a84c10,transparent);opacity:0;transition:opacity .25s}
-.role-card:hover{border-color:#c9a84c;transform:translateY(-8px);box-shadow:0 16px 40px #c9a84c22}
-.role-card:hover::before{opacity:1}
-.role-card:active{transform:scale(.97)}
-.role-icon{font-size:38px;margin-bottom:14px}
-.role-name{font-size:13px;font-weight:900;letter-spacing:3px;color:#1a1a1a}
-.role-desc{font-size:11px;color:#aaa;margin-top:6px}
-.catalogo-link{margin-top:32px;animation:fadeUp .8s ease}
-.catalogo-link a{color:#c9a84c99;font-size:12px;letter-spacing:2px;text-decoration:none;transition:color .2s}
-.catalogo-link a:hover{color:#c9a84c}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;align-items:center;justify-content:center;padding:20px}
-.overlay.open{display:flex}
-.modal{background:#fff;border:2px solid #e8e0d0;border-radius:20px;padding:36px 28px;width:100%;max-width:320px;text-align:center;animation:fadeUp .3s ease;box-shadow:0 24px 60px #0000001a}
-.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#c9a84c;letter-spacing:2px;margin-bottom:4px}
-.modal-sub{font-size:12px;color:#aaa;margin-bottom:24px}
-.pwd-input{width:100%;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:12px;padding:14px;color:#1a1a1a;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;margin-bottom:14px;transition:border-color .2s}
-.pwd-input:focus{border-color:#c9a84c}
-.btn-enter{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c060);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:all .2s;box-shadow:0 4px 14px #c9a84c33}
-.btn-enter:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.btn-cancel{width:100%;background:none;border:none;color:#bbb;padding:10px;cursor:pointer;font-size:13px;font-family:inherit;margin-top:4px;transition:color .2s}
-.btn-cancel:hover{color:#888}
-.err{color:#ef4444;font-size:12px;margin-top:10px;min-height:18px}
-.footer{position:fixed;bottom:16px;font-size:10px;color:#ccc;letter-spacing:2px;text-align:center}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f2;color:#1a1a1a;min-height:100vh}
+.topbar{background:#1a1a1a;border-bottom:3px solid #c9a84c;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+.brand{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:#c9a84c;letter-spacing:3px}
+.top-info{font-size:11px;color:#666;letter-spacing:1px}
+.cats{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;scrollbar-width:none;background:#fff;border-bottom:1px solid #e8e0d0;position:sticky;top:56px;z-index:9}
+.cats::-webkit-scrollbar{display:none}
+.cat{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1.5px solid #e8e0d0;background:#faf8f2;color:#888;white-space:nowrap;transition:all .15s}
+.cat.on,.cat:hover{background:#c9a84c;color:#fff;border-color:#c9a84c}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:20px}
+.card{background:#fff;border:1.5px solid #e8e0d0;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #0000000a;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 24px #c9a84c1a;border-color:#c9a84c88}
+.card-img{width:100%;height:140px;object-fit:cover;background:#f5f0e8;display:flex;align-items:center;justify-content:center;font-size:48px}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.card-body{padding:12px}
+.card-nom{font-weight:900;font-size:14px;color:#1a1a1a;margin-bottom:2px}
+.card-med{font-size:11px;color:#aaa;margin-bottom:8px}
+.card-price{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#c9a84c}
+.card-stock{font-size:10px;font-weight:700;margin-top:6px;padding:3px 8px;border-radius:5px;display:inline-block}
+.s-ok{background:#dcfce7;color:#16a34a}
+.s-no{background:#fee2e2;color:#dc2626}
+.s-na{background:#f5f0e8;color:#999}
+.empty{text-align:center;color:#bbb;padding:60px 20px;font-size:14px}
+.footer-link{text-align:center;padding:24px;font-size:11px;color:#ddd;letter-spacing:2px}
+.footer-link a{color:#ddd;text-decoration:none}
+.footer-link a:hover{color:#c9a84c}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.modal{background:#fff;border:2px solid #e8e0d0;border-radius:16px;padding:28px;width:100%;max-width:320px;text-align:center;box-shadow:0 24px 60px #0000001a}
+.modal h3{font-family:'Playfair Display',serif;font-size:20px;color:#c9a84c;margin-bottom:4px}
+.modal p{font-size:12px;color:#aaa;margin-bottom:18px}
+.pwd{width:100%;background:#faf6f0;border:1.5px solid #e8e0d0;border-radius:10px;padding:12px;color:#1a1a1a;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;margin-bottom:12px}
+.pwd:focus{border-color:#c9a84c}
+.btn-e{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c060);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit}
+.btn-c{width:100%;background:none;border:none;color:#bbb;padding:8px;cursor:pointer;font-size:12px;font-family:inherit;margin-top:4px}
+.err{color:#ef4444;font-size:12px;margin-top:8px;min-height:16px}
 </style>
 </head>
 <body>
-<div class="logo">
-  <div class="logo-t">LA JARDÍN</div>
-  <div class="logo-s">Sistema de Punto de Venta</div>
+<div class="topbar">
+  <div class="brand">MADERERÍA LA JARDÍN</div>
+  <div class="top-info">Nogal 3516, Tijuana · 664 709 3835</div>
 </div>
-<div class="roles">
-  <div class="role-card" onclick="abrir('admin')">
-    <div class="role-icon">⚙️</div>
-    <div class="role-name">ADMIN</div>
-    <div class="role-desc">Gestión completa</div>
-  </div>
-  <div class="role-card" onclick="abrir('cajero')">
-    <div class="role-icon">🛒</div>
-    <div class="role-name">CAJERO</div>
-    <div class="role-desc">Ventas y cobros</div>
-  </div>
+<div class="cats" id="cats"></div>
+<div class="grid" id="grid"></div>
+<div class="footer-link">
+  TIJUANA & ROSARITO · <a href="#" onclick="abrirAdmin()">⚙</a>
 </div>
-<div class="catalogo-link" style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap">
-  <a href="/catalogo.html">📋 VER CATÁLOGO →</a>
-  <a href="/cliente.html">📺 PANTALLA CLIENTE →</a>
-</div>
-<div class="overlay" id="overlay">
+
+<div class="ov" id="ov-login">
   <div class="modal">
-    <div class="modal-title" id="modal-title">ADMIN</div>
-    <div class="modal-sub">Ingresa tu contraseña</div>
-    <input class="pwd-input" type="password" id="pwd" placeholder="••••••" onkeydown="if(event.key==='Enter')entrar()">
-    <button class="btn-enter" onclick="entrar()">ENTRAR</button>
-    <button class="btn-cancel" onclick="cerrar()">Cancelar</button>
+    <h3>ACCESO</h3>
+    <p id="login-sub">Ingresa tu contraseña</p>
+    <input class="pwd" type="password" id="pwd" placeholder="••••••" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="btn-e" onclick="entrar()">ENTRAR</button>
+    <button class="btn-c" onclick="document.getElementById('ov-login').classList.remove('on')">Cancelar</button>
     <div class="err" id="err"></div>
   </div>
 </div>
-<div class="footer">MADERERÍA LA JARDÍN · TIJUANA & ROSARITO</div>
+
 <script>
-const destinos={admin:'/admin.html',cajero:'/cajero.html',cliente:'/cliente.html'};
-const nombres={admin:'ADMIN',cajero:'CAJERO',cliente:'CLIENTE'};
-let rol='';
-function abrir(r){rol=r;document.getElementById('modal-title').textContent=nombres[r];document.getElementById('pwd').value='';document.getElementById('err').textContent='';document.getElementById('overlay').classList.add('open');setTimeout(()=>document.getElementById('pwd').focus(),100);}
-function cerrar(){document.getElementById('overlay').classList.remove('open');}
+let prods=[], catAct='';
+
+async function init(){
+  try{
+    const r=await fetch('/api/catalogo');
+    prods=await r.json();
+  }catch(e){prods=[];}
+  const cats=['Todo',...new Set(prods.map(p=>p.categoria||'General').filter(Boolean))];
+  document.getElementById('cats').innerHTML=cats.map((c,i)=>`<div class="cat${i===0?' on':''}" onclick="filtrar('${c}',this)">${c.toUpperCase()}</div>`).join('');
+  render();
+}
+
+function filtrar(cat,el){
+  catAct=cat==='Todo'?'':cat;
+  document.querySelectorAll('.cat').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
+
+function render(){
+  const lista=catAct?prods.filter(p=>(p.categoria||'General')===catAct):prods;
+  const enStock=lista.filter(p=>p.stock!==false);
+  document.getElementById('grid').innerHTML=enStock.length
+    ?enStock.map(p=>`<div class="card">
+        <div class="card-img">${p.foto?`<img src="${p.foto}" alt="${p.nombre}">`:'🪵'}</div>
+        <div class="card-body">
+          <div class="card-nom">${p.nombre}</div>
+          <div class="card-med">${p.medida}</div>
+          <div class="card-price">$${p.precio.toLocaleString('es-MX')}</div>
+          <div class="card-stock ${p.cantidad!=null?(p.cantidad>0?'s-ok':'s-no'):'s-na'}">${p.cantidad!=null?(p.cantidad>0?p.cantidad+' en almacén':'Sin stock'):'Consultar'}</div>
+        </div>
+      </div>`).join('')
+    :'<div class="empty">Sin productos en esta categoría</div>';
+}
+
+let loginDest='';
+function abrirAdmin(){
+  loginDest='admin';
+  document.getElementById('login-sub').textContent='Contraseña admin';
+  document.getElementById('pwd').value='';
+  document.getElementById('err').textContent='';
+  document.getElementById('ov-login').classList.add('on');
+  setTimeout(()=>document.getElementById('pwd').focus(),100);
+}
+
 async function entrar(){
   const pwd=document.getElementById('pwd').value;
-  document.getElementById('err').textContent='';
   try{
-    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:rol,password:pwd})});
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:loginDest,password:pwd})});
     if(!res.ok){document.getElementById('err').textContent='Contraseña incorrecta';return;}
     const{token}=await res.json();
-    sessionStorage.setItem('token',token);sessionStorage.setItem('role',rol);
-    window.location.href=destinos[rol];
+    sessionStorage.setItem('token',token);sessionStorage.setItem('role',loginDest);
+    window.location.href='/'+loginDest+'.html';
   }catch(e){document.getElementById('err').textContent='Error de conexión';}
 }
+
+init();
 </script>
 </body>
 </html>

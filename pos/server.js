@@ -139,6 +139,7 @@ app.post('/api/verify-admin', auth('admin','cajero'), function(req, res) {
 });
 
 // ── Productos ─────────────────────────────────────────────────────────────────
+app.get('/api/catalogo', function(req, res) { res.json(readDB().productos.filter(function(p){ return p.stock !== false; })); });
 app.get('/api/productos', auth('admin','cajero'), function(req, res) { res.json(readDB().productos); });
 
 app.post('/api/productos', auth('admin','cajero'), function(req, res) {
