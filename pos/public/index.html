@@ -3,195 +3,204 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Maderería La Jardín — Catálogo</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
+<title>Maderería La Jardín</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#111;--bg:#f9f6f0;--white:#fff;--border:#e8e0d0;--text:#1a1a1a;--muted:#999}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f4ee;color:#1a1a1a;min-height:100vh}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* HERO TOPBAR */
-.hero{background:#1a1a1a;padding:28px 32px 24px;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,#c9a84c18,transparent 60%);pointer-events:none}
-.hero-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.logo-w{display:flex;align-items:center;gap:16px}
-.logo-icon{font-size:36px}
-.logo-text .t1{font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,36px);font-weight:900;color:#c9a84c;letter-spacing:3px;line-height:1}
-.logo-text .t2{font-size:11px;color:#666;letter-spacing:3px;margin-top:4px}
-.hero-contact{text-align:right}
-.hero-contact div{font-size:12px;color:#666;margin-bottom:4px}
-.hero-contact a{color:#c9a84c;text-decoration:none;font-weight:700;font-size:13px}
+/* ── HEADER ── */
+header{background:var(--dark);position:relative;overflow:hidden}
+header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.header-inner{max-width:1200px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.brand-name{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,26px);font-weight:900;color:var(--gold);letter-spacing:2px;line-height:1}
+.brand-sub{font-size:10px;color:#555;letter-spacing:3px;margin-top:3px}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.header-right a{color:var(--gold);text-decoration:none;font-size:13px;font-weight:600}
+.header-right span{font-size:11px;color:#555}
 
-/* SEARCH + CATS */
-.controls{background:#fff;border-bottom:1px solid #ede6d8;padding:14px 24px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px #0000000a}
-.controls-inner{max-width:1100px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.search-wrap{position:relative;flex:1;min-width:180px}
-.search-wrap input{width:100%;background:#f7f4ee;border:1.5px solid #e0d8c8;border-radius:10px;padding:9px 14px 9px 36px;font-size:13px;font-family:inherit;outline:none;color:#1a1a1a;transition:border-color .2s}
-.search-wrap input:focus{border-color:#c9a84c}
-.search-wrap::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px}
-.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+/* ── TAGLINE STRIP ── */
+.tagline{background:linear-gradient(135deg,var(--gold),var(--gold2));padding:10px 24px;text-align:center}
+.tagline p{font-size:11px;font-weight:700;letter-spacing:3px;color:#1a1a1a;text-transform:uppercase}
+
+/* ── CONTROLS ── */
+.controls{background:var(--white);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:20;box-shadow:0 4px 20px #00000008}
+.controls-inner{max-width:1200px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:160px;max-width:320px}
+.search input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px 9px 38px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--text);transition:border .2s}
+.search input:focus{border-color:var(--gold);background:var(--white)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4;width:15px;height:15px}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center}
 .cats::-webkit-scrollbar{display:none}
-.cat{padding:7px 16px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1.5px solid #e0d8c8;background:#f7f4ee;color:#999;white-space:nowrap;transition:all .15s}
-.cat.on{background:#c9a84c;color:#fff;border-color:#c9a84c}
-.cat:hover:not(.on){border-color:#c9a84c;color:#c9a84c}
+.cat{padding:7px 16px;border-radius:30px;font-size:11px;font-weight:600;letter-spacing:.5px;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif}
+.cat.on{background:var(--dark);color:var(--gold);border-color:var(--dark)}
+.cat:hover:not(.on){border-color:var(--gold);color:var(--gold)}
+.count-badge{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 
-/* GRID */
-.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
-.section-label{font-size:10px;font-weight:700;color:#bbb;letter-spacing:2px;margin-bottom:16px;text-transform:uppercase}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-@media(min-width:500px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:768px){.grid{grid-template-columns:repeat(4,1fr);gap:18px}}
-@media(min-width:1024px){.grid{grid-template-columns:repeat(5,1fr)}}
+/* ── GRID ── */
+.main{max-width:1200px;margin:0 auto;padding:28px 20px 80px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:480px){.grid{grid-template-columns:repeat(3,1fr);gap:14px}}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(5,1fr);gap:18px}}
 
-.card{background:#fff;border:1.5px solid #ede6d8;border-radius:16px;overflow:hidden;transition:all .2s;cursor:default}
-.card:hover{transform:translateY(-4px);box-shadow:0 12px 32px #c9a84c18;border-color:#c9a84c66}
-.card-img{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#f5f0e8,#ede6d8);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;position:relative}
-.card-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-.card-cat{position:absolute;top:8px;left:8px;background:#1a1a1a99;color:#c9a84c;font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 7px;border-radius:6px;backdrop-filter:blur(4px)}
-.card-body{padding:12px}
-.card-nom{font-weight:800;font-size:13px;color:#1a1a1a;line-height:1.3;margin-bottom:2px}
-.card-med{font-size:11px;color:#aaa;margin-bottom:8px}
-.card-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:4px}
-.card-price{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,22px);font-weight:900;color:#c9a84c;line-height:1}
-.card-price-sub{font-size:9px;color:#bbb;margin-top:2px}
-.badge{font-size:9px;font-weight:700;padding:3px 7px;border-radius:6px}
-.s-ok{background:#dcfce7;color:#16a34a}
-.s-no{background:#fee2e2;color:#dc2626}
-.s-na{background:#f5f0e8;color:#aaa}
+.card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .25s;position:relative}
+.card:hover{transform:translateY(-6px);box-shadow:0 20px 48px #c9a84c1a,0 4px 12px #00000010;border-color:#c9a84c55}
+.card-media{aspect-ratio:1;background:linear-gradient(145deg,#f5f0e8 0%,#ede6d8 100%);display:flex;align-items:center;justify-content:center;font-size:54px;overflow:hidden;position:relative}
+.card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.card:hover .card-media img{transform:scale(1.05)}
+.cat-pill{position:absolute;top:10px;left:10px;background:rgba(26,26,26,.75);backdrop-filter:blur(8px);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:1.5px;padding:4px 9px;border-radius:20px;text-transform:uppercase}
+.card-info{padding:13px 13px 14px}
+.card-name{font-weight:700;font-size:13px;color:var(--text);margin-bottom:2px;line-height:1.3}
+.card-size{font-size:11px;color:var(--muted);margin-bottom:10px}
+.card-footer{display:flex;align-items:flex-end;justify-content:space-between;gap:4px}
+.price{font-family:'Playfair Display',serif;font-size:clamp(16px,2.5vw,21px);font-weight:900;color:var(--gold);line-height:1}
+.price-note{font-size:9px;color:#ccc;margin-top:2px;font-family:'Inter',sans-serif}
+.stk{font-size:9px;font-weight:700;padding:4px 8px;border-radius:8px;letter-spacing:.5px}
+.stk-ok{background:#dcfce7;color:#15803d}
+.stk-no{background:#fee2e2;color:#dc2626}
+.stk-na{background:#f5f0e8;color:#aaa}
+.empty{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
 
-.empty{text-align:center;color:#bbb;padding:80px 20px;font-size:14px;grid-column:1/-1}
+/* ── FOOTER ── */
+footer{background:var(--dark);padding:24px;text-align:center}
+footer p{font-size:11px;color:#444;letter-spacing:2px}
 
-/* FOOTER */
-.footer{background:#1a1a1a;padding:20px 24px;text-align:center}
-.footer p{font-size:11px;color:#555;letter-spacing:2px}
-
-/* ADMIN BTN — solo desktop */
-.admin-btn{display:none}
+/* ── ADMIN BTN ── */
 @media(min-width:768px){
-  .admin-btn{display:flex;position:fixed;bottom:20px;right:20px;width:36px;height:36px;background:#1a1a1a;border:1px solid #333;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;font-size:14px;opacity:.35;transition:opacity .2s;z-index:100}
-  .admin-btn:hover{opacity:1}
+  .fab{position:fixed;bottom:24px;right:24px;width:40px;height:40px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;opacity:.25;transition:all .25s;z-index:100;box-shadow:0 4px 14px #00000033}
+  .fab:hover{opacity:1;transform:scale(1.1)}
 }
+.fab{display:none}
+@media(min-width:768px){.fab{display:flex}}
 
-/* LOGIN MODAL */
-.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px}
+/* ── MODAL ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
 .ov.on{display:flex}
-.modal{background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:300px;text-align:center;box-shadow:0 32px 80px #0000002a}
-.modal h3{font-family:'Playfair Display',serif;font-size:22px;color:#c9a84c;margin-bottom:4px}
-.modal p{font-size:12px;color:#aaa;margin-bottom:20px}
-.pwd{width:100%;background:#f7f4ee;border:1.5px solid #e0d8c8;border-radius:12px;padding:13px;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;margin-bottom:12px;color:#1a1a1a}
-.pwd:focus{border-color:#c9a84c}
-.btn-e{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c060);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit}
-.btn-c{width:100%;background:none;border:none;color:#bbb;padding:8px;cursor:pointer;font-size:12px;font-family:inherit;margin-top:4px}
-.err{color:#ef4444;font-size:12px;margin-top:8px;min-height:16px}
+.modal{background:var(--white);border-radius:24px;padding:36px 28px;width:100%;max-width:310px;text-align:center;box-shadow:0 40px 100px #00000030;animation:popIn .2s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal-icon{font-size:36px;margin-bottom:12px}
+.modal h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);margin-bottom:6px}
+.modal p{font-size:12px;color:var(--muted);margin-bottom:22px}
+.pwd{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-size:17px;font-family:'Inter',sans-serif;outline:none;text-align:center;letter-spacing:8px;margin-bottom:12px;color:var(--text);transition:border .2s}
+.pwd:focus{border-color:var(--gold)}
+.btn-go{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1a1a;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.5px;transition:filter .2s}
+.btn-go:hover{filter:brightness(1.06)}
+.btn-no{width:100%;background:none;border:none;color:var(--muted);padding:10px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;margin-top:2px}
+.err-msg{color:#ef4444;font-size:12px;margin-top:8px;min-height:16px}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="hero-inner">
-    <div class="logo-w">
-      <div class="logo-icon">🪵</div>
-      <div class="logo-text">
-        <div class="t1">LA JARDÍN</div>
-        <div class="t2">MADERERÍA · TIJUANA & ROSARITO</div>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">🪵</div>
+      <div>
+        <div class="brand-name">LA JARDÍN</div>
+        <div class="brand-sub">MADERERÍA · DESDE TIJUANA</div>
       </div>
     </div>
-    <div class="hero-contact">
-      <div>📍 Nogal 3516, Col. Ciudad Jardín</div>
+    <div class="header-right">
       <a href="tel:6647093835">📞 664 709 3835</a>
+      <span>📍 Nogal 3516, Col. Jardín, Tijuana</span>
+      <span>🏪 También en Rosarito</span>
     </div>
   </div>
-</div>
+</header>
+<div class="tagline"><p>Madera de calidad · Triplay · Cubiertas · Precios de mayoreo disponibles</p></div>
 
 <div class="controls">
   <div class="controls-inner">
-    <div class="search-wrap">
-      <input type="text" id="buscar" placeholder="Buscar producto..." oninput="render()">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="buscar" placeholder="Buscar producto o medida..." oninput="render()">
     </div>
     <div class="cats" id="cats"></div>
+    <div class="count-badge" id="count"></div>
   </div>
 </div>
 
 <div class="main">
-  <div class="section-label" id="section-label"></div>
   <div class="grid" id="grid"></div>
 </div>
 
-<div class="footer">
-  <p>MADERERÍA LA JARDÍN · TIJUANA & ROSARITO · 664 709 3835</p>
-</div>
+<footer>
+  <p>MADERERÍA LA JARDÍN &nbsp;·&nbsp; TIJUANA & ROSARITO &nbsp;·&nbsp; 664 709 3835</p>
+</footer>
 
-<div class="admin-btn" onclick="abrirAdmin()" title="Administración">⚙️</div>
+<div class="fab" onclick="abrirAdmin()" title="Administración">⚙️</div>
 
-<div class="ov" id="ov-login">
+<div class="ov" id="ov">
   <div class="modal">
-    <h3>ADMIN</h3>
-    <p>Ingresa tu contraseña</p>
+    <div class="modal-icon">🔐</div>
+    <h3>ACCESO ADMIN</h3>
+    <p>Ingresa tu contraseña de administrador</p>
     <input class="pwd" type="password" id="pwd" placeholder="••••••" onkeydown="if(event.key==='Enter')entrar()">
-    <button class="btn-e" onclick="entrar()">ENTRAR</button>
-    <button class="btn-c" onclick="document.getElementById('ov-login').classList.remove('on')">Cancelar</button>
-    <div class="err" id="err"></div>
+    <button class="btn-go" onclick="entrar()">ENTRAR</button>
+    <button class="btn-no" onclick="document.getElementById('ov').classList.remove('on')">Cancelar</button>
+    <div class="err-msg" id="err"></div>
   </div>
 </div>
 
 <script>
 let prods=[], catAct='';
-
 async function init(){
   try{ prods=await fetch('/api/catalogo').then(r=>r.json()); }catch(e){ prods=[]; }
   const cats=['Todo',...new Set(prods.map(p=>p.categoria||'General'))];
   document.getElementById('cats').innerHTML=cats.map((c,i)=>`<div class="cat${i===0?' on':''}" onclick="filtrar('${c}',this)">${c}</div>`).join('');
   render();
 }
-
 function filtrar(cat,el){
   catAct=cat==='Todo'?'':cat;
   document.querySelectorAll('.cat').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');
-  render();
+  el.classList.add('on'); render();
 }
-
 function render(){
   const q=document.getElementById('buscar').value.toLowerCase();
   let lista=catAct?prods.filter(p=>(p.categoria||'General')===catAct):prods;
   if(q) lista=lista.filter(p=>p.nombre.toLowerCase().includes(q)||p.medida.toLowerCase().includes(q));
-  const n=lista.length;
-  document.getElementById('section-label').textContent=n+' producto'+(n!==1?'s':'')+(catAct?' — '+catAct:'');
+  document.getElementById('count').textContent=lista.length+' producto'+(lista.length!==1?'s':'');
   document.getElementById('grid').innerHTML=lista.length
     ?lista.map(p=>`<div class="card">
-        <div class="card-img">
-          ${p.foto?`<img src="${p.foto}" alt="${p.nombre}">`:'🪵'}
-          <div class="card-cat">${p.categoria||'General'}</div>
+        <div class="card-media">
+          ${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:'🪵'}
+          <div class="cat-pill">${p.categoria||'General'}</div>
         </div>
-        <div class="card-body">
-          <div class="card-nom">${p.nombre}</div>
-          <div class="card-med">${p.medida}</div>
-          <div class="card-bottom">
-            <div><div class="card-price">$${p.precio.toLocaleString('es-MX')}</div><div class="card-price-sub">MXN / pieza</div></div>
-            <span class="badge ${p.cantidad!=null?(p.cantidad>0?'s-ok':'s-no'):'s-na'}">${p.cantidad!=null?(p.cantidad>0?p.cantidad+' pzs':'Agotado'):'Disponible'}</span>
+        <div class="card-info">
+          <div class="card-name">${p.nombre}</div>
+          <div class="card-size">${p.medida}</div>
+          <div class="card-footer">
+            <div>
+              <div class="price">$${p.precio.toLocaleString('es-MX')}</div>
+              <div class="price-note">MXN por pieza</div>
+            </div>
+            <span class="stk ${p.cantidad!=null?(p.cantidad>0?'stk-ok':'stk-no'):'stk-na'}">${p.cantidad!=null?(p.cantidad>0?p.cantidad+' pzs':'Agotado'):'Disponible'}</span>
           </div>
         </div>
       </div>`).join('')
-    :'<div class="empty">Sin productos</div>';
+    :`<div class="empty"><div class="empty-icon">🔍</div><div>Sin resultados</div></div>`;
 }
-
 function abrirAdmin(){
   document.getElementById('pwd').value='';
   document.getElementById('err').textContent='';
-  document.getElementById('ov-login').classList.add('on');
+  document.getElementById('ov').classList.add('on');
   setTimeout(()=>document.getElementById('pwd').focus(),100);
 }
-
 async function entrar(){
   const pwd=document.getElementById('pwd').value;
   try{
-    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'admin',password:pwd})});
-    if(!res.ok){document.getElementById('err').textContent='Contraseña incorrecta';return;}
-    const{token}=await res.json();
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'admin',password:pwd})});
+    if(!r.ok){document.getElementById('err').textContent='Contraseña incorrecta';return;}
+    const{token}=await r.json();
     sessionStorage.setItem('token',token);sessionStorage.setItem('role','admin');
     window.location.href='/admin.html';
   }catch(e){document.getElementById('err').textContent='Error de conexión';}
 }
-
 init();
 </script>
 </body>
