@@ -130,7 +130,7 @@ tr:hover td{background:#faf6f0}
   </div>
   <div id="gastos-lista"></div>
   <div style="margin-top:20px" class="sec-t">VENTAS DE HOY</div>
-  <table style="margin-top:10px"><thead><tr><th>N°</th><th>HORA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <table style="margin-top:10px"><thead><tr><th>N°</th><th>HORA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>VENDEDOR</th><th>TOTAL</th><th></th></tr></thead>
   <tbody id="body-hoy"></tbody></table>
 </div>
 
@@ -175,7 +175,7 @@ tr:hover td{background:#faf6f0}
     </select>
     <button class="btn bo bsm" onclick="exportCSV()">⬇ CSV</button>
   </div>
-  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>TOTAL</th><th></th></tr></thead>
+  <table><thead><tr><th>N°</th><th>FECHA</th><th>CLIENTE</th><th>PRODUCTOS</th><th>PAGO</th><th>VENDEDOR</th><th>TOTAL</th><th></th></tr></thead>
   <tbody id="body-hist"></tbody></table>
 </div>
 
@@ -336,6 +336,7 @@ tr:hover td{background:#faf6f0}
         <option value="fiado">Fiado</option>
       </select>
     </div>
+    <div class="fr"><label class="fl">Atendido por</label><input class="fi" id="ev-vendedor" placeholder="Nombre del vendedor"></div>
     <div class="fr"><label class="fl">Notas / observaciones</label><input class="fi" id="ev-notas" placeholder="Ej: pago parcial, entrega pendiente..."></div>
     <div id="ev-items-preview" style="background:#faf6f0;border:1px solid #e8e0d0;border-radius:9px;padding:10px;margin-bottom:12px;font-size:12px;color:#666"></div>
     <div class="ma"><button class="btn bg" onclick="guardarEditVenta()">Guardar cambios</button><button class="btn bo" onclick="document.getElementById('ov-edit-venta').classList.remove('on')">Cancelar</button></div>
@@ -456,6 +457,7 @@ async function loadHoy() {
         <td>${r.cliente}</td>
         <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' ×'+i.qty).join(', ')}</td>
         <td>${metBadge(r.metodo_pago)}</td>
+        <td style="font-size:12px;color:#888">${r.vendedor||'—'}</td>
         <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
         <td style="display:flex;gap:4px"><button class="btn bo bsm" onclick="editarVenta(${r.id})">Editar</button><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
       </tr>`).join('')
@@ -486,13 +488,14 @@ async function editarVenta(id){
   document.getElementById('ev-cliente').value=r.cliente||'';
   document.getElementById('ev-tel').value=r.tel||'';
   document.getElementById('ev-pago').value=r.metodo_pago||'efectivo';
+  document.getElementById('ev-vendedor').value=r.vendedor||'';
   document.getElementById('ev-notas').value=r.notas||'';
   document.getElementById('ev-items-preview').innerHTML='<b style="color:#aaa;font-size:10px;letter-spacing:1px">PRODUCTOS (no editables)</b><br>'+r.items.map(i=>`${i.nombre} ${i.medida} ×${i.qty} — $${(i.precio*i.qty).toLocaleString('es-MX')}`).join('<br>')+`<br><b style="color:#c9a84c">Total: $${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b>`;
   document.getElementById('ov-edit-venta').classList.add('on');
 }
 async function guardarEditVenta(){
   const id=document.getElementById('ev-id').value;
-  const body={cliente:document.getElementById('ev-cliente').value.trim(),tel:document.getElementById('ev-tel').value.trim(),metodo_pago:document.getElementById('ev-pago').value,notas:document.getElementById('ev-notas').value.trim()};
+  const body={cliente:document.getElementById('ev-cliente').value.trim(),tel:document.getElementById('ev-tel').value.trim(),metodo_pago:document.getElementById('ev-pago').value,vendedor:document.getElementById('ev-vendedor').value.trim(),notas:document.getElementById('ev-notas').value.trim()};
   await H('/api/remisiones/'+id+'/editar',{method:'PUT',body:JSON.stringify(body)});
   document.getElementById('ov-edit-venta').classList.remove('on');
   loadHoy();if(document.getElementById('panel-historial').classList.contains('on'))loadHistorial();
@@ -627,6 +630,7 @@ async function loadHistorial(){
         <td><div style="font-weight:700">${r.cliente}</div>${r.tel?`<div style="font-size:11px;color:#aaa">${r.tel}</div>`:''}</td>
         <td style="font-size:11px;color:#555">${r.items.map(i=>i.nombre+' '+i.medida+' ×'+i.qty).join(', ')}</td>
         <td>${metBadge(r.metodo_pago)}</td>
+        <td style="font-size:12px;color:#888">${r.vendedor||'—'}</td>
         <td class="total-gold">$${r.total.toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
         <td style="display:flex;gap:4px"><button class="btn bo bsm" onclick="editarVenta(${r.id})">Editar</button><button class="btn bd bsm" onclick="pedirAnular(${r.id})">Anular</button></td>
       </tr>`).join('')

@@ -195,6 +195,9 @@ canvas{display:block;width:100%;touch-action:none}
       </div>
       <label class="lbl">DIRECCIÓN — opcional</label>
       <input class="inp" id="p-dir" placeholder="Ej: Calle xyz, Col. Jardín, Tijuana">
+      <label class="lbl">ATENDIDO POR — opcional</label>
+      <input class="inp" id="p-vendedor" placeholder="Nombre del vendedor" list="vendedores-list">
+      <datalist id="vendedores-list"><option value="Mostrador"><option value="Oscar"><option value="Admin"></datalist>
       <label class="lbl" style="margin-bottom:10px">MÉTODO DE PAGO</label>
       <div class="metodos">
         <div class="met on" onclick="setMet('efectivo',this)"><div class="met-ico">💵</div><div class="met-nom">EFECTIVO</div></div>
@@ -482,6 +485,7 @@ function abrirPago() {
   document.getElementById('p-tel2-err').textContent='';
   document.getElementById('p-tel2-wrap').style.display='none';
   document.getElementById('p-dir').value='';
+  document.getElementById('p-vendedor').value='';
   document.getElementById('p-match').style.display='none';
   document.getElementById('pago-sub').textContent='Total: $'+getTotal().toLocaleString('es-MX',{minimumFractionDigits:2});
   clearSig();
@@ -542,12 +546,13 @@ async function confirmar() {
   }
   const dir=document.getElementById('p-dir').value.trim();
   const notas=document.getElementById('notas-in').value.trim();
+  const vendedor=document.getElementById('p-vendedor').value.trim();
   const firma=getSig();
   btn.disabled=true; btn.textContent='Guardando...';
   try {
     const rem=await H('/api/remisiones',{method:'POST',body:JSON.stringify({
       cliente:nom,tel,total,subtotal:sub,descuento:desc,
-      direccion:dir||undefined,
+      direccion:dir||undefined,vendedor:vendedor||undefined,
       metodo_pago:metAct,notas:notas||undefined,firma:firma||undefined,
       items:carrito.map(i=>({nombre:i.nombre,medida:i.medida,precio:i.precio,qty:i.qty,importe:i.precio*i.qty}))
     })}).then(r=>r.json());
