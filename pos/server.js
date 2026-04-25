@@ -43,9 +43,14 @@ const PRODUCTOS_DEFAULT = [
   {id:15, nombre:'Membrana granular', medida:'por rollo', precio:580, stock:true, categoria:'Cubiertas'},
 ];
 
-// ── Database (PostgreSQL persistent + file fallback) ──────────────────────────
+// ── Database (Supabase persistent + file fallback) ────────────────────────────
 let _cache = null;
-let _pgPool = null;
+const SB_URL = process.env.SUPABASE_URL;
+const SB_KEY = process.env.SUPABASE_KEY;
+
+function _sbHeaders() {
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+}
 
 function _defaults(db) {
   if (!db.config)          db.config = { passwords: { admin: 'admin123', cajero: 'cajero123', cliente: 'cliente' } };
@@ -67,27 +72,26 @@ function readDB() { return _cache; }
 
 function writeDB(data) {
   _cache = data;
-  if (_pgPool) {
-    _pgPool.query(
-      'INSERT INTO store(id,data) VALUES(1,$1) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data',
-      [JSON.stringify(data)]
-    ).catch(function(e) { console.error('PG write:', e.message); });
+  if (SB_URL && SB_KEY) {
+    fetch(SB_URL + '/rest/v1/store', {
+      method: 'POST',
+      headers: _sbHeaders(),
+      body: JSON.stringify({ id: 1, data: data })
+    }).catch(function(e) { console.error('SB write:', e.message); });
   } else {
     try { fs.writeFileSync(DB, JSON.stringify(data, null, 2)); } catch(e) {}
   }
 }
 
 async function initStorage() {
-  if (process.env.DATABASE_URL) {
+  if (SB_URL && SB_KEY) {
     try {
-      const { Pool } = require('pg');
-      _pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-      await _pgPool.query('CREATE TABLE IF NOT EXISTS store (id INT PRIMARY KEY, data JSONB)');
-      const r = await _pgPool.query('SELECT data FROM store WHERE id=1');
-      _cache = _defaults(r.rows.length ? r.rows[0].data : {});
-      console.log('Storage: PostgreSQL');
+      const r = await fetch(SB_URL + '/rest/v1/store?id=eq.1&select=data', { headers: _sbHeaders() });
+      const rows = await r.json();
+      _cache = _defaults(rows.length ? rows[0].data : {});
+      console.log('Storage: Supabase');
       return;
-    } catch(e) { console.error('PG init failed:', e.message); _pgPool = null; }
+    } catch(e) { console.error('Supabase init failed:', e.message); }
   }
   let raw = {};
   if (fs.existsSync(DB)) { try { raw = JSON.parse(fs.readFileSync(DB, 'utf8')); } catch(e) {} }
