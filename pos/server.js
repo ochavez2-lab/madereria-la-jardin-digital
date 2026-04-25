@@ -318,6 +318,25 @@ app.delete('/api/pedidos/:id', auth('admin'), function(req, res) {
   res.json({ ok: true });
 });
 
+app.post('/api/pedidos/:id/recibir', auth('admin','cajero'), function(req, res) {
+  const db = readDB();
+  const materiales = req.body.materiales || [];
+  const actualizado = [];
+  materiales.forEach(function(mat) {
+    const prod = db.productos.find(function(p) {
+      return p.nombre.toLowerCase() === mat.nombre.toLowerCase() &&
+             (!mat.medida || p.medida.toLowerCase() === mat.medida.toLowerCase());
+    });
+    if (prod && mat.cantidad > 0) {
+      prod.cantidad = (prod.cantidad || 0) + mat.cantidad;
+      prod.stock = true;
+      actualizado.push(prod.nombre + ' +' + mat.cantidad);
+    }
+  });
+  writeDB(db);
+  res.json({ ok: true, actualizado });
+});
+
 // ── Proveedores ───────────────────────────────────────────────────────────────
 app.get('/api/proveedores', auth('admin','cajero'), function(req, res) { res.json(readDB().proveedores || []); });
 

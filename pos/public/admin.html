@@ -145,7 +145,7 @@ tr:hover td{background:#faf6f0}
 <!-- CLIENTES -->
 <div class="panel" id="panel-clientes">
   <div style="padding-top:8px;margin-bottom:14px" class="sec-t">CLIENTES REGISTRADOS</div>
-  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>COMPRAS</th><th>TOTAL GASTADO</th><th>FIADO</th><th>ÚLTIMA VISITA</th></tr></thead>
+  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>COMPRAS</th><th>TOTAL GASTADO</th><th>FIADO</th><th>ÚLTIMA VISITA</th><th>ÚLTIMAS COMPRAS</th></tr></thead>
   <tbody id="body-clientes"></tbody></table>
 </div>
 
@@ -208,7 +208,7 @@ tr:hover td{background:#faf6f0}
     <div class="sec-t" style="margin:0">PROVEEDORES</div>
     <button class="btn bg bsm" onclick="abrirProveedor()">+ Nuevo proveedor</button>
   </div>
-  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>CONTACTO</th><th>PRODUCTOS</th><th>NOTAS</th><th></th></tr></thead>
+  <table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>PRODUCTOS</th><th>ENTREGA</th><th>NOTAS</th><th></th></tr></thead>
   <tbody id="body-proveedores"></tbody></table>
 </div>
 
@@ -266,18 +266,27 @@ tr:hover td{background:#faf6f0}
 
 <!-- MODAL PEDIDO -->
 <div class="ov" id="ov-pedido">
-  <div class="modal">
+  <div class="modal" style="max-width:500px">
     <h3 id="ped-title">Nuevo Pedido</h3>
     <input type="hidden" id="ped-id">
     <div class="fr"><label class="fl">Tipo</label>
-      <select class="fi" id="ped-tipo">
+      <select class="fi" id="ped-tipo" onchange="pedTipoChange()">
         <option value="cliente">Cliente (nos pide a nosotros)</option>
         <option value="proveedor">Proveedor (nosotros pedimos)</option>
       </select>
     </div>
     <div class="fr"><label class="fl">Para / De</label><input class="fi" id="ped-ref" placeholder="Nombre cliente o proveedor"></div>
     <div class="fr"><label class="fl">Teléfono</label><input class="fi" id="ped-tel" type="tel" placeholder="664 xxx xxxx"></div>
-    <div class="fr"><label class="fl">Descripción del pedido</label><textarea class="fi" id="ped-desc" rows="3" placeholder="Qué productos, medidas, cantidades..." style="resize:vertical"></textarea></div>
+    <div class="fr"><label class="fl">Descripción del pedido</label><textarea class="fi" id="ped-desc" rows="2" placeholder="Qué productos, medidas, cantidades..." style="resize:vertical"></textarea></div>
+    <!-- MATERIALES — visible para proveedor -->
+    <div id="ped-mats-wrap" style="display:none;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label class="fl" style="margin:0;font-weight:700;color:#666">MATERIALES QUE LLEGAN</label>
+        <button type="button" class="btn bo bsm" onclick="addMatRow()">+ Agregar</button>
+      </div>
+      <div id="ped-mats-list"></div>
+      <div style="font-size:11px;color:#bbb;margin-top:4px">Al marcar como "Entregado" se suma al inventario automáticamente.</div>
+    </div>
     <div class="fr"><label class="fl">Monto total ($MXN)</label><input class="fi" id="ped-monto" type="number" placeholder="0"></div>
     <div class="fr"><label class="fl">Adelanto pagado ($MXN)</label><input class="fi" id="ped-adelanto" type="number" placeholder="0"></div>
     <div class="fr"><label class="fl">Estado</label>
@@ -513,17 +522,23 @@ async function delProd(id){if(!confirm('¿Eliminar producto?'))return;await H('/
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────────
 async function loadClientes(){
-  const cs=await H('/api/clientes').then(r=>r.json());
+  const [cs,db]=await Promise.all([H('/api/clientes').then(r=>r.json()),H('/api/remisiones').then(r=>r.json())]);
+  const rems=db.remisiones||[];
   document.getElementById('body-clientes').innerHTML=cs.length
-    ? cs.map(c=>`<tr>
-        <td style="font-weight:700">${c.nombre}</td>
-        <td style="color:#555">${c.tel}</td>
-        <td style="text-align:center">${c.compras||0}</td>
-        <td class="total-gold">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-        <td style="color:${(c.fiado||0)>0?'#f87171':'#333'}">$${(c.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-        <td style="color:#444">${c.ultima?new Date(c.ultima).toLocaleDateString('es-MX'):'—'}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:28px">Sin clientes aún</td></tr>';
+    ? cs.map(c=>{
+        const historial=rems.filter(r=>r.cliente===c.nombre).slice(-3).reverse();
+        const wa=c.tel?c.tel.replace(/\D/g,''):'';
+        return`<tr>
+          <td><div style="font-weight:700">${c.nombre}</div>${c.direccion?`<div style="font-size:11px;color:#aaa">📍 ${c.direccion}</div>`:''}</td>
+          <td>${c.tel?`<a href="tel:${c.tel}" style="color:#2563eb;text-decoration:none;font-weight:600">${c.tel}</a>`:'—'}
+            ${wa?`<div style="margin-top:3px"><a href="https://wa.me/52${wa}" target="_blank" style="font-size:11px;background:#25d366;color:#fff;padding:2px 7px;border-radius:5px;text-decoration:none">WhatsApp</a></div>`:''}</td>
+          <td style="text-align:center"><div style="font-weight:700">${c.compras||0}</div><div style="font-size:11px;color:#aaa">compras</div></td>
+          <td class="total-gold">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+          <td style="color:${(c.fiado||0)>0?'#ef4444':'#16a34a'};font-weight:700">$${(c.fiado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+          <td style="color:#444">${c.ultima?new Date(c.ultima).toLocaleDateString('es-MX'):'—'}</td>
+          <td style="font-size:11px;color:#888;max-width:160px">${historial.length?historial.map(r=>`<div style="padding:2px 0;border-bottom:1px solid #f5f0e8">🧾 $${r.total.toLocaleString('es-MX')} — ${new Date(r.fecha).toLocaleDateString('es-MX')}</div>`).join(''):'sin historial'}</td>
+        </tr>`;}).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:28px">Sin clientes aún</td></tr>';
 }
 
 // ── FIADO ─────────────────────────────────────────────────────────────────────
@@ -619,11 +634,32 @@ async function loadPedidos(){
       </td></tr>`}).join('')
     :'<tr><td colspan="11" style="text-align:center;color:#bbb;padding:28px">Sin pedidos</td></tr>';
 }
+function pedTipoChange(){
+  const es_prov=document.getElementById('ped-tipo').value==='proveedor';
+  document.getElementById('ped-mats-wrap').style.display=es_prov?'block':'none';
+}
+let _matIdx=0;
+function addMatRow(nom='',med='',qty=''){
+  const id='mat-'+(_matIdx++);
+  const div=document.createElement('div');
+  div.id=id;div.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML=`<input class="fi" placeholder="Producto (ej: Barrote 2x4)" style="flex:2;padding:7px 10px;font-size:12px" value="${nom}">
+    <input class="fi" placeholder="Medida" style="flex:1;padding:7px 10px;font-size:12px" value="${med}">
+    <input class="fi" type="number" placeholder="Cant." style="width:64px;padding:7px 10px;font-size:12px" value="${qty}" min="1">
+    <button type="button" style="background:none;border:none;color:#bbb;cursor:pointer;font-size:16px;padding:4px" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById('ped-mats-list').appendChild(div);
+}
+function getMateriales(){
+  const rows=[...document.getElementById('ped-mats-list').children];
+  return rows.map(r=>{const ins=r.querySelectorAll('input');return{nombre:ins[0].value.trim(),medida:ins[1].value.trim(),cantidad:parseInt(ins[2].value)||0};}).filter(m=>m.nombre&&m.cantidad>0);
+}
 function abrirPedido(){
   ['ped-id','ped-ref','ped-tel','ped-desc','ped-monto','ped-adelanto','ped-notas','ped-fecha'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ped-tipo').value='cliente';
   document.getElementById('ped-estado').value='pendiente';
   document.getElementById('ped-title').textContent='Nuevo Pedido';
+  document.getElementById('ped-mats-list').innerHTML='';
+  document.getElementById('ped-mats-wrap').style.display='none';
   document.getElementById('ov-pedido').classList.add('on');
 }
 async function editarPedido(id){
@@ -639,17 +675,27 @@ async function editarPedido(id){
   document.getElementById('ped-estado').value=p.estado||'pendiente';
   document.getElementById('ped-fecha').value=p.fecha_promesa||'';
   document.getElementById('ped-notas').value=p.notas||'';
+  document.getElementById('ped-mats-list').innerHTML='';
+  (p.materiales||[]).forEach(m=>addMatRow(m.nombre,m.medida,m.cantidad));
+  document.getElementById('ped-mats-wrap').style.display=p.tipo==='proveedor'?'block':'none';
   document.getElementById('ped-title').textContent='Editar Pedido';
   document.getElementById('ov-pedido').classList.add('on');
 }
 async function savePedido(){
   const id=document.getElementById('ped-id').value;
-  const body={tipo:document.getElementById('ped-tipo').value,referencia:document.getElementById('ped-ref').value.trim(),tel:document.getElementById('ped-tel').value.trim(),descripcion:document.getElementById('ped-desc').value.trim(),monto:parseFloat(document.getElementById('ped-monto').value)||0,adelanto:parseFloat(document.getElementById('ped-adelanto').value)||0,estado:document.getElementById('ped-estado').value,fecha_promesa:document.getElementById('ped-fecha').value,notas:document.getElementById('ped-notas').value.trim()};
+  const tipo=document.getElementById('ped-tipo').value;
+  const estado=document.getElementById('ped-estado').value;
+  const materiales=tipo==='proveedor'?getMateriales():[];
+  const body={tipo,referencia:document.getElementById('ped-ref').value.trim(),tel:document.getElementById('ped-tel').value.trim(),descripcion:document.getElementById('ped-desc').value.trim(),monto:parseFloat(document.getElementById('ped-monto').value)||0,adelanto:parseFloat(document.getElementById('ped-adelanto').value)||0,estado,fecha_promesa:document.getElementById('ped-fecha').value,notas:document.getElementById('ped-notas').value.trim(),materiales};
   if(!body.referencia){alert('Escribe para quién es el pedido');return;}
   if(id) await H('/api/pedidos/'+id,{method:'PUT',body:JSON.stringify(body)});
   else   await H('/api/pedidos',{method:'POST',body:JSON.stringify(body)});
+  // si proveedor marcado entregado y hay materiales → actualizar stock
+  if(tipo==='proveedor'&&estado==='entregado'&&materiales.length){
+    await H('/api/pedidos/'+(id||'last')+'/recibir',{method:'POST',body:JSON.stringify({materiales})});
+  }
   document.getElementById('ov-pedido').classList.remove('on');
-  loadPedidos();
+  loadPedidos();loadProds();
 }
 async function delPedido(id){if(!confirm('¿Eliminar pedido?'))return;await H('/api/pedidos/'+id,{method:'DELETE'});loadPedidos();}
 
@@ -657,16 +703,17 @@ async function delPedido(id){if(!confirm('¿Eliminar pedido?'))return;await H('/
 async function loadProveedores(){
   const provs=await H('/api/proveedores').then(r=>r.json());
   document.getElementById('body-proveedores').innerHTML=provs.length
-    ?provs.map(p=>`<tr>
-      <td style="font-weight:700">${p.nombre}</td>
-      <td>${p.tel||'—'}</td>
-      <td style="color:#888">${p.contacto||'—'}</td>
+    ?provs.map(p=>{const wa=p.tel?p.tel.replace(/\D/g,''):'';return`<tr>
+      <td><div style="font-weight:700">${p.nombre}</div>${p.contacto?`<div style="font-size:11px;color:#aaa">👤 ${p.contacto}</div>`:''}</td>
+      <td>${p.tel?`<a href="tel:${p.tel}" style="color:#2563eb;text-decoration:none;font-weight:600">${p.tel}</a>`:'—'}
+        ${wa?`<div style="margin-top:3px"><a href="https://wa.me/52${wa}" target="_blank" style="font-size:11px;background:#25d366;color:#fff;padding:2px 7px;border-radius:5px;text-decoration:none">WhatsApp</a></div>`:''}</td>
       <td style="font-size:12px;color:#888">${p.productos||'—'}</td>
+      <td style="font-size:12px;color:#555">${p.dias||'—'}</td>
       <td style="font-size:12px;color:#aaa">${p.notas||'—'}</td>
       <td style="display:flex;gap:4px">
         <button class="btn bo bsm" onclick="editarProveedor(${p.id})">Editar</button>
         <button class="btn bd bsm" onclick="delProveedor(${p.id})">×</button>
-      </td></tr>`).join('')
+      </td></tr>`}).join('')
     :'<tr><td colspan="6" style="text-align:center;color:#bbb;padding:28px">Sin proveedores registrados</td></tr>';
 }
 function abrirProveedor(){
