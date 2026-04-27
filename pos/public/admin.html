@@ -231,27 +231,28 @@ tr:hover td{background:#faf6f0}
 <div class="panel" id="panel-config">
   <div style="padding-top:8px;margin-bottom:16px" class="sec-t">CONFIGURACIÓN</div>
   <div class="cs" style="margin-bottom:16px">
-    <h4>⭐ QR RESEÑAS INTELIGENTE</h4>
-    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Un solo QR que rota 20 textos diferentes. Cada cliente ve un comentario distinto listo para copiar y publicar en Google. Sin repetirse.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
-        <div style="font-size:28px;font-weight:900;color:#c9a84c" id="stat-resenas-count">—</div>
+    <h4>⭐ QR RESEÑAS — ESCANEA Y DEJA 5 ESTRELLAS</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 16px">Descarga este QR e imprímelo. El cliente escanea, ve un texto listo para copiar y lo publica en Google.</p>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <div style="background:#fff;padding:12px;border-radius:12px;display:inline-block" id="qr-resenas-wrap">
+        <div id="qr-resenas"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+        <button class="btn bg" onclick="descargarQR()">⬇ Descargar QR como imagen</button>
+        <a href="/resena" target="_blank" class="btn bo" style="text-decoration:none;text-align:center">👁 Ver página del cliente</a>
+        <div style="font-size:10px;color:#555;margin-top:4px">El QR siempre es el mismo<br>Los textos rotan automáticamente</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:8px 14px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#c9a84c" id="stat-resenas-count">—</div>
         <div style="font-size:10px;color:#666;letter-spacing:1px">GENERADAS</div>
       </div>
-      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
-        <div style="font-size:28px;font-weight:900;color:#c9a84c" id="stat-resenas-idx">—</div>
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:8px 14px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#c9a84c" id="stat-resenas-idx">—</div>
         <div style="font-size:10px;color:#666;letter-spacing:1px">TEXTO ACTUAL</div>
       </div>
-      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
-        <div style="font-size:28px;font-weight:900;color:#c9a84c">20</div>
-        <div style="font-size:10px;color:#666;letter-spacing:1px">TEXTOS ÚNICOS</div>
-      </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a href="/resena/qr" target="_blank" class="btn bg" style="text-decoration:none;text-align:center">🖨 Ver QR para imprimir</a>
-      <a href="/resena" target="_blank" class="btn bo" style="text-decoration:none;text-align:center">👁 Ver como cliente</a>
-    </div>
-    <div style="font-size:10px;color:#555;margin-top:10px">Ruta: /resena · El QR siempre es el mismo · Los textos rotan automáticamente</div>
   </div>
   <div class="cs" style="margin-bottom:16px">
     <h4>RESPALDO DE DATOS</h4>
@@ -840,6 +841,7 @@ async function loadResenasStats(){
     document.getElementById('stat-resenas-count').textContent=s.total||0;
     document.getElementById('stat-resenas-idx').textContent=((s.indice||0)%20)+1+'/20';
   }catch(e){}
+  if(typeof QRCode!=='undefined')initQR();
 }
 async function savePasswords(){
   const body={};
@@ -860,6 +862,20 @@ function tickClock(){document.getElementById('admin-clock').textContent=new Date
 tickClock();setInterval(tickClock,1000);
 function toggleDark(){const d=document.body.classList.toggle('dark');localStorage.setItem('adm-dark',d?'1':'');document.getElementById('btn-dark').textContent=d?'☀️':'🌙';}
 if(localStorage.getItem('adm-dark')==='1'){document.body.classList.add('dark');document.getElementById('btn-dark').textContent='☀️';}
+function initQR(){
+  if(!document.getElementById('qr-resenas')||document.getElementById('qr-resenas').childNodes.length>0)return;
+  var url=window.location.protocol+'//'+window.location.host+'/resena';
+  new QRCode(document.getElementById('qr-resenas'),{text:url,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+}
+function descargarQR(){
+  initQR();
+  setTimeout(function(){
+    var c=document.querySelector('#qr-resenas canvas');
+    if(!c){var img=document.querySelector('#qr-resenas img');if(img){var a=document.createElement('a');a.download='qr-resenas-lajardin.png';a.href=img.src;a.click();}return;}
+    var a=document.createElement('a');a.download='qr-resenas-lajardin.png';a.href=c.toDataURL('image/png');a.click();
+  },400);
+}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" onload="initQR()"></script>
 </body>
 </html>
