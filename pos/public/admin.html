@@ -231,16 +231,27 @@ tr:hover td{background:#faf6f0}
 <div class="panel" id="panel-config">
   <div style="padding-top:8px;margin-bottom:16px" class="sec-t">CONFIGURACIÓN</div>
   <div class="cs" style="margin-bottom:16px">
-    <h4>QR — RESEÑA GOOGLE</h4>
-    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Escanea o descarga para imprimir en lona. Apunta a tu perfil de Google.</p>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-      <img src="/qr_lajardin_blanco.png" style="width:140px;height:140px;border:1px solid #e8e0d0;border-radius:10px">
-      <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">
-        <a href="/qr_lajardin_blanco.png" download class="btn bg" style="text-decoration:none;text-align:center">⬇ Fondo blanco</a>
-        <a href="/qr_lajardin_transparente.png" download class="btn bo" style="text-decoration:none;text-align:center">⬇ Transparente</a>
-        <div style="font-size:10px;color:#aaa;margin-top:2px">1200×1200px · listo para lona</div>
+    <h4>⭐ QR RESEÑAS INTELIGENTE</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Un solo QR que rota 20 textos diferentes. Cada cliente ve un comentario distinto listo para copiar y publicar en Google. Sin repetirse.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:#c9a84c" id="stat-resenas-count">—</div>
+        <div style="font-size:10px;color:#666;letter-spacing:1px">GENERADAS</div>
+      </div>
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:#c9a84c" id="stat-resenas-idx">—</div>
+        <div style="font-size:10px;color:#666;letter-spacing:1px">TEXTO ACTUAL</div>
+      </div>
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:10px 18px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:#c9a84c">20</div>
+        <div style="font-size:10px;color:#666;letter-spacing:1px">TEXTOS ÚNICOS</div>
       </div>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/resena/qr" target="_blank" class="btn bg" style="text-decoration:none;text-align:center">🖨 Ver QR para imprimir</a>
+      <a href="/resena" target="_blank" class="btn bo" style="text-decoration:none;text-align:center">👁 Ver como cliente</a>
+    </div>
+    <div style="font-size:10px;color:#555;margin-top:10px">Ruta: /resena · El QR siempre es el mismo · Los textos rotan automáticamente</div>
   </div>
   <div class="cs" style="margin-bottom:16px">
     <h4>RESPALDO DE DATOS</h4>
@@ -426,6 +437,7 @@ function show(id,btn) {
   if (id==='historial')   loadHistorial();
   if (id==='pedidos')     loadPedidos();
   if (id==='proveedores') loadProveedores();
+  if (id==='config')      loadResenasStats();
 }
 
 // ── HOY ───────────────────────────────────────────────────────────────────────
@@ -822,6 +834,13 @@ async function saveProveedor(){
 async function delProveedor(id){if(!confirm('¿Eliminar proveedor?'))return;await H('/api/proveedores/'+id,{method:'DELETE'});loadProveedores();}
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
+async function loadResenasStats(){
+  try{
+    const s=await H('/api/resenas/stats');
+    document.getElementById('stat-resenas-count').textContent=s.total||0;
+    document.getElementById('stat-resenas-idx').textContent=((s.indice||0)%20)+1+'/20';
+  }catch(e){}
+}
 async function savePasswords(){
   const body={};
   const a=document.getElementById('pwd-a').value.trim();

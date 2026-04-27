@@ -64,6 +64,8 @@ function _defaults(db) {
   if (!db.pedidos_cnt)     db.pedidos_cnt = 1;
   if (!db.proveedores)     db.proveedores = [];
   if (!db.proveedores_cnt) db.proveedores_cnt = 1;
+  if (db.resenas_idx === undefined) db.resenas_idx = 0;
+  if (!db.resenas_count)  db.resenas_count = 0;
   db.productos.forEach(function(p) { if (!p.categoria) p.categoria = CAT_MAP[p.nombre] || 'General'; });
   return db;
 }
@@ -408,6 +410,131 @@ app.get('/api/catalogo', function(req, res) {
   res.json(db.productos.filter(function(p) { return p.stock; }).map(function(p) {
     return { id:p.id, nombre:p.nombre, medida:p.medida, precio:p.precio, categoria:p.categoria, stock:p.stock };
   }));
+});
+
+// ── Reseñas rotativas ─────────────────────────────────────────────────────────
+const RESENAS = [
+  'Excelente maderería en Tijuana. Buen precio, madera de calidad y te atienden rápido. Los recomiendo.',
+  'Fui a comprar triplay y quedé muy satisfecho. Buena variedad y precios accesibles. Regreso seguro.',
+  'Muy buen servicio. Me ayudaron a encontrar lo que necesitaba para mi construcción. Gracias.',
+  'Llevo tiempo comprando aquí y siempre me tratan bien. La madera es de buena calidad.',
+  'Rápidos y amables. Encontré los 2×4 que necesitaba a buen precio. Muy recomendados.',
+  'Primera vez que vengo y no será la última. Buen surtido y precio justo.',
+  'Gran variedad de madera y materiales. El personal conoce el producto y te orienta bien.',
+  'Compré cubiertas y triplay, todo en buen estado. El precio es competitivo en la zona.',
+  'Muy buena atención desde que llegué. Me ayudaron a cargar el material sin cobrar extra.',
+  'Siempre que necesito madera vengo aquí. Precios honestos y buena calidad.',
+  'Buen lugar para comprar material de construcción en Tijuana. Los recomiendo con confianza.',
+  'Compré para un proyecto grande y me cumplieron en cantidad y calidad. Gracias equipo.',
+  'Me surtieron rápido y sin complicaciones. El material llegó en perfectas condiciones.',
+  'Excelente experiencia de compra. Personal amable y precios accesibles. Volvería sin dudar.',
+  'Tienen todo lo que uno busca: surtido completo, buen precio y trato amable.',
+  'Muy satisfecho con mi compra. La madera era justo lo que necesitaba y a buen precio.',
+  'Rápida atención y buen producto. Para proyectos de construcción son mi primera opción.',
+  'Me recomendaron este lugar y no me decepcionó. Calidad y precio van de la mano aquí.',
+  'Buen ambiente, personal servicial y precios que no encontré mejores en Tijuana.',
+  'Aquí encontré lo que en otros lados no tenían. Buen surtido y los mejores precios.'
+];
+
+const GOOGLE_REVIEW_URL = 'https://g.page/r/CRrkUjwJJUHEECA/review';
+
+app.get('/resena', function(req, res) {
+  const db = readDB();
+  const idx = db.resenas_idx % RESENAS.length;
+  const texto = RESENAS[idx];
+  db.resenas_idx = idx + 1;
+  db.resenas_count = (db.resenas_count || 0) + 1;
+  writeDB(db);
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Déjanos tu reseña · La Jardín</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:24px;padding:32px 24px;max-width:420px;width:100%;text-align:center}
+.logo{font-size:40px;margin-bottom:8px}
+.title{color:#c9a84c;font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:4px}
+.sub{color:#666;font-size:12px;letter-spacing:2px;margin-bottom:28px}
+.stars{font-size:32px;margin-bottom:20px}
+.label{color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.text-box{background:#222;border:1.5px solid #333;border-radius:16px;padding:20px;color:#e8e0d0;font-size:15px;line-height:1.6;text-align:left;margin-bottom:16px;cursor:pointer;transition:border .2s;position:relative}
+.text-box:active{border-color:#c9a84c}
+.copy-hint{font-size:10px;color:#555;text-align:right;margin-top:8px}
+.btn-copy{width:100%;background:#222;border:1.5px solid #c9a84c;color:#c9a84c;border-radius:14px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;letter-spacing:.5px;transition:all .2s}
+.btn-copy:active,.btn-copy.done{background:#c9a84c;color:#111;border-color:#c9a84c}
+.btn-go{width:100%;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#111;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-decoration:none;display:block}
+.btn-go:active{filter:brightness(.9)}
+.note{color:#555;font-size:11px;margin-top:16px;line-height:1.5}
+</style></head><body>
+<div class="card">
+  <div class="logo">🪵</div>
+  <div class="title">LA JARDÍN</div>
+  <div class="sub">MADERERÍA · TIJUANA</div>
+  <div class="stars">⭐⭐⭐⭐⭐</div>
+  <div class="label">Tu comentario sugerido</div>
+  <div class="text-box" id="txt" onclick="copiar()">${texto}<div class="copy-hint">Toca para copiar</div></div>
+  <button class="btn-copy" id="btn" onclick="copiar()">📋 Copiar texto</button>
+  <a class="btn-go" href="${GOOGLE_REVIEW_URL}" target="_blank" rel="noopener">⭐ Dejar reseña en Google</a>
+  <p class="note">1. Copia el texto · 2. Abre Google · 3. Pega y publica<br>¡Gracias por tu apoyo!</p>
+</div>
+<script>
+function copiar(){
+  navigator.clipboard.writeText(${JSON.stringify(texto)}).then(function(){
+    var b=document.getElementById('btn');
+    b.textContent='✓ Copiado!';b.classList.add('done');
+    setTimeout(function(){b.textContent='📋 Copiar texto';b.classList.remove('done');},2000);
+  }).catch(function(){
+    var r=document.createRange();r.selectNode(document.getElementById('txt'));
+    window.getSelection().removeAllRanges();window.getSelection().addRange(r);
+    document.execCommand('copy');
+    document.getElementById('btn').textContent='✓ Seleccionado — copia con Ctrl+C';
+  });
+}
+</script></body></html>`);
+});
+
+app.get('/resena/qr', function(req, res) {
+  const base = req.protocol + '://' + req.get('host');
+  const url = base + '/resena';
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QR Reseñas · La Jardín</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center}
+h2{color:#c9a84c;font-size:18px;margin-bottom:6px}
+p{color:#666;font-size:12px;margin-bottom:24px}
+#qr{display:flex;justify-content:center;margin-bottom:20px}
+#qr canvas,#qr img{border-radius:12px}
+.url{background:#222;border:1px solid #333;border-radius:10px;padding:10px 14px;color:#c9a84c;font-size:12px;word-break:break-all;margin-bottom:20px}
+.btn{display:block;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#111;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;width:100%}
+</style></head><body>
+<div class="card">
+  <h2>QR Reseñas Google</h2>
+  <p>Imprime este código · Los clientes escanean y dejan 5 estrellas</p>
+  <div id="qr"></div>
+  <div class="url">${url}</div>
+  <button class="btn" onclick="descargar()">⬇ Descargar PNG</button>
+</div>
+<script>
+var qr=new QRCode(document.getElementById('qr'),{text:'${url}',width:280,height:280,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+function descargar(){
+  setTimeout(function(){
+    var c=document.querySelector('#qr canvas');
+    if(c){var a=document.createElement('a');a.download='qr-resenas-lajardin.png';a.href=c.toDataURL();a.click();}
+  },300);
+}
+<\/script></body></html>`);
+});
+
+app.get('/api/resenas/stats', auth('admin'), function(req, res) {
+  const db = readDB();
+  res.json({ total: db.resenas_count || 0, indice: db.resenas_idx || 0, textos: RESENAS.length });
 });
 
 // ── Config ────────────────────────────────────────────────────────────────────
