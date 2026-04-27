@@ -839,7 +839,7 @@ async function loadResenasStats(){
   try{
     const s=await H('/api/resenas/stats');
     document.getElementById('stat-resenas-count').textContent=s.total||0;
-    document.getElementById('stat-resenas-idx').textContent=((s.indice||0)%20)+1+'/20';
+    document.getElementById('stat-resenas-idx').textContent=((s.indice||0)%(s.textos||100))+1+'/'+(s.textos||100);
   }catch(e){}
   if(typeof QRCode!=='undefined')initQR();
 }
