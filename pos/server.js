@@ -464,11 +464,13 @@ app.get('/resena', function(req, res) {
 '<div class="tbox" id="txt" onclick="copiar()">' + textoEsc + '</div>' +
 '<div class="hint">Toca el texto para copiar</div>' +
 '<button class="bcopy" id="btn" onclick="copiar()">📋 Copiar texto</button>' +
-'<a class="bgo" href="' + GOOGLE_REVIEW_URL + '" target="_blank">⭐ Dejar resena en Google</a>' +
-'<p class="note">1. Copia · 2. Abre Google · 3. Pega y publica<br>Gracias por tu apoyo!</p>' +
+'<div id="countdown" style="display:none;background:#c9a84c;color:#111;border-radius:12px;padding:14px;font-size:15px;font-weight:bold;margin-bottom:10px;text-align:center"></div>' +
+'<a class="bgo" id="bgo" href="' + GOOGLE_REVIEW_URL + '">⭐ Abrir Google Reviews</a>' +
+'<p class="note">1. Copia · 2. Se abre Google · 3. Pega y publica<br>Gracias por tu apoyo!</p>' +
 '</div></div>' +
 '<script>' +
 'var T=' + JSON.stringify(texto) + ';' +
+'var GU="' + GOOGLE_REVIEW_URL + '";' +
 'function copiar(){' +
 '  var b=document.getElementById("btn");' +
 '  try{' +
@@ -477,10 +479,22 @@ app.get('/resena', function(req, res) {
 '    document.body.appendChild(ta);ta.focus();ta.select();' +
 '    document.execCommand("copy");' +
 '    document.body.removeChild(ta);' +
-'    b.textContent="✓ Copiado!";b.style.background="#c9a84c";b.style.color="#111";' +
-'    setTimeout(function(){b.textContent="📋 Copiar texto";b.style.background="";b.style.color="#c9a84c";},2500);' +
-'  }catch(e){b.textContent="Mantén presionado el texto y copia";}' +
+'    b.style.display="none";' +
+'    iniciarConteo();' +
+'  }catch(e){b.textContent="Manten presionado el texto y copia";}' +
 '}' +
+'function iniciarConteo(){' +
+'  var d=document.getElementById("countdown");' +
+'  d.style.display="block";' +
+'  var s=3;' +
+'  d.textContent="✓ Copiado! Abriendo Google en "+s+"...";' +
+'  var iv=setInterval(function(){' +
+'    s--;' +
+'    if(s>0){d.textContent="✓ Copiado! Abriendo Google en "+s+"...";}' +
+'    else{clearInterval(iv);d.textContent="Abriendo...";window.location.href=GU;}' +
+'  },1000);' +
+'}' +
+'' +
 'function toggleColor(){' +
 '  var l=document.body.classList.toggle("light");' +
 '  document.getElementById("tog").textContent=l?"🌙 Modo oscuro":"☀ Modo claro";' +
