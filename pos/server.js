@@ -413,28 +413,7 @@ app.get('/api/catalogo', function(req, res) {
 });
 
 // ── Reseñas rotativas ─────────────────────────────────────────────────────────
-const RESENAS = [
-  'Excelente maderería en Tijuana. Buen precio, madera de calidad y te atienden rápido. Los recomiendo.',
-  'Fui a comprar triplay y quedé muy satisfecho. Buena variedad y precios accesibles. Regreso seguro.',
-  'Muy buen servicio. Me ayudaron a encontrar lo que necesitaba para mi construcción. Gracias.',
-  'Llevo tiempo comprando aquí y siempre me tratan bien. La madera es de buena calidad.',
-  'Rápidos y amables. Encontré los 2×4 que necesitaba a buen precio. Muy recomendados.',
-  'Primera vez que vengo y no será la última. Buen surtido y precio justo.',
-  'Gran variedad de madera y materiales. El personal conoce el producto y te orienta bien.',
-  'Compré cubiertas y triplay, todo en buen estado. El precio es competitivo en la zona.',
-  'Muy buena atención desde que llegué. Me ayudaron a cargar el material sin cobrar extra.',
-  'Siempre que necesito madera vengo aquí. Precios honestos y buena calidad.',
-  'Buen lugar para comprar material de construcción en Tijuana. Los recomiendo con confianza.',
-  'Compré para un proyecto grande y me cumplieron en cantidad y calidad. Gracias equipo.',
-  'Me surtieron rápido y sin complicaciones. El material llegó en perfectas condiciones.',
-  'Excelente experiencia de compra. Personal amable y precios accesibles. Volvería sin dudar.',
-  'Tienen todo lo que uno busca: surtido completo, buen precio y trato amable.',
-  'Muy satisfecho con mi compra. La madera era justo lo que necesitaba y a buen precio.',
-  'Rápida atención y buen producto. Para proyectos de construcción son mi primera opción.',
-  'Me recomendaron este lugar y no me decepcionó. Calidad y precio van de la mano aquí.',
-  'Buen ambiente, personal servicial y precios que no encontré mejores en Tijuana.',
-  'Aquí encontré lo que en otros lados no tenían. Buen surtido y los mejores precios.'
-];
+const RESENAS = require('./resenas');
 
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CRrkUjwJJUHEECA/review';
 
@@ -446,53 +425,67 @@ app.get('/resena', function(req, res) {
   db.resenas_count = (db.resenas_count || 0) + 1;
   writeDB(db);
 
+  var textoEsc = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(`<!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Déjanos tu reseña · La Jardín</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.card{background:#1a1a1a;border:1px solid #333;border-radius:24px;padding:32px 24px;max-width:420px;width:100%;text-align:center}
-.logo{font-size:40px;margin-bottom:8px}
-.title{color:#c9a84c;font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:4px}
-.sub{color:#666;font-size:12px;letter-spacing:2px;margin-bottom:28px}
-.stars{font-size:32px;margin-bottom:20px}
-.label{color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.text-box{background:#222;border:1.5px solid #333;border-radius:16px;padding:20px;color:#e8e0d0;font-size:15px;line-height:1.6;text-align:left;margin-bottom:16px;cursor:pointer;transition:border .2s;position:relative}
-.text-box:active{border-color:#c9a84c}
-.copy-hint{font-size:10px;color:#555;text-align:right;margin-top:8px}
-.btn-copy{width:100%;background:#222;border:1.5px solid #c9a84c;color:#c9a84c;border-radius:14px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;letter-spacing:.5px;transition:all .2s}
-.btn-copy:active,.btn-copy.done{background:#c9a84c;color:#111;border-color:#c9a84c}
-.btn-go{width:100%;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#111;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-decoration:none;display:block}
-.btn-go:active{filter:brightness(.9)}
-.note{color:#555;font-size:11px;margin-top:16px;line-height:1.5}
-</style></head><body>
-<div class="card">
-  <div class="logo">🪵</div>
-  <div class="title">LA JARDÍN</div>
-  <div class="sub">MADERERÍA · TIJUANA</div>
-  <div class="stars">⭐⭐⭐⭐⭐</div>
-  <div class="label">Tu comentario sugerido</div>
-  <div class="text-box" id="txt" onclick="copiar()">${texto}<div class="copy-hint">Toca para copiar</div></div>
-  <button class="btn-copy" id="btn" onclick="copiar()">📋 Copiar texto</button>
-  <a class="btn-go" href="${GOOGLE_REVIEW_URL}" target="_blank" rel="noopener">⭐ Dejar reseña en Google</a>
-  <p class="note">1. Copia el texto · 2. Abre Google · 3. Pega y publica<br>¡Gracias por tu apoyo!</p>
-</div>
-<script>
-function copiar(){
-  navigator.clipboard.writeText(${JSON.stringify(texto)}).then(function(){
-    var b=document.getElementById('btn');
-    b.textContent='✓ Copiado!';b.classList.add('done');
-    setTimeout(function(){b.textContent='📋 Copiar texto';b.classList.remove('done');},2000);
-  }).catch(function(){
-    var r=document.createRange();r.selectNode(document.getElementById('txt'));
-    window.getSelection().removeAllRanges();window.getSelection().addRange(r);
-    document.execCommand('copy');
-    document.getElementById('btn').textContent='✓ Seleccionado — copia con Ctrl+C';
-  });
-}
-</script></body></html>`);
+  res.send('<!DOCTYPE html><html lang="es"><head>' +
+'<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<title>Resena La Jardin</title>' +
+'<style>' +
+'*{-webkit-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}' +
+'body{font-family:Arial,Helvetica,sans-serif;background:#111;color:#e8e0d0;min-height:100vh;padding:16px}' +
+'body.light{background:#f5f5f5;color:#111}' +
+'.wrap{max-width:420px;margin:0 auto}' +
+'.topbar{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:end;-webkit-justify-content:flex-end;justify-content:flex-end;margin-bottom:12px}' +
+'.tog{background:none;border:1px solid #555;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px;color:#aaa}' +
+'body.light .tog{border-color:#999;color:#555}' +
+'.card{background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:24px 18px;text-align:center}' +
+'body.light .card{background:#fff;border-color:#ddd}' +
+'.logo{font-size:36px;margin-bottom:6px}' +
+'.title{color:#c9a84c;font-size:20px;font-weight:bold;margin-bottom:2px}' +
+'.sub{color:#666;font-size:11px;margin-bottom:20px}' +
+'.stars{font-size:28px;margin-bottom:16px}' +
+'.label{color:#888;font-size:11px;margin-bottom:8px;text-transform:uppercase}' +
+'.tbox{background:#222;border:2px solid #444;border-radius:12px;padding:16px;font-size:15px;line-height:1.6;text-align:left;margin-bottom:6px;cursor:pointer}' +
+'body.light .tbox{background:#f0f0f0;border-color:#ccc;color:#111}' +
+'.hint{font-size:10px;color:#666;text-align:right;margin-bottom:14px}' +
+'.bcopy{width:100%;background:#1a1a1a;border:2px solid #c9a84c;color:#c9a84c;border-radius:12px;padding:14px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:10px}' +
+'body.light .bcopy{background:#fff}' +
+'.bgo{display:block;width:100%;background:#c9a84c;color:#111;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center}' +
+'.note{color:#666;font-size:11px;margin-top:14px;line-height:1.6}' +
+'</style></head><body>' +
+'<div class="wrap">' +
+'<div class="topbar"><button class="tog" id="tog" onclick="toggleColor()">☀ Modo claro</button></div>' +
+'<div class="card">' +
+'<div class="logo">🪵</div>' +
+'<div class="title">LA JARDIN</div>' +
+'<div class="sub">MADERERIA · TIJUANA</div>' +
+'<div class="stars">⭐⭐⭐⭐⭐</div>' +
+'<div class="label">Copia este comentario y publicalo</div>' +
+'<div class="tbox" id="txt" onclick="copiar()">' + textoEsc + '</div>' +
+'<div class="hint">Toca el texto para copiar</div>' +
+'<button class="bcopy" id="btn" onclick="copiar()">📋 Copiar texto</button>' +
+'<a class="bgo" href="' + GOOGLE_REVIEW_URL + '" target="_blank">⭐ Dejar resena en Google</a>' +
+'<p class="note">1. Copia · 2. Abre Google · 3. Pega y publica<br>Gracias por tu apoyo!</p>' +
+'</div></div>' +
+'<script>' +
+'var T=' + JSON.stringify(texto) + ';' +
+'function copiar(){' +
+'  var b=document.getElementById("btn");' +
+'  try{' +
+'    var ta=document.createElement("textarea");' +
+'    ta.value=T;ta.style.position="fixed";ta.style.top="-9999px";' +
+'    document.body.appendChild(ta);ta.focus();ta.select();' +
+'    document.execCommand("copy");' +
+'    document.body.removeChild(ta);' +
+'    b.textContent="✓ Copiado!";b.style.background="#c9a84c";b.style.color="#111";' +
+'    setTimeout(function(){b.textContent="📋 Copiar texto";b.style.background="";b.style.color="#c9a84c";},2500);' +
+'  }catch(e){b.textContent="Mantén presionado el texto y copia";}' +
+'}' +
+'function toggleColor(){' +
+'  var l=document.body.classList.toggle("light");' +
+'  document.getElementById("tog").textContent=l?"🌙 Modo oscuro":"☀ Modo claro";' +
+'}' +
+'<\/script></body></html>');
 });
 
 app.get('/resena/qr', function(req, res) {
