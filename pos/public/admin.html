@@ -255,6 +255,15 @@ tr:hover td{background:#faf6f0}
     </div>
   </div>
   <div class="cs" style="margin-bottom:16px">
+    <h4>EXPORTAR A LOYVERSE</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Descarga el CSV e impórtalo en Loyverse → Artículos → Importar.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="/api/export/loyverse" class="btn bg" style="text-decoration:none;text-align:center" id="btn-loyverse" onclick="this.setAttribute('href','/api/export/loyverse');return true;">⬇ Descargar CSV Loyverse</a>
+      <button class="btn bo" onclick="resetProductos()">🔄 Restablecer catálogo completo</button>
+    </div>
+    <div id="msg-reset" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
+  </div>
+  <div class="cs" style="margin-bottom:16px">
     <h4>RESPALDO DE DATOS</h4>
     <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Descarga una copia de todos tus datos antes de actualizaciones. Si se pierden, usa "Restaurar" para subirlos de nuevo.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -835,6 +844,13 @@ async function saveProveedor(){
 async function delProveedor(id){if(!confirm('¿Eliminar proveedor?'))return;await H('/api/proveedores/'+id,{method:'DELETE'});loadProveedores();}
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
+async function resetProductos(){
+  if(!confirm('¿Restablecer catálogo completo? Se reemplazarán todos los productos con el catálogo actualizado.'))return;
+  const r=await H('/api/productos/reset',{method:'POST'});
+  document.getElementById('msg-reset').textContent='✓ Catálogo restablecido — '+r.count+' productos';
+  setTimeout(()=>document.getElementById('msg-reset').textContent='',4000);
+  loadProds();
+}
 async function loadResenasStats(){
   try{
     const s=await H('/api/resenas/stats');

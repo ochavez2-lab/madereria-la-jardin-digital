@@ -18,29 +18,58 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '5mb' }));
 
 const CAT_MAP = {
-  'Barrote 2x4':'Madera','Tablon 2x6':'Madera','Viga 4x4':'Madera',
+  'Barrote 2x4':'Madera','Tablon 2x6':'Madera','Polin 4x4':'Madera','Viga 4x6':'Madera',
   'Triplay 3/8':'Triplay','Triplay 1/2':'Triplay','Triplay 5/8':'Triplay',
   'Triplay 3/4':'Triplay','Triplay ranurado':'Triplay',
-  'OSB Cimbraplay':'Triplay','Cimbra fenolica':'Triplay',
-  'Shingle asfaltico':'Cubiertas','Membrana azul':'Cubiertas','Membrana granular':'Cubiertas'
+  'OSB 7/16':'Triplay','OSB 1/2':'Triplay','Cimbra fenolica':'Triplay',
+  'Shingle asfaltico':'Cubiertas','Membrana azul':'Cubiertas','Membrana granular':'Cubiertas','Fieltro 15lb':'Cubiertas'
 };
 
 const PRODUCTOS_DEFAULT = [
-  {id:1,  nombre:'Barrote 2x4',       medida:'8 pies',    precio:45,  stock:true, categoria:'Madera'},
-  {id:2,  nombre:'Barrote 2x4',       medida:'16 pies',   precio:85,  stock:true, categoria:'Madera'},
-  {id:3,  nombre:'Barrote 2x4',       medida:'30 pies',   precio:180, stock:true, categoria:'Madera'},
-  {id:4,  nombre:'Tablon 2x6',        medida:'16 pies',   precio:140, stock:true, categoria:'Madera'},
-  {id:5,  nombre:'Viga 4x4',          medida:'16 pies',   precio:210, stock:true, categoria:'Madera'},
-  {id:6,  nombre:'Triplay 3/8',       medida:'4x8 pies',  precio:310, stock:true, categoria:'Triplay'},
-  {id:7,  nombre:'Triplay 1/2',       medida:'4x8 pies',  precio:420, stock:true, categoria:'Triplay'},
-  {id:8,  nombre:'Triplay 5/8',       medida:'4x8 pies',  precio:425, stock:true, categoria:'Triplay'},
-  {id:9,  nombre:'Triplay 3/4',       medida:'4x8 pies',  precio:580, stock:true, categoria:'Triplay'},
-  {id:10, nombre:'Triplay ranurado',  medida:'4x8 pies',  precio:390, stock:true, categoria:'Triplay'},
-  {id:11, nombre:'OSB Cimbraplay',    medida:'4x8 pies',  precio:380, stock:true, categoria:'Triplay'},
-  {id:12, nombre:'Cimbra fenolica',   medida:'4x8 pies',  precio:450, stock:true, categoria:'Triplay'},
-  {id:13, nombre:'Shingle asfaltico', medida:'por pieza', precio:425, stock:true, categoria:'Cubiertas'},
-  {id:14, nombre:'Membrana azul',     medida:'por rollo', precio:650, stock:true, categoria:'Cubiertas'},
-  {id:15, nombre:'Membrana granular', medida:'por rollo', precio:580, stock:true, categoria:'Cubiertas'},
+  // ── BARROTE 2x4 ──
+  {id:1,  nombre:'Barrote 2x4', medida:'8 pies',  precio:68,  stock:true, categoria:'Madera'},
+  {id:2,  nombre:'Barrote 2x4', medida:'10 pies', precio:85,  stock:true, categoria:'Madera'},
+  {id:3,  nombre:'Barrote 2x4', medida:'12 pies', precio:102, stock:true, categoria:'Madera'},
+  {id:4,  nombre:'Barrote 2x4', medida:'14 pies', precio:119, stock:true, categoria:'Madera'},
+  {id:5,  nombre:'Barrote 2x4', medida:'16 pies', precio:136, stock:true, categoria:'Madera'},
+  {id:6,  nombre:'Barrote 2x4', medida:'18 pies', precio:153, stock:true, categoria:'Madera'},
+  {id:7,  nombre:'Barrote 2x4', medida:'20 pies', precio:170, stock:true, categoria:'Madera'},
+  {id:8,  nombre:'Barrote 2x4', medida:'22 pies', precio:187, stock:true, categoria:'Madera'},
+  {id:9,  nombre:'Barrote 2x4', medida:'24 pies', precio:204, stock:true, categoria:'Madera'},
+  {id:10, nombre:'Barrote 2x4', medida:'26 pies', precio:220, stock:true, categoria:'Madera'},
+  {id:11, nombre:'Barrote 2x4', medida:'28 pies', precio:237, stock:true, categoria:'Madera'},
+  {id:12, nombre:'Barrote 2x4', medida:'30 pies', precio:254, stock:true, categoria:'Madera'},
+  // ── TABLON 2x6 ──
+  {id:13, nombre:'Tablon 2x6',  medida:'8 pies',  precio:120, stock:true, categoria:'Madera'},
+  {id:14, nombre:'Tablon 2x6',  medida:'10 pies', precio:150, stock:true, categoria:'Madera'},
+  {id:15, nombre:'Tablon 2x6',  medida:'12 pies', precio:180, stock:true, categoria:'Madera'},
+  {id:16, nombre:'Tablon 2x6',  medida:'14 pies', precio:210, stock:true, categoria:'Madera'},
+  {id:17, nombre:'Tablon 2x6',  medida:'16 pies', precio:240, stock:true, categoria:'Madera'},
+  {id:18, nombre:'Tablon 2x6',  medida:'18 pies', precio:270, stock:true, categoria:'Madera'},
+  {id:19, nombre:'Tablon 2x6',  medida:'20 pies', precio:300, stock:true, categoria:'Madera'},
+  // ── POLIN 4x4 ──
+  {id:20, nombre:'Polin 4x4',   medida:'8 pies',  precio:185, stock:true, categoria:'Madera'},
+  {id:21, nombre:'Polin 4x4',   medida:'10 pies', precio:232, stock:true, categoria:'Madera'},
+  {id:22, nombre:'Polin 4x4',   medida:'12 pies', precio:278, stock:true, categoria:'Madera'},
+  {id:23, nombre:'Polin 4x4',   medida:'16 pies', precio:370, stock:true, categoria:'Madera'},
+  // ── VIGA 4x6 ──
+  {id:24, nombre:'Viga 4x6',    medida:'8 pies',  precio:280, stock:true, categoria:'Madera'},
+  {id:25, nombre:'Viga 4x6',    medida:'12 pies', precio:420, stock:true, categoria:'Madera'},
+  {id:26, nombre:'Viga 4x6',    medida:'16 pies', precio:560, stock:true, categoria:'Madera'},
+  // ── TRIPLAY ──
+  {id:27, nombre:'Triplay 3/8',      medida:'4x8 pies', precio:320, stock:true, categoria:'Triplay'},
+  {id:28, nombre:'Triplay 1/2',      medida:'4x8 pies', precio:430, stock:true, categoria:'Triplay'},
+  {id:29, nombre:'Triplay 5/8',      medida:'4x8 pies', precio:535, stock:true, categoria:'Triplay'},
+  {id:30, nombre:'Triplay 3/4',      medida:'4x8 pies', precio:640, stock:true, categoria:'Triplay'},
+  {id:31, nombre:'Triplay ranurado', medida:'4x8 pies', precio:385, stock:true, categoria:'Triplay'},
+  {id:32, nombre:'OSB 7/16',         medida:'4x8 pies', precio:285, stock:true, categoria:'Triplay'},
+  {id:33, nombre:'OSB 1/2',          medida:'4x8 pies', precio:325, stock:true, categoria:'Triplay'},
+  {id:34, nombre:'Cimbra fenolica',  medida:'4x8 pies', precio:460, stock:true, categoria:'Triplay'},
+  // ── CUBIERTAS ──
+  {id:35, nombre:'Shingle asfaltico', medida:'por bundle', precio:435, stock:true, categoria:'Cubiertas'},
+  {id:36, nombre:'Membrana azul',     medida:'por rollo',  precio:690, stock:true, categoria:'Cubiertas'},
+  {id:37, nombre:'Membrana granular', medida:'por rollo',  precio:590, stock:true, categoria:'Cubiertas'},
+  {id:38, nombre:'Fieltro 15lb',      medida:'por rollo',  precio:225, stock:true, categoria:'Cubiertas'},
 ];
 
 // ── Database (Supabase persistent + file fallback) ────────────────────────────
@@ -556,6 +585,35 @@ app.put('/api/config/passwords', auth('admin'), function(req, res) {
 io.on('connection', function(socket) {
   socket.on('actualizar_carrito', function(data) { socket.broadcast.emit('carrito_cliente', data); });
   socket.on('limpiar_cliente',    function()     { socket.broadcast.emit('limpiar_cliente'); });
+});
+
+// ── Loyverse CSV export ───────────────────────────────────────────────────────
+app.get('/api/export/loyverse', auth('admin'), function(req, res) {
+  const db = readDB();
+  const rows = [['Item name','Category name','Price','Description','Track stock']];
+  db.productos.forEach(function(p) {
+    if (p.stock !== false) {
+      rows.push([
+        '"' + (p.nombre + ' ' + p.medida).replace(/"/g,'""') + '"',
+        '"' + (p.categoria || 'General') + '"',
+        p.precio,
+        '"' + p.medida.replace(/"/g,'""') + '"',
+        'FALSE'
+      ]);
+    }
+  });
+  var csv = rows.map(function(r){ return r.join(','); }).join('\r\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="lajardin-loyverse.csv"');
+  res.send('﻿' + csv);
+});
+
+app.post('/api/productos/reset', auth('admin'), function(req, res) {
+  const db = readDB();
+  db.productos = JSON.parse(JSON.stringify(PRODUCTOS_DEFAULT));
+  writeDB(db);
+  io.emit('productos_actualizados', db.productos);
+  res.json({ ok: true, count: db.productos.length });
 });
 
 // ── Backup / Restore ─────────────────────────────────────────────────────────
