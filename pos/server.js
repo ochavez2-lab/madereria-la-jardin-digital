@@ -86,7 +86,10 @@ function _sbHeaders() {
 
 function _defaults(db) {
   if (!db.config)          db.config = { passwords: { admin: 'admin123', cajero: 'cajero123', cliente: 'cliente' } };
-  if (!db.productos)       db.productos = PRODUCTOS_DEFAULT;
+  if (!db.productos || db.productos.length < 30 || db.catalogo_v !== 2) {
+    db.productos = JSON.parse(JSON.stringify(PRODUCTOS_DEFAULT));
+    db.catalogo_v = 2;
+  }
   if (!db.remisiones)      db.remisiones = [];
   if (!db.clientes)        db.clientes = [];
   if (!db.contador)        db.contador = 1;
