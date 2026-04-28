@@ -6,35 +6,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Arial',sans-serif;background:#eee;padding:16px}
+body{font-family:'Arial',sans-serif;background:#ddd;padding:16px}
 
 .controls{text-align:center;margin-bottom:16px}
-.controls button{background:#c9a84c;color:#111;border:none;padding:10px 28px;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:1px}
-.controls button:hover{background:#e8c96a}
+.controls button{background:#333;color:#fff;border:none;padding:10px 28px;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:1px}
 .controls p{margin-top:6px;font-size:11px;color:#666}
 
-/* ── HOJA CARTA: 216mm × 279mm ── */
 .sheet{
   width:196mm;
-  height:259mm;
+  height:260mm;
   margin:0 auto;
   background:#fff;
   display:grid;
   grid-template-columns:repeat(3,1fr);
   grid-template-rows:repeat(3,1fr);
-  gap:3mm;
-  padding:3mm;
+  gap:2.5mm;
+  padding:2.5mm;
 }
 
-/* ── TICKET ── */
 .ticket{
-  border:1.5px dashed #c9a84c;
-  border-radius:5px;
+  border:1.5px dashed #aaa;
+  border-radius:4px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:space-evenly;
-  padding:4px 5px;
+  padding:5px 4px 4px;
   background:#fff;
   position:relative;
   overflow:hidden;
@@ -44,64 +41,54 @@ body{font-family:'Arial',sans-serif;background:#eee;padding:16px}
   content:'';
   position:absolute;
   top:0;left:0;right:0;
-  height:2.5px;
-  background:linear-gradient(90deg,#c9a84c,#e8c96a,#c9a84c);
+  height:3px;
+  background:repeating-linear-gradient(90deg,#222 0,#222 6px,#fff 6px,#fff 9px);
 }
 
-.t-logo{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  line-height:1;
-  margin-top:2px;
-}
-.t-logo img{height:22px;object-fit:contain;filter:brightness(0)}
-.t-logo-text{font-size:11px;font-weight:900;color:#111;letter-spacing:1.5px;font-family:'Georgia',serif}
-.t-logo-sub{font-size:6px;color:#999;letter-spacing:2px;text-transform:uppercase}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;margin-top:3px}
+.tree{display:flex;flex-direction:column;align-items:center}
+.t1{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #222}
+.t2{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:12px solid #222;margin-top:-4px}
+.t3{width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:14px solid #222;margin-top:-5px}
+.trunk{width:4px;height:6px;background:#444;margin:0 auto}
+.logo-title{font-size:7.5px;font-weight:900;color:#111;letter-spacing:1.5px;margin-top:2px;text-transform:uppercase;font-family:'Arial Black','Arial',sans-serif}
+.logo-sub{font-size:5.5px;color:#666;letter-spacing:1.5px;text-transform:uppercase}
 
-.t-divider{width:36px;height:1px;background:linear-gradient(90deg,#c9a84c,#e8c96a);margin:0 auto}
+.sep{width:50px;height:0.5px;background:#ccc}
 
-.t-gracias{font-size:7px;font-weight:700;color:#666;letter-spacing:.5px;text-transform:uppercase}
-.t-title{font-size:8.5px;font-weight:900;color:#111;line-height:1.3;padding:0 2px}
+.t-gracias{font-size:6.5px;color:#888;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+.t-instruc-top{font-size:7.5px;font-weight:900;color:#111;line-height:1.35}
 
-.t-qr{flex-shrink:0}
-.t-qr canvas,.t-qr img{width:62px!important;height:62px!important;display:block}
+.t-qr canvas,.t-qr img{width:60px!important;height:60px!important;display:block}
 
 .t-badge{
   background:#111;
-  color:#c9a84c;
-  font-size:15px;
+  color:#fff;
+  font-size:16px;
   font-weight:900;
-  padding:3px 12px;
+  padding:2px 14px;
   border-radius:20px;
   letter-spacing:.5px;
   font-family:'Georgia',serif;
-  line-height:1.2;
 }
-.t-badge-sub{font-size:6px;color:#888;letter-spacing:.5px;text-transform:uppercase}
+.t-badge-sub{font-size:6px;color:#777;letter-spacing:.5px;text-transform:uppercase}
 
-.t-instruc{font-size:6px;color:#aaa;line-height:1.4;padding:0 3px}
-.t-tel{font-size:6px;color:#bbb;letter-spacing:.5px}
+.t-condicion{font-size:5.5px;color:#bbb;line-height:1.4;padding:0 2px}
+.t-tel{font-size:6px;color:#aaa;letter-spacing:.5px}
 
 @media print{
-  @page{size:letter;margin:10mm}
+  @page{size:letter;margin:8mm}
   body{background:#fff;padding:0}
   .controls{display:none}
-  .sheet{
-    width:100%;
-    height:calc(100vh - 20mm);
-    margin:0;
-    padding:0;
-    gap:3mm;
-  }
+  .sheet{width:100%;height:calc(100vh - 16mm);margin:0;padding:2mm;gap:2mm}
 }
 </style>
 </head>
 <body>
 
 <div class="controls">
-  <button onclick="window.print()">🖨️ IMPRIMIR (9 tickets en 1 hoja)</button>
-  <p>Tamaño carta · Recortar por líneas punteadas · 1 ticket por cliente por reseña</p>
+  <button onclick="window.print()">🖨️ IMPRIMIR — 9 tickets en 1 hoja</button>
+  <p>Tamaño carta · Recortar por líneas punteadas · 1 ticket por cliente</p>
 </div>
 
 <div class="sheet" id="sheet"></div>
@@ -110,45 +97,39 @@ body{font-family:'Arial',sans-serif;background:#eee;padding:16px}
 const RESENA2_URL = window.location.origin + '/resena2';
 const sheet = document.getElementById('sheet');
 
-// Intentar cargar logo del negocio
-let logoSrc = null;
-fetch('/api/config/logo').then(r=>r.ok?r.json():null).then(d=>{
-  if(d && d.logo) logoSrc = d.logo;
-  generarTickets();
-}).catch(()=>generarTickets());
-
-function generarTickets(){
-  sheet.innerHTML = '';
-  for(let i = 0; i < 9; i++){
-    const t = document.createElement('div');
-    t.className = 'ticket';
-    t.innerHTML = `
-      <div class="t-logo">
-        ${logoSrc
-          ? `<img src="${logoSrc}" alt="La Jardín">`
-          : `<div class="t-logo-text">LA JARDÍN</div>`}
-        <div class="t-logo-sub">Maderería · Tijuana</div>
+for(let i = 0; i < 9; i++){
+  const t = document.createElement('div');
+  t.className = 'ticket';
+  t.innerHTML = `
+    <div class="logo-wrap">
+      <div class="tree">
+        <div class="t1"></div>
+        <div class="t2"></div>
+        <div class="t3"></div>
+        <div class="trunk"></div>
       </div>
-      <div class="t-divider"></div>
-      <div class="t-gracias">¡Gracias por tu reseña!</div>
-      <div class="t-title">Vuelve, escanea el QR<br>y deja tu 2ª reseña</div>
-      <div class="t-qr" id="qr-${i}"></div>
-      <div class="t-badge">$75 OFF</div>
-      <div class="t-badge-sub">en tu próxima compra</div>
-      <div class="t-instruc">Presenta este ticket al pagar<br>válido 1 uso · 1 ticket por persona</div>
-      <div class="t-tel">664 709 3835</div>
-    `;
-    sheet.appendChild(t);
+      <div class="logo-title">Maderería</div>
+      <div class="logo-sub">La Jardín TJ</div>
+    </div>
+    <div class="sep"></div>
+    <div class="t-gracias">¡Gracias por tu reseña!</div>
+    <div class="t-instruc-top">Regresa, escanea el QR<br>y deja tu 2ª reseña</div>
+    <div class="t-qr" id="qr-${i}"></div>
+    <div class="t-badge">$75 OFF</div>
+    <div class="t-badge-sub">en tu próxima compra</div>
+    <div class="t-condicion">Presenta este ticket · 1 uso · 1 por persona</div>
+    <div class="t-tel">664 709 3835 · Cd. Jardín, Tijuana</div>
+  `;
+  sheet.appendChild(t);
 
-    new QRCode(document.getElementById('qr-' + i), {
-      text: RESENA2_URL,
-      width: 62,
-      height: 62,
-      colorDark: '#111111',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  }
+  new QRCode(document.getElementById('qr-' + i), {
+    text: RESENA2_URL,
+    width: 60,
+    height: 60,
+    colorDark: '#111111',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
 }
 </script>
 </body>
