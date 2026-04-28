@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Tickets Descuento – Maderería La Jardín</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Arial',sans-serif;background:#f0f0f0;padding:20px}
+
+/* ── PRINT CONTROLS (hidden when printing) ── */
+.controls{text-align:center;margin-bottom:20px}
+.controls button{background:#c9a84c;color:#111;border:none;padding:12px 32px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;margin:0 8px;letter-spacing:1px}
+.controls button:hover{background:#e8c96a}
+.controls p{margin-top:8px;font-size:12px;color:#666}
+
+/* ── SHEET ── */
+.sheet{width:216mm;margin:0 auto;background:#fff;padding:8mm;display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+
+/* ── TICKET ── */
+.ticket{border:2px dashed #c9a84c;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;position:relative;overflow:hidden;height:86mm}
+.ticket::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#c9a84c,#e8c96a,#c9a84c)}
+
+.tkt-brand{font-size:9px;font-weight:700;letter-spacing:2px;color:#888;text-transform:uppercase;margin-top:2px}
+.tkt-name{font-size:14px;font-weight:900;color:#111;letter-spacing:1px;font-family:'Georgia',serif}
+.tkt-line{width:40px;height:1.5px;background:linear-gradient(90deg,#c9a84c,#e8c96a);margin:2px 0}
+
+.tkt-msg{font-size:8.5px;color:#333;text-align:center;line-height:1.4;font-weight:600;padding:0 4px}
+.tkt-msg strong{color:#111;display:block;font-size:9px}
+
+.tkt-qr{width:80px;height:80px;flex-shrink:0}
+.tkt-qr canvas,.tkt-qr img{width:80px!important;height:80px!important}
+
+.tkt-discount{background:linear-gradient(135deg,#111,#1a1a1a);color:#c9a84c;font-size:19px;font-weight:900;padding:4px 14px;border-radius:20px;letter-spacing:1px;font-family:'Georgia',serif}
+.tkt-discount-sub{font-size:7.5px;color:#555;text-align:center;letter-spacing:.5px}
+
+.tkt-scan{font-size:7px;color:#999;text-align:center;letter-spacing:.5px;text-transform:uppercase}
+.tkt-tel{font-size:7.5px;color:#aaa;letter-spacing:.5px}
+
+/* ── PRINT ── */
+@media print{
+  @page{size:letter;margin:8mm}
+  body{background:#fff;padding:0}
+  .controls{display:none}
+  .sheet{width:100%;padding:0;gap:4mm;margin:0}
+  .ticket{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="window.print()">🖨️ IMPRIMIR TICKETS</button>
+  <p>9 tickets por hoja · Tamaño carta · Recortar por las líneas punteadas</p>
+</div>
+
+<div class="sheet" id="sheet"></div>
+
+<script>
+const RESENA2_URL = window.location.origin + '/resena2';
+
+function crearTicket() {
+  const div = document.createElement('div');
+  div.className = 'ticket';
+  div.innerHTML = `
+    <div class="tkt-brand">Maderería</div>
+    <div class="tkt-name">LA JARDÍN</div>
+    <div class="tkt-line"></div>
+    <div class="tkt-msg">
+      <strong>¡GRACIAS POR TU SEGUNDA COMPRA!</strong>
+      Escanea, deja tu reseña<br>y obtén tu descuento en la<br>próxima visita
+    </div>
+    <div class="tkt-qr" id="qr-PLACEHOLDER"></div>
+    <div class="tkt-discount">$75 OFF</div>
+    <div class="tkt-discount-sub">en tu próxima compra</div>
+    <div class="tkt-scan">📷 Escanea el código QR</div>
+    <div class="tkt-tel">664 709 3835 · Tijuana</div>
+  `;
+  return div;
+}
+
+const sheet = document.getElementById('sheet');
+for (let i = 0; i < 9; i++) {
+  const ticket = crearTicket();
+  // fix placeholder id
+  ticket.querySelector('[id^="qr-PLACEHOLDER"]').id = 'qr-' + i;
+  sheet.appendChild(ticket);
+
+  new QRCode(document.getElementById('qr-' + i), {
+    text: RESENA2_URL,
+    width: 80,
+    height: 80,
+    colorDark: '#111111',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+</script>
+</body>
+</html>
