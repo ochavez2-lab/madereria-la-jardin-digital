@@ -100,7 +100,9 @@ function _defaults(db) {
   if (!db.proveedores)     db.proveedores = [];
   if (!db.proveedores_cnt) db.proveedores_cnt = 1;
   if (db.resenas_idx === undefined) db.resenas_idx = 0;
-  if (!db.resenas_count)  db.resenas_count = 0;
+  if (!db.resenas_count)   db.resenas_count = 0;
+  if (db.resenas2_idx === undefined) db.resenas2_idx = 0;
+  if (!db.resenas2_count)  db.resenas2_count = 0;
   db.productos.forEach(function(p) { if (!p.categoria) p.categoria = CAT_MAP[p.nombre] || 'General'; });
   return db;
 }
@@ -439,7 +441,8 @@ app.get('/api/catalogo', function(req, res) {
 });
 
 // ── Reseñas rotativas ─────────────────────────────────────────────────────────
-const RESENAS = require('./resenas');
+const RESENAS  = require('./resenas');
+const RESENAS2 = require('./resenas2');
 
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CRrkUjwJJUHEECA/review';
 
@@ -540,6 +543,65 @@ function descargar(){
 app.get('/api/resenas/stats', auth('admin'), function(req, res) {
   const db = readDB();
   res.json({ total: db.resenas_count || 0, indice: db.resenas_idx || 0, textos: RESENAS.length });
+});
+
+app.get('/resena2', function(req, res) {
+  const db = readDB();
+  const idx = db.resenas2_idx % RESENAS2.length;
+  const texto = RESENAS2[idx];
+  db.resenas2_idx = idx + 1;
+  db.resenas2_count = (db.resenas2_count || 0) + 1;
+  writeDB(db);
+  var textoEsc = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send('<!DOCTYPE html><html lang="es"><head>' +
+'<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<title>Resena La Jardin</title>' +
+'<style>' +
+'*{box-sizing:border-box;margin:0;padding:0}' +
+'body{font-family:Arial,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}' +
+'.card{background:#111;border-radius:20px;padding:28px 22px;max-width:400px;width:100%;text-align:center}' +
+'.logo{font-size:42px;margin-bottom:6px}' +
+'.title{color:#c9a84c;font-size:22px;font-weight:900;letter-spacing:2px}' +
+'.sub{color:#555;font-size:11px;letter-spacing:2px;margin-bottom:22px}' +
+'.stars{font-size:34px;margin-bottom:18px}' +
+'.paso{background:#c9a84c;color:#111;font-size:13px;font-weight:900;border-radius:30px;padding:6px 18px;display:inline-block;margin-bottom:16px;letter-spacing:1px}' +
+'.tbox{background:#222;border:2px solid #333;border-radius:14px;padding:18px;font-size:16px;line-height:1.7;text-align:left;color:#f0ece4;margin-bottom:20px}' +
+'.bcopy{width:100%;background:#c9a84c;border:none;color:#111;border-radius:14px;padding:18px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:1px}' +
+'.bcopy.ok{background:#22c55e;color:#fff}' +
+'.instruccion{color:#666;font-size:13px;margin-top:16px;line-height:1.8}' +
+'.instruccion b{color:#c9a84c}' +
+'</style></head><body>' +
+'<div class="card">' +
+'<div class="logo">🪵</div>' +
+'<div class="title">LA JARDÍN</div>' +
+'<div class="sub">MADERERÍA · TIJUANA</div>' +
+'<div class="stars">⭐⭐⭐⭐⭐</div>' +
+'<div class="paso">PASO 1 — COPIA ESTE TEXTO</div>' +
+'<div class="tbox">' + textoEsc + '</div>' +
+'<button class="bcopy" id="btn" onclick="copiar()">📋 COPIAR TEXTO</button>' +
+'<p class="instruccion"><b>PASO 2</b> — Se abre Google automáticamente<br><b>PASO 3</b> — Pega el texto ⭐⭐⭐⭐⭐ y publica<br><br>¡Gracias por volver con nosotros!</p>' +
+'</div>' +
+'<script>' +
+'var T=' + JSON.stringify(texto) + ';' +
+'var GU="' + GOOGLE_REVIEW_URL + '";' +
+'function copiar(){' +
+'  try{' +
+'    var ta=document.createElement("textarea");' +
+'    ta.value=T;ta.style.position="fixed";ta.style.top="-9999px";' +
+'    document.body.appendChild(ta);ta.focus();ta.select();' +
+'    document.execCommand("copy");document.body.removeChild(ta);' +
+'    var b=document.getElementById("btn");' +
+'    b.textContent="✓ COPIADO — Abriendo Google...";b.classList.add("ok");' +
+'    setTimeout(function(){window.location.href=GU;},1500);' +
+'  }catch(e){document.getElementById("btn").textContent="Manten presionado y copia";}' +
+'}' +
+'<\/script></body></html>');
+});
+
+app.get('/api/resenas2/stats', auth('admin'), function(req, res) {
+  const db = readDB();
+  res.json({ total: db.resenas2_count || 0, indice: db.resenas2_idx || 0, textos: RESENAS2.length });
 });
 
 // ── Config ────────────────────────────────────────────────────────────────────

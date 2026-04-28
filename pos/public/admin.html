@@ -255,6 +255,30 @@ tr:hover td{background:#faf6f0}
     </div>
   </div>
   <div class="cs" style="margin-bottom:16px">
+    <h4>⭐⭐ QR RESEÑA 2 — CLIENTES QUE REGRESAN</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 16px">Este QR va en el ticket de descuento. El cliente lo escanea cuando regresa y deja una segunda reseña con texto de cliente frecuente.</p>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <div style="background:#fff;padding:12px;border-radius:12px;display:inline-block" id="qr-resenas2-wrap">
+        <div id="qr-resenas2"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+        <button class="btn bg" onclick="descargarQR2()">⬇ Descargar QR como imagen</button>
+        <a href="/resena2" target="_blank" class="btn bo" style="text-decoration:none;text-align:center">👁 Ver página del cliente</a>
+        <div style="font-size:10px;color:#555;margin-top:4px">100 textos de cliente frecuente<br>Rota automáticamente</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:8px 14px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#c9a84c" id="stat-resenas2-count">—</div>
+        <div style="font-size:10px;color:#666;letter-spacing:1px">GENERADAS</div>
+      </div>
+      <div style="background:#111;border:1px solid #333;border-radius:10px;padding:8px 14px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#c9a84c" id="stat-resenas2-idx">—</div>
+        <div style="font-size:10px;color:#666;letter-spacing:1px">TEXTO ACTUAL</div>
+      </div>
+    </div>
+  </div>
+  <div class="cs" style="margin-bottom:16px">
     <h4>EXPORTAR A LOYVERSE</h4>
     <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Descarga el CSV e impórtalo en Loyverse → Artículos → Importar.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -882,7 +906,25 @@ async function loadResenasStats(){
     document.getElementById('stat-resenas-count').textContent=s.total||0;
     document.getElementById('stat-resenas-idx').textContent=((s.indice||0)%(s.textos||100))+1+'/'+(s.textos||100);
   }catch(e){}
-  if(typeof QRCode!=='undefined')initQR();
+  try{
+    const s2=await H('/api/resenas2/stats');
+    document.getElementById('stat-resenas2-count').textContent=s2.total||0;
+    document.getElementById('stat-resenas2-idx').textContent=((s2.indice||0)%(s2.textos||100))+1+'/'+(s2.textos||100);
+  }catch(e){}
+  if(typeof QRCode!=='undefined'){initQR();initQR2();}
+}
+function initQR2(){
+  if(!document.getElementById('qr-resenas2')||document.getElementById('qr-resenas2').childNodes.length>0)return;
+  var url=window.location.protocol+'//'+window.location.host+'/resena2';
+  new QRCode(document.getElementById('qr-resenas2'),{text:url,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+}
+function descargarQR2(){
+  initQR2();
+  setTimeout(function(){
+    var c=document.querySelector('#qr-resenas2 canvas');
+    if(!c){var img=document.querySelector('#qr-resenas2 img');if(img){var a=document.createElement('a');a.download='qr-resena2-lajardin.png';a.href=img.src;a.click();}return;}
+    var a=document.createElement('a');a.download='qr-resena2-lajardin.png';a.href=c.toDataURL('image/png');a.click();
+  },400);
 }
 async function savePasswords(){
   const body={};
