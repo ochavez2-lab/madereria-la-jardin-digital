@@ -277,13 +277,8 @@ app.post('/api/productos/:id/foto', auth('admin','cajero'), function(req, res) {
   const i = db.productos.findIndex(function(p) { return p.id === Number(req.params.id); });
   if (i < 0) return res.status(404).json({ error: 'No encontrado' });
   const base64 = req.body.foto;
-  if (!base64 || !base64.startsWith('data:image')) return res.status(400).json({ error: 'Imagen inválida' });
-  const ext = base64.includes('image/png') ? 'png' : 'jpg';
-  const uploadsDir = path.join(__dirname, 'public', 'uploads');
-  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-  const filename = 'prod-' + db.productos[i].id + '.' + ext;
-  fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(base64.split(',')[1], 'base64'));
-  db.productos[i].foto = '/uploads/' + filename;
+  if (!base64 || !base64.startsWith('data:image')) return res.status(400).json({ error: 'Imagen invalida' });
+  db.productos[i].foto = base64;
   writeDB(db);
   io.emit('productos_actualizados', db.productos);
   res.json(db.productos[i]);
@@ -293,13 +288,9 @@ app.delete('/api/productos/:id/foto', auth('admin','cajero'), function(req, res)
   const db = readDB();
   const i = db.productos.findIndex(function(p) { return p.id === Number(req.params.id); });
   if (i < 0) return res.status(404).json({ error: 'No encontrado' });
-  if (db.productos[i].foto) {
-    const fp = path.join(__dirname, 'public', db.productos[i].foto);
-    if (fs.existsSync(fp)) fs.unlinkSync(fp);
-    delete db.productos[i].foto;
-    writeDB(db);
-    io.emit('productos_actualizados', db.productos);
-  }
+  delete db.productos[i].foto;
+  writeDB(db);
+  io.emit('productos_actualizados', db.productos);
   res.json({ ok: true });
 });
 
