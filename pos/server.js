@@ -66,10 +66,13 @@ const PRODUCTOS_DEFAULT = [
   {id:33, nombre:'OSB 1/2',          medida:'4x8 pies', precio:325, stock:true, categoria:'Triplay'},
   {id:34, nombre:'Cimbra fenolica',  medida:'4x8 pies', precio:460, stock:true, categoria:'Triplay'},
   // ── CUBIERTAS ──
-  {id:35, nombre:'Shingle asfaltico', medida:'por bundle', precio:435, stock:true, categoria:'Cubiertas'},
-  {id:36, nombre:'Membrana azul',     medida:'por rollo',  precio:690, stock:true, categoria:'Cubiertas'},
-  {id:37, nombre:'Membrana granular', medida:'por rollo',  precio:590, stock:true, categoria:'Cubiertas'},
-  {id:38, nombre:'Fieltro 15lb',      medida:'por rollo',  precio:225, stock:true, categoria:'Cubiertas'},
+  {id:35, nombre:'Shingle asfaltico',   medida:'por bundle', precio:435, stock:true, categoria:'Cubiertas'},
+  {id:36, nombre:'Membrana azul',       medida:'por rollo',  precio:690, stock:true, categoria:'Cubiertas'},
+  {id:37, nombre:'Antorchable arenado', medida:'por rollo',  precio:590, stock:true, categoria:'Cubiertas'},
+  {id:38, nombre:'Sticker arenado',     medida:'por rollo',  precio:480, stock:true, categoria:'Cubiertas'},
+  {id:39, nombre:'Fieltro 15lb',        medida:'por rollo',  precio:225, stock:true, categoria:'Cubiertas'},
+  // ── TABLARROCA ──
+  {id:40, nombre:'Hoja de yeso',        medida:'4x8 pies',   precio:185, stock:true, categoria:'Tablarroca'},
 ];
 
 // ── Database (Supabase persistent + file fallback) ────────────────────────────
@@ -570,6 +573,21 @@ app.put('/api/config/passwords', auth('admin'), function(req, res) {
   Object.assign(db.config.passwords, req.body);
   writeDB(db);
   res.json({ ok: true });
+});
+
+app.post('/api/config/logo', auth('admin'), function(req, res) {
+  const db = readDB();
+  const base64 = req.body.logo;
+  if (!base64 || !base64.startsWith('data:image')) return res.status(400).json({ error: 'Imagen invalida' });
+  db.config.logo = base64;
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+app.get('/api/config/logo', function(req, res) {
+  const db = readDB();
+  if (!db.config.logo) return res.status(404).json({ error: 'No hay logo' });
+  res.json({ logo: db.config.logo });
 });
 
 // ── Socket ────────────────────────────────────────────────────────────────────

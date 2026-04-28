@@ -99,7 +99,7 @@ footer p{font-size:11px;color:#444;letter-spacing:2px}
 <header>
   <div class="header-inner">
     <div class="brand">
-      <div class="brand-icon">🪵</div>
+      <div class="brand-icon" id="logo-wrap">🪵</div>
       <div>
         <div class="brand-name">LA JARDÍN</div>
         <div class="brand-sub">MADERERÍA · DESDE TIJUANA</div>
@@ -202,6 +202,9 @@ async function entrar(){
   }catch(e){document.getElementById('err').textContent='Error de conexión';}
 }
 init();
+fetch('/api/config/logo').then(function(r){if(r.ok)return r.json();}).then(function(d){
+  if(d&&d.logo){var w=document.getElementById('logo-wrap');w.innerHTML='';var img=document.createElement('img');img.src=d.logo;img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:10px';w.appendChild(img);}
+}).catch(function(){});
 </script>
 </body>
 </html>

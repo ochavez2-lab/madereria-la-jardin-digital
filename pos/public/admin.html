@@ -273,6 +273,18 @@ tr:hover td{background:#faf6f0}
     </div>
     <div id="msg-backup" style="font-size:12px;color:#4ade80;margin-top:8px;min-height:16px"></div>
   </div>
+  <div class="cs" style="margin-bottom:16px">
+    <h4>LOGO DEL NEGOCIO</h4>
+    <p style="font-size:12px;color:#aaa;margin:8px 0 12px">Aparece en el header del catálogo público. Se guarda permanentemente.</p>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <div id="logo-prev" style="width:80px;height:80px;background:#222;border:1px solid #333;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden">🪵</div>
+      <div>
+        <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="subirLogo(this)">
+        <button class="btn bg" onclick="document.getElementById('logo-file').click()">📷 Subir logo</button>
+        <div id="msg-logo" style="font-size:12px;color:#4ade80;margin-top:6px;min-height:16px"></div>
+      </div>
+    </div>
+  </div>
   <div class="cs">
     <h4>CONTRASEÑAS</h4>
     <div class="fr"><label class="fl">Admin</label><input class="fi" id="pwd-a" type="password" placeholder="Nueva contraseña admin"></div>
@@ -844,6 +856,19 @@ async function saveProveedor(){
 async function delProveedor(id){if(!confirm('¿Eliminar proveedor?'))return;await H('/api/proveedores/'+id,{method:'DELETE'});loadProveedores();}
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
+function subirLogo(input){
+  var file=input.files[0]; if(!file)return;
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    var b64=e.target.result;
+    var prev=document.getElementById('logo-prev');
+    prev.innerHTML='<img src="'+b64+'" style="width:100%;height:100%;object-fit:contain;border-radius:12px">';
+    await H('/api/config/logo',{method:'POST',body:JSON.stringify({logo:b64})});
+    document.getElementById('msg-logo').textContent='✓ Logo guardado';
+    setTimeout(function(){document.getElementById('msg-logo').textContent='';},3000);
+  };
+  reader.readAsDataURL(file);
+}
 async function resetProductos(){
   if(!confirm('¿Restablecer catálogo completo? Se reemplazarán todos los productos con el catálogo actualizado.'))return;
   const r=await H('/api/productos/reset',{method:'POST'});
