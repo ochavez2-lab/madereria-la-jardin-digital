@@ -457,73 +457,45 @@ app.get('/resena', function(req, res) {
 '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
 '<title>Resena La Jardin</title>' +
 '<style>' +
-'*{-webkit-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}' +
-'body{font-family:Arial,Helvetica,sans-serif;background:#111;color:#e8e0d0;min-height:100vh;padding:16px}' +
-'body.light{background:#f5f5f5;color:#111}' +
-'.wrap{max-width:420px;margin:0 auto}' +
-'.topbar{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:end;-webkit-justify-content:flex-end;justify-content:flex-end;margin-bottom:12px}' +
-'.tog{background:none;border:1px solid #555;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px;color:#aaa}' +
-'body.light .tog{border-color:#999;color:#555}' +
-'.card{background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:24px 18px;text-align:center}' +
-'body.light .card{background:#fff;border-color:#ddd}' +
-'.logo{font-size:36px;margin-bottom:6px}' +
-'.title{color:#c9a84c;font-size:20px;font-weight:bold;margin-bottom:2px}' +
-'.sub{color:#666;font-size:11px;margin-bottom:20px}' +
-'.stars{font-size:28px;margin-bottom:16px}' +
-'.label{color:#888;font-size:11px;margin-bottom:8px;text-transform:uppercase}' +
-'.tbox{background:#222;border:2px solid #444;border-radius:12px;padding:16px;font-size:15px;line-height:1.6;text-align:left;margin-bottom:6px;cursor:pointer}' +
-'body.light .tbox{background:#f0f0f0;border-color:#ccc;color:#111}' +
-'.hint{font-size:10px;color:#666;text-align:right;margin-bottom:14px}' +
-'.bcopy{width:100%;background:#1a1a1a;border:2px solid #c9a84c;color:#c9a84c;border-radius:12px;padding:14px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:10px}' +
-'body.light .bcopy{background:#fff}' +
-'.bgo{display:block;width:100%;background:#c9a84c;color:#111;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center}' +
-'.note{color:#666;font-size:11px;margin-top:14px;line-height:1.6}' +
+'*{box-sizing:border-box;margin:0;padding:0}' +
+'body{font-family:Arial,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}' +
+'.card{background:#111;border-radius:20px;padding:28px 22px;max-width:400px;width:100%;text-align:center}' +
+'.logo{font-size:42px;margin-bottom:6px}' +
+'.title{color:#c9a84c;font-size:22px;font-weight:900;letter-spacing:2px}' +
+'.sub{color:#555;font-size:11px;letter-spacing:2px;margin-bottom:22px}' +
+'.stars{font-size:34px;margin-bottom:18px}' +
+'.paso{background:#c9a84c;color:#111;font-size:13px;font-weight:900;border-radius:30px;padding:6px 18px;display:inline-block;margin-bottom:16px;letter-spacing:1px}' +
+'.tbox{background:#222;border:2px solid #333;border-radius:14px;padding:18px;font-size:16px;line-height:1.7;text-align:left;color:#f0ece4;margin-bottom:20px}' +
+'.bcopy{width:100%;background:#c9a84c;border:none;color:#111;border-radius:14px;padding:18px;font-size:16px;font-weight:900;cursor:pointer;letter-spacing:1px}' +
+'.bcopy.ok{background:#22c55e;color:#fff}' +
+'.instruccion{color:#666;font-size:13px;margin-top:16px;line-height:1.8}' +
+'.instruccion b{color:#c9a84c}' +
 '</style></head><body>' +
-'<div class="wrap">' +
-'<div class="topbar"><button class="tog" id="tog" onclick="toggleColor()">☀ Modo claro</button></div>' +
 '<div class="card">' +
 '<div class="logo">🪵</div>' +
-'<div class="title">LA JARDIN</div>' +
-'<div class="sub">MADERERIA · TIJUANA</div>' +
+'<div class="title">LA JARDÍN</div>' +
+'<div class="sub">MADERERÍA · TIJUANA</div>' +
 '<div class="stars">⭐⭐⭐⭐⭐</div>' +
-'<div class="label">Copia este comentario y publicalo</div>' +
-'<div class="tbox" id="txt" onclick="copiar()">' + textoEsc + '</div>' +
-'<div class="hint">Toca el texto para copiar</div>' +
-'<button class="bcopy" id="btn" onclick="copiar()">📋 Copiar texto</button>' +
-'<div id="countdown" style="display:none;background:#c9a84c;color:#111;border-radius:12px;padding:14px;font-size:15px;font-weight:bold;margin-bottom:10px;text-align:center"></div>' +
-'<a class="bgo" id="bgo" href="' + GOOGLE_REVIEW_URL + '">⭐ Abrir Google Reviews</a>' +
-'<p class="note">1. Copia · 2. Se abre Google · 3. Pega y publica<br>Gracias por tu apoyo!</p>' +
-'</div></div>' +
+'<div class="paso">PASO 1 — COPIA ESTE TEXTO</div>' +
+'<div class="tbox">' + textoEsc + '</div>' +
+'<button class="bcopy" id="btn" onclick="copiar()">📋 COPIAR TEXTO</button>' +
+'<p class="instruccion"><b>PASO 2</b> — Se abre Google automáticamente<br><b>PASO 3</b> — Pega el texto ⭐⭐⭐⭐⭐ y publica<br><br>¡Gracias por tu reseña!</p>' +
+'</div>' +
 '<script>' +
 'var T=' + JSON.stringify(texto) + ';' +
 'var GU="' + GOOGLE_REVIEW_URL + '";' +
 'function copiar(){' +
-'  var b=document.getElementById("btn");' +
 '  try{' +
 '    var ta=document.createElement("textarea");' +
 '    ta.value=T;ta.style.position="fixed";ta.style.top="-9999px";' +
 '    document.body.appendChild(ta);ta.focus();ta.select();' +
 '    document.execCommand("copy");' +
 '    document.body.removeChild(ta);' +
-'    b.style.display="none";' +
-'    iniciarConteo();' +
-'  }catch(e){b.textContent="Manten presionado el texto y copia";}' +
-'}' +
-'function iniciarConteo(){' +
-'  var d=document.getElementById("countdown");' +
-'  d.style.display="block";' +
-'  var s=3;' +
-'  d.textContent="✓ Copiado! Abriendo Google en "+s+"...";' +
-'  var iv=setInterval(function(){' +
-'    s--;' +
-'    if(s>0){d.textContent="✓ Copiado! Abriendo Google en "+s+"...";}' +
-'    else{clearInterval(iv);d.textContent="Abriendo...";window.location.href=GU;}' +
-'  },1000);' +
-'}' +
-'' +
-'function toggleColor(){' +
-'  var l=document.body.classList.toggle("light");' +
-'  document.getElementById("tog").textContent=l?"🌙 Modo oscuro":"☀ Modo claro";' +
+'    var b=document.getElementById("btn");' +
+'    b.textContent="✓ COPIADO — Abriendo Google...";' +
+'    b.classList.add("ok");' +
+'    setTimeout(function(){window.location.href=GU;},1500);' +
+'  }catch(e){document.getElementById("btn").textContent="Manten presionado y copia";}' +
 '}' +
 '<\/script></body></html>');
 });
