@@ -447,9 +447,13 @@ const RESENAS2 = require('./resenas2');
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CRrkUjwJJUHEECA/review';
 
 app.get('/resena', function(req, res) {
-  const db = readDB();
-  const idx = db.resenas_idx % RESENAS.length;
-  const texto = RESENAS[idx];
+  var db;
+  try { db = readDB(); } catch(e) { db = null; }
+  if (!db) {
+    return res.status(500).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:Arial;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0"><div style="text-align:center"><p style="font-size:18px;color:#c9a84c">Intenta de nuevo en unos segundos</p><a href="/resena" style="color:#c9a84c">🔄 Reintentar</a></div></body></html>');
+  }
+  const idx = (db.resenas_idx || 0) % RESENAS.length;
+  const texto = RESENAS[idx] || RESENAS[0];
   db.resenas_idx = idx + 1;
   db.resenas_count = (db.resenas_count || 0) + 1;
   writeDB(db);
@@ -546,9 +550,13 @@ app.get('/api/resenas/stats', auth('admin'), function(req, res) {
 });
 
 app.get('/resena2', function(req, res) {
-  const db = readDB();
-  const idx = db.resenas2_idx % RESENAS2.length;
-  const texto = RESENAS2[idx];
+  var db;
+  try { db = readDB(); } catch(e) { db = null; }
+  if (!db) {
+    return res.status(500).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:Arial;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0"><div style="text-align:center"><p style="font-size:18px;color:#c9a84c">Intenta de nuevo en unos segundos</p><a href="/resena2" style="color:#c9a84c">🔄 Reintentar</a></div></body></html>');
+  }
+  const idx = (db.resenas2_idx || 0) % RESENAS2.length;
+  const texto = RESENAS2[idx] || RESENAS2[0];
   db.resenas2_idx = idx + 1;
   db.resenas2_count = (db.resenas2_count || 0) + 1;
   writeDB(db);
