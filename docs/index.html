@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Maderería La Jardín TJ — Madera estructural, triplay, OSB, impermeabilización. Tijuana y Rosarito. Tel: 664 709-3835">
+<title>Maderería La Jardín TJ — Tijuana</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--dark2:#1a1a1a;
+  --card:#fff;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+/* ── NAV ── */
+nav{background:var(--dark);position:sticky;top:0;z-index:100;border-bottom:1px solid #222}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-tree{display:flex;flex-direction:column;align-items:center}
+.nt1{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:9px solid var(--gold)}
+.nt2{width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:10px solid var(--gold);margin-top:-3px}
+.nt3{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:11px solid var(--gold);margin-top:-4px}
+.nt-trunk{width:3px;height:5px;background:var(--gold)}
+.nav-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:900;color:var(--gold);letter-spacing:1px;line-height:1}
+.nav-sub{font-size:8px;color:#555;letter-spacing:2px}
+.nav-tel{color:var(--gold);font-size:13px;font-weight:700;text-decoration:none}
+.nav-links{display:flex;gap:20px}
+.nav-links a{color:#666;font-size:12px;font-weight:600;text-decoration:none;letter-spacing:.5px;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+@media(max-width:600px){.nav-links{display:none}}
+
+/* ── HERO ── */
+.hero{background:var(--dark);padding:56px 20px 48px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,#c9a84c18 0%,transparent 70%)}
+.hero-badge{display:inline-block;background:#1a1a1a;border:1px solid #333;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:3px;padding:6px 16px;border-radius:30px;margin-bottom:18px;text-transform:uppercase}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(28px,6vw,52px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:8px}
+.hero h1 span{color:var(--gold)}
+.hero-sub{font-size:14px;color:#666;letter-spacing:1px;margin-bottom:28px}
+.hero-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:32px}
+.pill{background:#1a1a1a;border:1px solid #2a2a2a;color:#aaa;font-size:11px;font-weight:600;padding:6px 14px;border-radius:20px;letter-spacing:.5px}
+.pill.gold{border-color:var(--gold);color:var(--gold)}
+.hero-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.btn-wa{background:linear-gradient(135deg,#25d366,#1ebe5d);color:#fff;font-size:14px;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;letter-spacing:.5px;transition:filter .2s}
+.btn-wa:hover{filter:brightness(1.1)}
+.btn-outline{border:1.5px solid var(--gold);color:var(--gold);font-size:14px;font-weight:700;padding:13px 24px;border-radius:12px;text-decoration:none;letter-spacing:.5px;transition:all .2s}
+.btn-outline:hover{background:var(--gold);color:#111}
+
+/* ── STATS BAR ── */
+.stats{background:linear-gradient(135deg,var(--gold),var(--gold2));padding:16px 20px}
+.stats-inner{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.stat{text-align:center;padding:0 20px}
+.stat-n{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#111;line-height:1}
+.stat-l{font-size:10px;color:#5a4a1a;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.stat-div{width:1px;height:32px;background:#c9a84c44}
+
+/* ── SECTION ── */
+section{max-width:1100px;margin:0 auto;padding:48px 20px}
+.sec-title{font-family:'Playfair Display',serif;font-size:clamp(20px,4vw,30px);font-weight:900;color:var(--text);margin-bottom:4px}
+.sec-title span{color:var(--gold)}
+.sec-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.gold-line{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));margin:10px 0 24px}
+
+/* ── FILTER TABS ── */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.tab{padding:8px 18px;border-radius:30px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);letter-spacing:.5px;transition:all .15s;font-family:'Inter',sans-serif}
+.tab.on{background:var(--dark);color:var(--gold);border-color:var(--dark)}
+.tab:hover:not(.on){border-color:var(--gold);color:var(--gold)}
+
+/* ── PRODUCT TABLE ── */
+.ptable-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);margin-bottom:32px;background:#fff}
+.ptable{width:100%;border-collapse:collapse;font-size:13px}
+.ptable thead tr{background:var(--dark)}
+.ptable thead th{color:var(--gold);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:12px 16px;text-align:left;white-space:nowrap}
+.ptable tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+.ptable tbody tr:last-child{border-bottom:none}
+.ptable tbody tr:hover{background:#faf7f2}
+.ptable td{padding:11px 16px;vertical-align:middle}
+.ptable .prod-name{font-weight:700;color:var(--text)}
+.ptable .prod-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.price-cell{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--text)}
+.price-bulto{color:var(--gold)}
+.badge-uso{display:inline-block;background:#f5f0e8;color:#8a6a2a;font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px;letter-spacing:.5px;white-space:nowrap}
+.badge-azul{background:#e8f0ff;color:#2456aa}
+.wa-btn{display:inline-flex;align-items:center;gap:5px;background:#25d366;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;text-decoration:none;white-space:nowrap}
+.wa-btn:hover{background:#1ebe5d}
+
+/* ── PHOTO GALLERY ── */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:480px){.gallery{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:768px){.gallery{grid-template-columns:repeat(4,1fr)}}
+.photo-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .25s;cursor:pointer}
+.photo-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px #c9a84c18}
+.photo-slot{aspect-ratio:1;background:linear-gradient(145deg,#f5f0e8,#ede6d8);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.photo-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.photo-emoji{font-size:36px;opacity:.4}
+.photo-label{padding:10px 12px}
+.photo-label strong{font-size:12px;font-weight:700;display:block}
+.photo-label span{font-size:10px;color:var(--muted)}
+
+/* ── INFO CARDS ── */
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(min-width:600px){.info-grid{grid-template-columns:repeat(4,1fr)}}
+.info-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px 16px;text-align:center}
+.info-icon{font-size:28px;margin-bottom:8px}
+.info-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.info-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ── WHY US ── */
+.why-grid{display:grid;gap:12px}
+@media(min-width:600px){.why-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.why-grid{grid-template-columns:repeat(3,1fr)}}
+.why-card{background:#fff;border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:16px 18px}
+.why-card h4{font-size:13px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.why-card p{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── CONTACT ── */
+.contact-band{background:var(--dark);padding:48px 20px}
+.contact-inner{max-width:1100px;margin:0 auto;display:grid;gap:32px}
+@media(min-width:700px){.contact-inner{grid-template-columns:1fr 1fr}}
+.contact-info h2{font-family:'Playfair Display',serif;font-size:26px;color:var(--gold);margin-bottom:16px}
+.contact-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.contact-row .icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.contact-row .val{font-size:13px;color:#ccc;line-height:1.6}
+.contact-row .val strong{color:#fff;display:block}
+.contact-row .val a{color:var(--gold);text-decoration:none}
+.social-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.soc-btn{display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;transition:filter .2s}
+.soc-btn:hover{filter:brightness(1.1)}
+.soc-wa{background:#25d366;color:#fff}
+.soc-fb{background:#1877f2;color:#fff}
+.soc-gm{background:#fff;color:#333;border:1px solid #ddd}
+.map-placeholder{background:#1a1a1a;border:1px solid #333;border-radius:16px;height:240px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.map-placeholder p{color:#555;font-size:12px}
+.map-placeholder a{color:var(--gold);text-decoration:none;font-weight:700;font-size:14px;display:block;margin-top:8px}
+
+/* ── FLETE BANNER ── */
+.flete-banner{background:linear-gradient(135deg,var(--gold),var(--gold2));padding:20px;border-radius:16px;text-align:center;margin-bottom:32px}
+.flete-banner strong{font-size:16px;font-weight:900;color:#111;display:block}
+.flete-banner span{font-size:12px;color:#5a4a1a}
+
+/* ── FAQ ── */
+.faq{display:grid;gap:10px}
+@media(min-width:600px){.faq{grid-template-columns:repeat(2,1fr)}}
+.faq-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}
+.faq-item h4{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.faq-item p{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── FOOTER ── */
+footer{background:#080808;padding:24px 20px;text-align:center}
+footer p{font-size:11px;color:#333;letter-spacing:1px}
+footer span{color:var(--gold)}
+
+/* ── WHATSAPP FAB ── */
+.wa-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;text-decoration:none;box-shadow:0 4px 20px #25d36644;z-index:200;transition:transform .2s}
+.wa-fab:hover{transform:scale(1.1)}
+
+/* ── HIDDEN ── */
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-tree">
+        <div class="nt1"></div><div class="nt2"></div><div class="nt3"></div>
+        <div class="nt-trunk"></div>
+      </div>
+      <div>
+        <div class="nav-name">LA JARDÍN</div>
+        <div class="nav-sub">MADERERÍA · TJ</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#catalogo">Catálogo</a>
+      <a href="#fotos">Fotos</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </div>
+    <a class="nav-tel" href="tel:6647093835">📞 664 709-3835</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🏆 10 años en el mercado · Tijuana & Rosarito</div>
+  <h1>Madera de primera.<br><span>Precio justo.</span></h1>
+  <div class="hero-sub">Barrotes · Triplay · OSB · Impermeabilización · Entrega el mismo día</div>
+  <div class="hero-pills">
+    <span class="pill gold">✓ Flete gratis 50+ piezas</span>
+    <span class="pill">Mayoreo y menudeo</span>
+    <span class="pill">Entrega hasta 7:20 pm</span>
+    <span class="pill">Terminal bancaria</span>
+  </div>
+  <div class="hero-btns">
+    <a class="btn-wa" href="https://wa.me/17144224650" target="_blank">💬 Cotizar por WhatsApp</a>
+    <a class="btn-outline" href="#catalogo">Ver precios →</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat"><div class="stat-n">10+</div><div class="stat-l">Años de exp.</div></div>
+    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-n">200+</div><div class="stat-l">Reseñas 5★</div></div>
+    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-n">2</div><div class="stat-l">Sucursales</div></div>
+    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-n">Hoy</div><div class="stat-l">Entrega TJ/RST</div></div>
+    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-n">7am</div><div class="stat-l">Abrimos Lun–Sáb</div></div>
+  </div>
+</div>
+
+<!-- CATÁLOGO -->
+<section id="catalogo">
+  <div class="sec-title">Catálogo de <span>Precios</span></div>
+  <div class="gold-line"></div>
+  <div class="sec-sub">Precios en MXN · Sujetos a cambio · Precio bulto desde 50 piezas</div>
+
+  <div class="flete-banner">
+    <strong>🚚 FLETE GRATIS en compras de 50+ piezas — Tijuana y Rosarito</strong>
+    <span>Costo regular $100–$200 · Pedidos antes de las 5pm se entregan hoy</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="filtrar('todo',this)">Todo</button>
+    <button class="tab" onclick="filtrar('2x4',this)">Barrotes 2×4</button>
+    <button class="tab" onclick="filtrar('4x4',this)">Barrotes 4×4</button>
+    <button class="tab" onclick="filtrar('2x6',this)">Barrotes 2×6</button>
+    <button class="tab" onclick="filtrar('panel',this)">Paneles</button>
+    <button class="tab" onclick="filtrar('imp',this)">Impermeab.</button>
+  </div>
+
+  <!-- BARROTES 2x4 -->
+  <div class="ptable-wrap cat-2x4">
+    <table class="ptable">
+      <thead><tr>
+        <th>Producto</th><th>Descripción / Uso</th><th>$ Pieza</th><th>$ Bulto</th><th>Cotizar</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="prod-name">2×4×8 #1</span></td><td><span class="badge-uso badge-azul">Estructural Azul</span> <span class="prod-desc">Cert. estructural · Armado de paredes</span></td><td class="price-cell">$85</td><td class="price-cell price-bulto">$78</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x8%20%231%20Azul" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×8 #1</span></td><td><span class="badge-uso">Normal</span> <span class="prod-desc">Uso general · Marcos y cerchas</span></td><td class="price-cell">$80</td><td class="price-cell price-bulto">$72</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x8%20Normal" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×8 #2</span></td><td><span class="badge-uso">Económico</span> <span class="prod-desc">Uso no estructural</span></td><td class="price-cell">$72</td><td class="price-cell price-bulto">$68</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x8%20%232" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×10 #1</span></td><td><span class="badge-uso">Estructural</span> <span class="prod-desc">Largueros de piso · 10 pies</span></td><td class="price-cell">$130</td><td class="price-cell price-bulto">$110</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x10" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×12 #1</span></td><td><span class="badge-uso">Estructural</span> <span class="prod-desc">Marcos de ventana · Vigas 12 pies</span></td><td class="price-cell">$140</td><td class="price-cell price-bulto">$125</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x12" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×14</span></td><td><span class="prod-desc">Techados y aleros · 14 pies</span></td><td class="price-cell">$160</td><td class="price-cell price-bulto">$155</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x14" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×16</span></td><td><span class="prod-desc">Cubierta y techo · Trabe 16 pies</span></td><td class="price-cell">$190</td><td class="price-cell price-bulto">$180</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x16" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×18</span></td><td><span class="prod-desc">Entrepisos y trabes · 18 pies</span></td><td class="price-cell">$240</td><td class="price-cell price-bulto">$220</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x18" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×20</span></td><td><span class="prod-desc">Vigas principales · Claros largos · 20 pies</span></td><td class="price-cell">$250</td><td class="price-cell price-bulto">$230</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x20" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×4×22</span></td><td><span class="prod-desc">Obras de gran escala · 22 pies</span></td><td class="price-cell">$265</td><td class="price-cell price-bulto">$250</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x4x22" target="_blank">💬 WA</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BARROTES 4x4 -->
+  <div class="ptable-wrap cat-4x4">
+    <table class="ptable">
+      <thead><tr>
+        <th>Producto</th><th>Descripción / Uso</th><th>$ Pieza</th><th>$ Bulto</th><th>Cotizar</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="prod-name">4×4×8</span></td><td><span class="badge-uso">Estructural</span> <span class="prod-desc">Postes y columnas · Soporte vertical</span></td><td class="price-cell">$190</td><td class="price-cell price-bulto">$170</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%204x4x8" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">4×4×10</span></td><td><span class="badge-uso">Estructural</span> <span class="prod-desc">Pérgolas · Columnas exteriores · 10 pies</span></td><td class="price-cell">$270</td><td class="price-cell price-bulto">$245</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%204x4x10" target="_blank">💬 WA</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BARROTES 2x6 -->
+  <div class="ptable-wrap cat-2x6">
+    <table class="ptable">
+      <thead><tr>
+        <th>Producto</th><th>Descripción / Uso</th><th>$ Pieza</th><th>$ Bulto</th><th>Cotizar</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="prod-name">2×6×8</span></td><td><span class="prod-desc">Viga de piso · Larguero primario</span></td><td class="price-cell">$140</td><td class="price-cell price-bulto">$125</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x8" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×10</span></td><td><span class="prod-desc">Viga de piso · Entrepiso residencial</span></td><td class="price-cell">$180</td><td class="price-cell price-bulto">$165</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x10" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×12</span></td><td><span class="prod-desc">Viga estructural · Techo y piso</span></td><td class="price-cell">$210</td><td class="price-cell price-bulto">$185</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x12" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×14</span></td><td><span class="prod-desc">Viga larga · Claros amplios</span></td><td class="price-cell">$250</td><td class="price-cell price-bulto">$230</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x14" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×16</span></td><td><span class="prod-desc">Viga de naves y bodegas</span></td><td class="price-cell">$270</td><td class="price-cell price-bulto">$250</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x16" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×18</span></td><td><span class="prod-desc">Viga pesada · Estructuras grandes</span></td><td class="price-cell">$310</td><td class="price-cell price-bulto">$290</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x18" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×20</span></td><td><span class="prod-desc">Viga pesada · Claros de 20 pies</span></td><td class="price-cell">$370</td><td class="price-cell price-bulto">$345</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x20" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">2×6×22</span></td><td><span class="prod-desc">Viga pesada · Obra industrial</span></td><td class="price-cell">$400</td><td class="price-cell price-bulto">$390</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%202x6x22" target="_blank">💬 WA</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PANELES -->
+  <div class="ptable-wrap cat-panel">
+    <table class="ptable">
+      <thead><tr>
+        <th>Producto</th><th>Descripción / Uso</th><th>$ Pieza</th><th>$ Bulto</th><th>Cotizar</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="prod-name">Triplay 3/4</span></td><td><span class="badge-uso">CDX Pino</span> <span class="prod-desc">Subpiso y formaleta · Alta resistencia</span></td><td class="price-cell">$470</td><td class="price-cell price-bulto">$430</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Triplay%203/4" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Triplay 5/8</span></td><td><span class="badge-uso">CDX Pino</span> <span class="prod-desc">Muros y techos · Uso general</span></td><td class="price-cell">$395</td><td class="price-cell price-bulto">$375</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Triplay%205/8" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Triplay 1/2</span></td><td><span class="badge-uso">CDX Pino</span> <span class="prod-desc">Acabado y cierre · Ligero</span></td><td class="price-cell">$350</td><td class="price-cell price-bulto">$310</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Triplay%201/2" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">OSB 3/4</span></td><td><span class="badge-uso">Petatillo</span> <span class="prod-desc">Subpiso y muro portante · Alta densidad</span></td><td class="price-cell">$390</td><td class="price-cell price-bulto">$365</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20OSB%203/4" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">OSB 5/8</span></td><td><span class="badge-uso">Petatillo</span> <span class="prod-desc">Muros estructurales · Uso general</span></td><td class="price-cell">$320</td><td class="price-cell price-bulto">$280</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20OSB%205/8" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">OSB 1/2</span></td><td><span class="badge-uso">Petatillo</span> <span class="prod-desc">Cierre y forro · Ligero</span></td><td class="price-cell">$280</td><td class="price-cell price-bulto">$250</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20OSB%201/2" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Cimbraplay 3/4</span></td><td><span class="badge-uso">Doble cara</span> <span class="prod-desc">Alta resist. · Reutilizable · Formaleta</span></td><td class="price-cell">$530</td><td class="price-cell price-bulto">$490</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Cimbraplay%203/4" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Cimbraplay 5/8</span></td><td><span class="badge-uso">Doble cara</span> <span class="prod-desc">Formaleta estándar</span></td><td class="price-cell">$490</td><td class="price-cell price-bulto">$480</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Cimbraplay%205/8" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Ranurado 1/2</span></td><td><span class="badge-uso">R8</span> <span class="prod-desc">Cieloraso y decoración · Acabado fino</span></td><td class="price-cell">$540</td><td class="price-cell price-bulto">$515</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Ranurado%201/2" target="_blank">💬 WA</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- IMPERMEABILIZACIÓN -->
+  <div class="ptable-wrap cat-imp">
+    <table class="ptable">
+      <thead><tr>
+        <th>Producto</th><th>Descripción / Uso</th><th>$ Pieza</th><th>$ Bulto</th><th>Cotizar</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><span class="prod-name">Membrana Antorchable</span></td><td><span class="badge-uso">Arenada 4.5</span> <span class="prod-desc">10m×1m · Aplicación con soplete</span></td><td class="price-cell">$850</td><td class="price-cell price-bulto">$800</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Membrana%20Antorchable" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Membrana Sticker</span></td><td><span class="badge-uso">Arenada 4.5</span> <span class="prod-desc">10m×1m · Adhesiva autoportante</span></td><td class="price-cell">$850</td><td class="price-cell price-bulto">$800</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Membrana%20Sticker" target="_blank">💬 WA</a></td></tr>
+        <tr><td><span class="prod-name">Shingle Asfáltico</span></td><td><span class="badge-uso">Teja</span> <span class="prod-desc">Techos inclinados · Fácil instalación</span></td><td class="price-cell">$380</td><td class="price-cell price-bulto">$370</td><td><a class="wa-btn" href="https://wa.me/17144224650?text=Hola,%20quiero%20cotizar%20Shingle%20Asfaltico" target="_blank">💬 WA</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOTOS -->
+<div style="background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+<section id="fotos">
+  <div class="sec-title">Galería de <span>Productos</span></div>
+  <div class="gold-line"></div>
+  <div class="sec-sub">Fotos reales del inventario · Madera seleccionada en almacén</div>
+  <div class="gallery">
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">🪵</div></div><div class="photo-label"><strong>Barrotes 2×4</strong><span>Estructural Azul — varios pies</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">🪵</div></div><div class="photo-label"><strong>Barrotes 4×4</strong><span>Postes y columnas</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">🪵</div></div><div class="photo-label"><strong>Barrotes 2×6</strong><span>Vigas estructurales</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">📦</div></div><div class="photo-label"><strong>Triplay CDX</strong><span>3/4 · 5/8 · 1/2 pulgada</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">📦</div></div><div class="photo-label"><strong>OSB Petatillo</strong><span>3/4 · 5/8 · 1/2 pulgada</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">📦</div></div><div class="photo-label"><strong>Cimbraplay</strong><span>Doble cara melamina</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">🏠</div></div><div class="photo-label"><strong>Membrana Antorchable</strong><span>Impermeabilización</span></div></div>
+    <div class="photo-card"><div class="photo-slot"><div class="photo-emoji">🏠</div></div><div class="photo-label"><strong>Shingle Asfáltico</strong><span>Techos inclinados</span></div></div>
+  </div>
+</section>
+</div>
+
+<!-- POR QUÉ ELEGIRNOS -->
+<section id="nosotros">
+  <div class="sec-title">¿Por qué <span>elegirnos?</span></div>
+  <div class="gold-line"></div>
+  <div class="why-grid">
+    <div class="why-card"><h4>📦 Inventario completo</h4><p>Barrotes, paneles e impermeabilización en un solo lugar. No pierdas tiempo buscando.</p></div>
+    <div class="why-card"><h4>🚚 Entrega el mismo día</h4><p>Pedidos antes de las 5pm se entregan hoy en Tijuana y Rosarito.</p></div>
+    <div class="why-card"><h4>⭐ Madera de primera</h4><p>Surtido directo de importación, seleccionado en almacén. Sin defectos.</p></div>
+    <div class="why-card"><h4>💰 Precio de mayoreo</h4><p>Desde 50 piezas obtienes precio de bulto. Sin trámites ni contratos.</p></div>
+    <div class="why-card"><h4>🤝 Atención directa</h4><p>Trato sin intermediarios. Cotización al instante. 10 años de confianza.</p></div>
+    <div class="why-card"><h4>🏗️ Para constructores</h4><p>Vendemos desde 1 pieza hasta camiones completos. Mayoreo y menudeo.</p></div>
+  </div>
+
+  <div style="margin-top:32px">
+    <div class="sec-title" style="font-size:18px;margin-bottom:8px">Preguntas <span>frecuentes</span></div>
+    <div class="faq">
+      <div class="faq-item"><h4>¿Entregan a domicilio?</h4><p>Sí, en Tijuana y Rosarito. Gratis desde 50 piezas. Costo regular $100–$200.</p></div>
+      <div class="faq-item"><h4>¿Aceptan tarjeta?</h4><p>Sí, terminal bancaria y efectivo. No se aceptan cheques.</p></div>
+      <div class="faq-item"><h4>¿Hacen mayoreo?</h4><p>Sí. Desde 50 piezas obtienes precio de bulto automáticamente.</p></div>
+      <div class="faq-item"><h4>¿Puedo recoger en tienda?</h4><p>Claro. Calle Nogal #3516, Col. Jardín, Tijuana. Lun–Sáb 7am–6pm.</p></div>
+      <div class="faq-item"><h4>¿Tienen más productos?</h4><p>También manejamos Hoja Deglas y pedidos especiales. Pregunta por WhatsApp.</p></div>
+      <div class="faq-item"><h4>¿Hacen cotizaciones?</h4><p>Sí, al instante. Ven a la maderería o llama al (664) 709-3835.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<div class="contact-band" id="contacto">
+  <div class="contact-inner">
+    <div class="contact-info">
+      <h2>Contáctanos</h2>
+      <div class="contact-row">
+        <span class="icon">📞</span>
+        <div class="val">
+          <strong>Teléfono local</strong>
+          <a href="tel:6647093835">(664) 709-3835</a>
+        </div>
+      </div>
+      <div class="contact-row">
+        <span class="icon">💬</span>
+        <div class="val">
+          <strong>WhatsApp (desde USA)</strong>
+          <a href="https://wa.me/17144224650" target="_blank">(001-714) 422-4650</a>
+        </div>
+      </div>
+      <div class="contact-row">
+        <span class="icon">📧</span>
+        <div class="val">
+          <strong>Email</strong>
+          <a href="mailto:madererialajardin@gmail.com">madererialajardin@gmail.com</a>
+        </div>
+      </div>
+      <div class="contact-row">
+        <span class="icon">📍</span>
+        <div class="val">
+          <strong>Dirección</strong>
+          Calle Nogal #3516, Col. Jardín<br>Tijuana, B.C. 22610
+        </div>
+      </div>
+      <div class="contact-row">
+        <span class="icon">🕐</span>
+        <div class="val">
+          <strong>Horario</strong>
+          Lun–Sáb 7:00am – 6:00pm<br>Entregas hasta 7:20pm
+        </div>
+      </div>
+      <div class="social-row">
+        <a class="soc-btn soc-wa" href="https://wa.me/17144224650" target="_blank">💬 WhatsApp</a>
+        <a class="soc-btn soc-fb" href="https://facebook.com/MadererialaJardinTJ" target="_blank">📘 Facebook</a>
+        <a class="soc-btn soc-gm" href="https://maps.app.goo.gl/madereria-la-jardin" target="_blank">📍 Google Maps</a>
+      </div>
+    </div>
+    <div>
+      <div class="map-placeholder">
+        <div>
+          <div style="font-size:36px;margin-bottom:12px">📍</div>
+          <p style="color:#888;font-size:13px">Calle Nogal #3516<br>Col. Jardín, Tijuana B.C.</p>
+          <a href="https://maps.app.goo.gl/search/madereria+la+jardin+tijuana" target="_blank">Ver en Google Maps →</a>
+        </div>
+      </div>
+      <div class="info-grid" style="margin-top:14px">
+        <div class="info-card"><div class="info-icon">🏪</div><div class="info-title">Tijuana</div><div class="info-desc">Nogal 3516<br>Col. Jardín</div></div>
+        <div class="info-card"><div class="info-icon">🏖️</div><div class="info-title">Rosarito</div><div class="info-desc">También<br>disponible</div></div>
+        <div class="info-card"><div class="info-icon">🚚</div><div class="info-title">Flete</div><div class="info-desc">Gratis<br>50+ piezas</div></div>
+        <div class="info-card"><div class="info-icon">💳</div><div class="info-title">Pago</div><div class="info-desc">Efectivo<br>+ Terminal</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 <span>MADERERÍA LA JARDÍN TJ</span> · Tijuana & Rosarito · (664) 709-3835 · Precios MXN sujetos a cambio</p>
+</footer>
+
+<!-- WhatsApp FAB -->
+<a class="wa-fab" href="https://wa.me/17144224650" target="_blank" title="Cotizar por WhatsApp">💬</a>
+
+<script>
+function filtrar(cat, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const clases = ['cat-2x4','cat-4x4','cat-2x6','cat-panel','cat-imp'];
+  clases.forEach(c => {
+    const el2 = document.querySelector('.' + c);
+    if (el2) el2.style.display = (cat === 'todo' || cat === c.replace('cat-','')) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
