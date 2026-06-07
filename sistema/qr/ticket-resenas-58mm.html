@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket QR Reseñas — Maderería La Jardín</title>
+<style>
+  @page { size: 58mm auto; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 58mm;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+    background: #fff;
+    text-align: center;
+    padding: 3mm 2mm;
+  }
+  .brand {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1mm;
+  }
+  .msg {
+    font-size: 10px;
+    line-height: 1.3;
+    margin-bottom: 2mm;
+  }
+  .qr {
+    width: 38mm;
+    height: 38mm;
+    margin: 1mm auto;
+    display: block;
+  }
+  .cta {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2mm;
+  }
+  .footer {
+    font-size: 8px;
+    color: #444;
+    margin-top: 2mm;
+  }
+  @media print {
+    body { width: 58mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="brand">Maderería La Jardín</div>
+  <div class="msg">¡Tu opinión nos ayuda a mejorar!<br>Escanea el código y déjanos tu reseña en Google.</div>
+  <img class="qr" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQAAAABTUiuoAAACQElEQVR4nO2bQYrjMBBFX0WGXtqQA8xR7Jv1meYG9lH6BtKyQeHPQpKdMLPIMGQsSNXCBPstCj7l+lVWTDwZ2+VZEhx11NELJKuxcDO26Wbt3kB7NHSSq6MESZKAIPuMQWw/MswRmCVJsZtc3xsdADAIGdKENgvZ5q8PWQHSBPPP1yXg6F+rdYTNcTK2CRPpfyTg6L+hQVIMv3vFHnN9M7TUVpMmZLYpYIDVe6OgVNnpuTp6AW7F9wFgnxGYY5AtAJuZmU2vTcDRZ0N3EQEIxR1qHe+faT09V0cvkNpYtRR5vg3GXB63QeylCTj6dNRRqwiVgVEqo1aNajq8tjpAKVIUEziq2Y0x18F4bbOzq9UBWtRijvsvqV72KisdzNU6Hx1qjxqFMX6bSNeszUIWaciCPFh5MZ6eq6NIsV3W8v7LNHcIeN/qCd3fhHvfanbwbqE7e9/qA909YUYrR6mF5hNjm7xcrfPRfTrOVCfYrMbD29HV6gIdIF2zlQ1G+hCkY20IBh8y0jV3kKujO3ozW8ZM2QluNgAEMe9F11Gub4u26bhMwsDjnrA0L+9bnaAcPuJemfEPS97Tc3X0cQcf9gKj+I1DMlerD/Q489Sm42NjaAu0ez3k+uboXd8qxbSyz2D7GsN3GV2h9cRgMYaS2QRSvJXPxqXoesnV0RZBzF8DWtOA2RTqx8nNT3/2irY9oVbAljTg81Yv6EPfUn5sWXXz5PNWL+j915F6lLrJU3aHtLWhq3U+av6PIEcdfQn6C0gc2o4CIknOAAAAAElFTkSuQmCC" alt="QR Reseñas Google">
+  <div class="cta">⭐ Califícanos en Google ⭐</div>
+  <div class="footer">Nogal 3516, Col. Ciudad Jardín, Tijuana</div>
+  <script>
+    window.addEventListener('load', () => setTimeout(() => window.print(), 300));
+  </script>
+</body>
+</html>
