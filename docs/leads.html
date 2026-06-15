@@ -102,6 +102,7 @@ textarea:focus{border-color:var(--gold)}
 
   <div class="historial-toggle" onclick="toggleHistorial()" id="histToggle">Ver historial de contactados (<span id="histCount">0</span>)</div>
   <div class="historial-toggle" onclick="descargarBackup()">⬇️ Descargar respaldo (Excel)</div>
+  <div class="historial-toggle" onclick="actualizarAhora(this)" id="syncToggle">🔄 Actualizar</div>
   <div id="historialBox" style="display:none"></div>
 
 </div>
@@ -158,13 +159,22 @@ async function syncHistorial(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ entries: local })
     });
-    if (!res.ok) return;
+    if (!res.ok) return false;
     const merged = await res.json();
     if (Array.isArray(merged) && merged.length){
       saveHistorial(merged);
       actualizarContadorHistorial();
     }
-  } catch(e) { /* sin conexión: seguimos con los datos locales */ }
+    return true;
+  } catch(e) { return false; /* sin conexión: seguimos con los datos locales */ }
+}
+
+async function actualizarAhora(btn){
+  const original = btn.textContent;
+  btn.textContent = '🔄 Actualizando...';
+  const ok = await syncHistorial();
+  btn.textContent = ok ? '✅ Actualizado' : '⚠️ Sin conexión al servidor';
+  setTimeout(() => { btn.textContent = original; }, 2000);
 }
 
 function normalizarNumero(digits){
