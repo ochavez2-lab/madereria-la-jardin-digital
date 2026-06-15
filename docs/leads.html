@@ -39,12 +39,16 @@ textarea:focus{border-color:var(--gold)}
 
 .lead-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
 .lead-card.done{opacity:.45}
+.lead-card.repetido{border-color:#f3c2c2;background:#fff6f6;opacity:1}
 .lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
 .lead-ctx{font-size:11px;color:var(--muted);background:#f7f4ef;border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4}
 .lead-actions{display:flex;gap:8px}
 .btn-wa{flex:1;background:#25d366;color:#fff;text-align:center;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;text-decoration:none}
-.btn-done{background:#eee;color:#666;border:none;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-done{flex:1;background:#eee;color:#666;border:none;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-sinwa{flex:1;background:#fff;color:#c0392b;border:1.5px solid #f3c2c2;border-radius:10px;padding:11px 8px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-sms{flex:1;background:#007aff;color:#fff;text-align:center;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;text-decoration:none}
 .lead-card.done .btn-done{background:var(--gold);color:#111}
+.badge-rojo{display:inline-block;background:#e74c3c;color:#fff;font-size:10px;font-weight:700;padding:5px 10px;border-radius:20px;align-self:flex-start}
 
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 0}
 
@@ -215,8 +219,8 @@ function procesar(){
     </div>
   `;
 
-  if (nuevos.length === 0){
-    document.getElementById('resultados').innerHTML = '<div class="empty">No se encontraron números nuevos 🤷</div>';
+  if (nuevos.length === 0 && repetidos.length === 0){
+    document.getElementById('resultados').innerHTML = '<div class="empty">No se encontraron números 🤷</div>';
     return;
   }
 
@@ -232,11 +236,47 @@ function procesar(){
         <div class="lead-ctx">${n.contexto}</div>
         <div class="lead-actions">
           <a class="btn-wa" href="https://wa.me/${n.numero}?text=${mensajeEnc}" target="_blank">💬 Abrir WhatsApp</a>
+        </div>
+        <div class="lead-actions">
           <button class="btn-done" onclick="marcarContactado(${i})">✓ Listo</button>
+          <button class="btn-sinwa" onclick="marcarSinWhatsapp(${i})">📵 Sin WhatsApp</button>
         </div>
       </div>
     `;
   });
+
+  if (repetidos.length > 0){
+    html += `<div class="empty" style="padding:14px 0 4px">🔁 Ya contactados antes (este lote)</div>`;
+    repetidos.forEach(n => {
+      const entry = historial.slice().reverse().find(h => h.numero === n.numero);
+      const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
+      let badge, extra = '';
+      if (entry && entry.metodo === 'sin_whatsapp'){
+        if (entry.sms_enviado){
+          badge = `📵📩 Sin WhatsApp · SMS enviado ${new Date(entry.fecha_sms).toLocaleDateString('es-MX')}`;
+        } else {
+          badge = '📵 Sin WhatsApp · sin SMS aún';
+          extra = `
+            <div class="lead-actions">
+              <a class="btn-sms" href="sms:+${n.numero}">📩 Enviar SMS</a>
+              <button class="btn-done" onclick="marcarSmsEnviado('${n.numero}', this)">✓ SMS enviado</button>
+            </div>`;
+        }
+      } else {
+        const fecha = entry ? new Date(entry.fecha_contacto).toLocaleDateString('es-MX') : '-';
+        badge = `🔁 Ya contactado por WhatsApp el ${fecha}`;
+      }
+      html += `
+        <div class="lead-card repetido">
+          <div class="lead-num">${display}</div>
+          <div class="lead-ctx">${n.contexto}</div>
+          <span class="badge-rojo">${badge}</span>
+          ${extra}
+        </div>
+      `;
+    });
+  }
+
   document.getElementById('resultados').innerHTML = html;
 }
 
@@ -250,12 +290,51 @@ function marcarContactado(i){
     fecha_pub: card.dataset.fecha,
     dia_horario: card.dataset.dia,
     contexto: card.dataset.ctx,
-    fecha_contacto: new Date().toISOString()
+    fecha_contacto: new Date().toISOString(),
+    metodo: 'whatsapp'
   });
   saveHistorial(historial);
   card.classList.add('done');
   card.querySelector('.btn-done').textContent = '✓ Contactado';
   actualizarContadorHistorial();
+}
+
+function marcarSinWhatsapp(i){
+  const card = document.getElementById('lead-' + i);
+  if (!card) return;
+  const numero = card.dataset.numero;
+  const historial = getHistorial();
+  historial.push({
+    numero: numero,
+    categoria: card.dataset.cat,
+    fecha_pub: card.dataset.fecha,
+    dia_horario: card.dataset.dia,
+    contexto: card.dataset.ctx,
+    fecha_contacto: new Date().toISOString(),
+    metodo: 'sin_whatsapp',
+    sms_enviado: false
+  });
+  saveHistorial(historial);
+  card.classList.add('done');
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[actions.length - 1].innerHTML = `
+    <a class="btn-sms" href="sms:+${numero}">📩 Enviar SMS</a>
+    <button class="btn-done" onclick="marcarSmsEnviado('${numero}', this)">✓ SMS enviado</button>
+  `;
+  actualizarContadorHistorial();
+}
+
+function marcarSmsEnviado(numero, btn){
+  const historial = getHistorial();
+  const entry = historial.slice().reverse().find(h => h.numero === numero && h.metodo === 'sin_whatsapp');
+  if (entry){
+    entry.sms_enviado = true;
+    entry.fecha_sms = new Date().toISOString();
+    saveHistorial(historial);
+  }
+  const card = btn.closest('.lead-card');
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[actions.length - 1].innerHTML = '<span class="badge-rojo">📵📩 Sin WhatsApp · SMS enviado</span>';
 }
 
 function actualizarContadorHistorial(){
@@ -269,13 +348,19 @@ function toggleHistorial(){
     if (hist.length === 0){
       box.innerHTML = '<div class="empty">Sin contactos guardados aún</div>';
     } else {
-      box.innerHTML = hist.map(h => `
-        <div class="lead-card">
-          <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
-          <div class="lead-ctx">${h.contexto || '-'}</div>
-          <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · contactado: ${new Date(h.fecha_contacto).toLocaleString('es-MX')}</div>
-        </div>
-      `).join('');
+      box.innerHTML = hist.map(h => {
+        let metodoInfo = '💬 WhatsApp';
+        if (h.metodo === 'sin_whatsapp'){
+          metodoInfo = h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS';
+        }
+        return `
+          <div class="lead-card">
+            <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
+            <div class="lead-ctx">${h.contexto || '-'}</div>
+            <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · contactado: ${new Date(h.fecha_contacto).toLocaleString('es-MX')} · ${metodoInfo}</div>
+          </div>
+        `;
+      }).join('');
     }
     box.style.display = 'block';
   } else {
@@ -289,7 +374,7 @@ function descargarBackup(){
     alert('Aún no tienes contactos guardados.');
     return;
   }
-  const headers = ['numero','categoria','fecha_pub','dia_horario','contexto','fecha_contacto'];
+  const headers = ['numero','categoria','fecha_pub','dia_horario','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms'];
   let csv = headers.join(',') + '\n';
   hist.forEach(h => {
     const fila = headers.map(k => {
