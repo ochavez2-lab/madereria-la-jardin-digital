@@ -265,6 +265,10 @@ function procesar(){
       } else {
         const fecha = entry ? new Date(entry.fecha_contacto).toLocaleDateString('es-MX') : '-';
         badge = `🔁 Ya contactado por WhatsApp el ${fecha}`;
+        extra = `
+          <div class="lead-actions">
+            <a class="btn-wa" href="https://wa.me/${n.numero}?text=${mensajeEnc}" target="_blank">💬 Reenviar WhatsApp</a>
+          </div>`;
       }
       html += `
         <div class="lead-card repetido">
