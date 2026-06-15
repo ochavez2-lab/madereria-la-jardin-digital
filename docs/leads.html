@@ -97,6 +97,7 @@ textarea:focus{border-color:var(--gold)}
   <div id="resultados"></div>
 
   <div class="historial-toggle" onclick="toggleHistorial()" id="histToggle">Ver historial de contactados (<span id="histCount">0</span>)</div>
+  <div class="historial-toggle" onclick="descargarBackup()">⬇️ Descargar respaldo (Excel)</div>
   <div id="historialBox" style="display:none"></div>
 
 </div>
@@ -264,6 +265,33 @@ function toggleHistorial(){
   } else {
     box.style.display = 'none';
   }
+}
+
+function descargarBackup(){
+  const hist = getHistorial();
+  if (hist.length === 0){
+    alert('Aún no tienes contactos guardados.');
+    return;
+  }
+  const headers = ['numero','categoria','fecha_pub','dia_horario','contexto','fecha_contacto'];
+  let csv = headers.join(',') + '\n';
+  hist.forEach(h => {
+    const fila = headers.map(k => {
+      const val = (h[k] || '').toString().replace(/"/g,'""');
+      return `"${val}"`;
+    });
+    csv += fila.join(',') + '\n';
+  });
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `lj_leads_contactados_${fecha}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 actualizarContadorHistorial();
