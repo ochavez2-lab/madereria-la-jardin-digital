@@ -17,6 +17,14 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '5mb' }));
 
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, x-token');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 const CAT_MAP = {
   'Barrote 2x4':'Madera','Tablon 2x6':'Madera','Polin 4x4':'Madera','Viga 4x6':'Madera',
   'Triplay 3/8':'Triplay','Triplay 1/2':'Triplay','Triplay 5/8':'Triplay',
@@ -103,6 +111,7 @@ function _defaults(db) {
   if (!db.resenas_count)   db.resenas_count = 0;
   if (db.resenas2_idx === undefined) db.resenas2_idx = 0;
   if (!db.resenas2_count)  db.resenas2_count = 0;
+  if (!db.leads_historial) db.leads_historial = [];
   db.productos.forEach(function(p) { if (!p.categoria) p.categoria = CAT_MAP[p.nombre] || 'General'; });
   return db;
 }
@@ -679,6 +688,45 @@ app.post('/api/backup/import', auth('admin'), function(req, res) {
   if (!data || typeof data !== 'object') return res.status(400).json({ error: 'invalid' });
   writeDB(data);
   res.json({ ok: true });
+});
+
+// ── Leads historial (sincronizacion entre dispositivos) ────────────────────────
+app.get('/api/leads-historial', function(req, res) {
+  res.json(readDB().leads_historial || []);
+});
+
+app.post('/api/leads-historial/sync', function(req, res) {
+  const db = readDB();
+  if (!db.leads_historial) db.leads_historial = [];
+  const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
+  const keys = new Set(db.leads_historial.map(function(h) { return h.numero + '|' + h.fecha_contacto; }));
+  let cambios = false;
+  entries.forEach(function(e) {
+    if (!e || !e.numero || !e.fecha_contacto) return;
+    const k = e.numero + '|' + e.fecha_contacto;
+    if (!keys.has(k)) {
+      db.leads_historial.push(e);
+      keys.add(k);
+      cambios = true;
+    }
+  });
+  if (cambios) writeDB(db);
+  res.json(db.leads_historial);
+});
+
+app.post('/api/leads-historial/sms', function(req, res) {
+  const db = readDB();
+  if (!db.leads_historial) db.leads_historial = [];
+  const numero = req.body.numero, fecha_contacto = req.body.fecha_contacto;
+  const entry = db.leads_historial.find(function(h) {
+    return h.numero === numero && h.fecha_contacto === fecha_contacto && h.metodo === 'sin_whatsapp';
+  });
+  if (entry) {
+    entry.sms_enviado = true;
+    entry.fecha_sms = new Date().toISOString();
+    writeDB(db);
+  }
+  res.json(db.leads_historial);
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
