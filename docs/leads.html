@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leads → WhatsApp · La Jardín</title>
+<style>
+:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);padding-bottom:60px}
+
+header{background:var(--dark);padding:18px 16px;text-align:center}
+header h1{color:var(--gold);font-size:18px;font-weight:900;letter-spacing:1px}
+header p{color:#666;font-size:11px;margin-top:4px}
+
+.wrap{max-width:600px;margin:0 auto;padding:16px}
+
+.section{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.section h2{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)}
+
+.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cat-btn{border:1.5px solid var(--border);background:#fff;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center}
+.cat-btn.on{background:var(--dark);color:var(--gold);border-color:var(--dark)}
+
+textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;outline:none}
+textarea:focus{border-color:var(--gold)}
+
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.meta-row input{border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-family:inherit;outline:none}
+.meta-row input:focus{border-color:var(--gold)}
+.meta-row label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px}
+
+.btn-main{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;margin-top:12px}
+.btn-main:active{filter:brightness(0.95)}
+
+.resumen{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.resumen .chip{background:var(--dark);color:var(--gold);font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px}
+.resumen .chip.gray{background:#eee;color:#888}
+
+.lead-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.lead-card.done{opacity:.45}
+.lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
+.lead-ctx{font-size:11px;color:var(--muted);background:#f7f4ef;border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4}
+.lead-actions{display:flex;gap:8px}
+.btn-wa{flex:1;background:#25d366;color:#fff;text-align:center;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;text-decoration:none}
+.btn-done{background:#eee;color:#666;border:none;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.lead-card.done .btn-done{background:var(--gold);color:#111}
+
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 0}
+
+.historial-toggle{text-align:center;font-size:12px;color:var(--gold);font-weight:700;padding:10px;cursor:pointer;text-decoration:underline}
+.warn{background:#fff8e6;border:1px solid #f0d896;border-radius:10px;padding:10px 12px;font-size:11px;color:#7a5a10;margin-bottom:14px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🪵 LEADS → WHATSAPP</h1>
+  <p>Maderería La Jardín · Prospección manual</p>
+</header>
+
+<div class="wrap">
+
+  <div class="warn">
+    ⚠️ Los enlaces abren WhatsApp con el mensaje listo. <b>Envía uno por uno, espaciado</b> (15-30 seg entre cada uno) para no arriesgar tu número. Usa WhatsApp Business si puedes.
+  </div>
+
+  <div class="section">
+    <h2>1. Tipo de publicación</h2>
+    <div class="cats" id="cats">
+      <div class="cat-btn on" data-cat="cimbrado">🧱 Cimbrado</div>
+      <div class="cat-btn" data-cat="bloques_albanil">👷 Bloques / Albañil</div>
+      <div class="cat-btn" data-cat="yeseros">🎨 Yeseros / Acabados</div>
+      <div class="cat-btn" data-cat="constructores">🏗️ Constructores</div>
+      <div class="cat-btn" data-cat="contratistas">📋 Contratistas</div>
+      <div class="cat-btn" data-cat="otro">📦 Otro</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>2. Pega los comentarios de Facebook</h2>
+    <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
+    <div class="meta-row">
+      <div>
+        <label>Fecha publicación</label>
+        <input type="date" id="fechaPub">
+      </div>
+      <div>
+        <label>Día/horario que piden</label>
+        <input type="text" id="diaHorario" placeholder="ej. lunes a sábado">
+      </div>
+    </div>
+    <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
+  </div>
+
+  <div id="resumenBox"></div>
+  <div id="resultados"></div>
+
+  <div class="historial-toggle" onclick="toggleHistorial()" id="histToggle">Ver historial de contactados (<span id="histCount">0</span>)</div>
+  <div id="historialBox" style="display:none"></div>
+
+</div>
+
+<script>
+const LS_KEY = 'lj_leads_historial';
+
+const TEMPLATES = {
+  cimbrado:        { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la próxima colada? Con gusto le cotizo.' },
+  bloques_albanil: { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la obra esta semana? Le surto el mismo día.' },
+  yeseros:         { gancho: 'Vi que hace acabados.',           cierre: 'Si ocupa madera o material pa\' terminar, se lo dejo el mismo día en obra.' },
+  constructores:   { gancho: 'Vi que maneja obra.',             cierre: 'Manejo volumen, factura y entrega en obra el mismo día. ¿En qué proyecto anda? Le paso lista por volumen.' },
+  contratistas:    { gancho: 'Vi que anda contratando obra.',   cierre: 'Le surto a tiempo pa\' que no pare la obra. ¿Qué ocupa pa\' la próxima etapa?' },
+  otro:            { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la próxima colada? Con gusto le cotizo.' }
+};
+
+let catActual = 'cimbrado';
+
+document.getElementById('cats').addEventListener('click', function(e){
+  const btn = e.target.closest('.cat-btn');
+  if(!btn) return;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  catActual = btn.dataset.cat;
+});
+
+function getHistorial(){
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch(e){ return []; }
+}
+function saveHistorial(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+
+function normalizarNumero(digits){
+  // digits = solo dígitos
+  let d = digits;
+  if (d.length === 10) return '52' + d;
+  if (d.length === 11 && d[0] === '1') return '52' + d.slice(1);
+  if (d.length === 12 && d.startsWith('52')) return d;
+  if (d.length === 13 && d.startsWith('521')) return '52' + d.slice(3);
+  if (d.length > 10) return '52' + d.slice(-10);
+  return null; // muy corto, descartar
+}
+
+function extraerNumeros(texto){
+  const lineas = texto.split('\n');
+  const encontrados = [];
+  const regex = /[\d][\d\s\-.()]{7,17}\d/g;
+
+  lineas.forEach(linea => {
+    const matches = linea.match(regex);
+    if (!matches) return;
+    matches.forEach(m => {
+      const soloDigitos = m.replace(/\D/g,'');
+      if (soloDigitos.length < 10 || soloDigitos.length > 13) return;
+      const norm = normalizarNumero(soloDigitos);
+      if (!norm) return;
+      encontrados.push({ numero: norm, contexto: linea.trim() });
+    });
+  });
+  return encontrados;
+}
+
+function construirMensaje(){
+  const t = TEMPLATES[catActual];
+  return `Qué tal maestro 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
+}
+
+function procesar(){
+  const texto = document.getElementById('raw').value;
+  const fechaPub = document.getElementById('fechaPub').value || new Date().toISOString().slice(0,10);
+  const diaHorario = document.getElementById('diaHorario').value || '-';
+
+  if (!texto.trim()){
+    document.getElementById('resultados').innerHTML = '<div class="empty">Pega algún texto primero 👆</div>';
+    document.getElementById('resumenBox').innerHTML = '';
+    return;
+  }
+
+  const encontrados = extraerNumeros(texto);
+  const historial = getHistorial();
+  const histNums = new Set(historial.map(h => h.numero));
+
+  // dedup dentro del lote
+  const vistos = new Set();
+  const unicos = [];
+  encontrados.forEach(e => {
+    if (vistos.has(e.numero)) return;
+    vistos.add(e.numero);
+    unicos.push(e);
+  });
+
+  const nuevos = unicos.filter(u => !histNums.has(u.numero));
+  const repetidos = unicos.filter(u => histNums.has(u.numero));
+
+  document.getElementById('resumenBox').innerHTML = `
+    <div class="resumen">
+      <div class="chip">✅ ${nuevos.length} nuevos</div>
+      <div class="chip gray">🔁 ${repetidos.length} ya contactados</div>
+      <div class="chip gray">📂 ${catActual.replace('_',' ')}</div>
+    </div>
+  `;
+
+  if (nuevos.length === 0){
+    document.getElementById('resultados').innerHTML = '<div class="empty">No se encontraron números nuevos 🤷</div>';
+    return;
+  }
+
+  const mensaje = construirMensaje();
+  const mensajeEnc = encodeURIComponent(mensaje);
+
+  let html = '';
+  nuevos.forEach((n, i) => {
+    const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
+    html += `
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${catActual}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
+        <div class="lead-num">${display}</div>
+        <div class="lead-ctx">${n.contexto}</div>
+        <div class="lead-actions">
+          <a class="btn-wa" href="https://wa.me/${n.numero}?text=${mensajeEnc}" target="_blank">💬 Abrir WhatsApp</a>
+          <button class="btn-done" onclick="marcarContactado(${i})">✓ Listo</button>
+        </div>
+      </div>
+    `;
+  });
+  document.getElementById('resultados').innerHTML = html;
+}
+
+function marcarContactado(i){
+  const card = document.getElementById('lead-' + i);
+  if (!card) return;
+  const historial = getHistorial();
+  historial.push({
+    numero: card.dataset.numero,
+    categoria: card.dataset.cat,
+    fecha_pub: card.dataset.fecha,
+    dia_horario: card.dataset.dia,
+    contexto: card.dataset.ctx,
+    fecha_contacto: new Date().toISOString()
+  });
+  saveHistorial(historial);
+  card.classList.add('done');
+  card.querySelector('.btn-done').textContent = '✓ Contactado';
+  actualizarContadorHistorial();
+}
+
+function actualizarContadorHistorial(){
+  document.getElementById('histCount').textContent = getHistorial().length;
+}
+
+function toggleHistorial(){
+  const box = document.getElementById('historialBox');
+  if (box.style.display === 'none'){
+    const hist = getHistorial().slice().reverse();
+    if (hist.length === 0){
+      box.innerHTML = '<div class="empty">Sin contactos guardados aún</div>';
+    } else {
+      box.innerHTML = hist.map(h => `
+        <div class="lead-card">
+          <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
+          <div class="lead-ctx">${h.contexto || '-'}</div>
+          <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · contactado: ${new Date(h.fecha_contacto).toLocaleString('es-MX')}</div>
+        </div>
+      `).join('');
+    }
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+actualizarContadorHistorial();
+</script>
+</body>
+</html>
