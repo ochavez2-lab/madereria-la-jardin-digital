@@ -155,34 +155,25 @@ function saveHistorial(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); 
 
 async function syncHistorial(){
   try {
-    // Leer datos remotos directamente de Supabase (sin pasar por Render)
-    const r = await fetch(SB_URL + '/rest/v1/store?id=eq.1&select=data', { headers: _sbH() });
-    if (!r.ok) return false;
-    const rows = await r.json();
-    const remoteDB = rows.length ? rows[0].data : {};
-    const remote = Array.isArray(remoteDB.leads_historial) ? remoteDB.leads_historial : [];
-
-    // Combinar: agregar entradas locales que no están en remoto
-    const local = getHistorial();
-    const keys = new Set(remote.map(function(h){ return h.numero + '|' + h.fecha_contacto; }));
-    var nuevos = 0;
-    local.forEach(function(e){
-      if (!e || !e.numero || !e.fecha_contacto) return;
-      var k = e.numero + '|' + e.fecha_contacto;
-      if (!keys.has(k)){ remote.push(e); keys.add(k); nuevos++; }
-    });
-
-    // Si tenemos entradas nuevas, subirlas a Supabase
-    if (nuevos > 0){
-      await fetch(SB_URL + '/rest/v1/store', {
-        method: 'POST',
-        headers: _sbH(),
-        body: JSON.stringify({ id: 1, data: Object.assign({}, remoteDB, { leads_historial: remote }) })
+    var local = getHistorial();
+    // Subir todos los contactos locales a Supabase (upsert — no duplica gracias a UNIQUE)
+    if (local.length > 0){
+      var rows = local.map(function(e){
+        return { numero: e.numero, categoria: e.categoria||null, fecha_pub: e.fecha_pub||null,
+          dia_horario: e.dia_horario||null, contexto: e.contexto||null,
+          fecha_contacto: e.fecha_contacto, metodo: e.metodo||'whatsapp',
+          sms_enviado: !!e.sms_enviado, fecha_sms: e.fecha_sms||null };
       });
+      var w = await fetch(SB_URL + '/rest/v1/leads_historial', {
+        method: 'POST', headers: _sbH(), body: JSON.stringify(rows)
+      });
+      if (!w.ok) return false;
     }
-
-    // Actualizar localStorage con la lista combinada
-    if (remote.length !== local.length){
+    // Descargar lista completa de Supabase (ya tiene datos de ambos celulares)
+    var r = await fetch(SB_URL + '/rest/v1/leads_historial?select=numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms&order=fecha_contacto', { headers: _sbH() });
+    if (!r.ok) return false;
+    var remote = await r.json();
+    if (Array.isArray(remote) && remote.length !== local.length){
       saveHistorial(remote);
       actualizarContadorHistorial();
     }
