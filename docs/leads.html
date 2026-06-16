@@ -170,7 +170,8 @@ async function syncHistorial(){
         return {numero:e.numero, categoria:e.categoria||null, fecha_pub:e.fecha_pub||null,
           dia_horario:e.dia_horario||null, contexto:(e.contexto||'').slice(0,200),
           fecha_contacto:e.fecha_contacto, metodo:e.metodo||'whatsapp',
-          sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null};
+          sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null,
+          seguimiento:e.seguimiento||'pendiente'};
       });
       var w = await fetch(RAILWAY_URL+'/api/sync', {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rows), signal:ctrl.signal
@@ -178,19 +179,28 @@ async function syncHistorial(){
       if (!w.ok){ clearTimeout(timer); return 'E'+w.status; }
     }
 
-    // Paso 3: Descargar entradas del otro celular
-    var localSet = new Set(local.map(function(h){ return h.numero+'|'+h.fecha_contacto; }));
-    var hayNuevos = sbKeys.some(function(h){ return h&&h.numero&&h.fecha_contacto&&!localSet.has(h.numero+'|'+h.fecha_contacto); });
-    if (hayNuevos){
-      var rf = await fetch(RAILWAY_URL+'/api/all', {signal:ctrl.signal});
-      clearTimeout(timer);
-      if (!rf.ok) return 'E'+rf.status;
-      var remote = await rf.json();
-      var nuevos = remote.filter(function(e){ return e&&e.numero&&e.fecha_contacto&&!localSet.has(e.numero+'|'+e.fecha_contacto); });
-      if (nuevos.length > 0){ saveHistorial(local.concat(nuevos)); actualizarContadorHistorial(); }
-    } else {
-      clearTimeout(timer);
-    }
+    // Paso 3: Descargar entradas nuevas y actualizar seguimiento de las existentes
+    var rf = await fetch(RAILWAY_URL+'/api/all', {signal:ctrl.signal});
+    clearTimeout(timer);
+    if (!rf.ok) return 'E'+rf.status;
+    var remote = await rf.json();
+    var localMap = {};
+    local.forEach(function(h){ localMap[h.numero+'|'+h.fecha_contacto] = h; });
+    var cambios = false;
+    remote.forEach(function(e){
+      if (!e||!e.numero||!e.fecha_contacto) return;
+      var key = e.numero+'|'+e.fecha_contacto;
+      var existing = localMap[key];
+      if (!existing){
+        local.push(e);
+        localMap[key] = e;
+        cambios = true;
+      } else if (e.seguimiento && e.seguimiento !== existing.seguimiento){
+        existing.seguimiento = e.seguimiento;
+        cambios = true;
+      }
+    });
+    if (cambios){ saveHistorial(local); actualizarContadorHistorial(); }
     return true;
   } catch(e){ return e.name==='AbortError'?'timeout':(e.message||'red'); }
 }
@@ -353,7 +363,8 @@ function marcarContactado(i){
     dia_horario: card.dataset.dia,
     contexto: card.dataset.ctx,
     fecha_contacto: new Date().toISOString(),
-    metodo: 'whatsapp'
+    metodo: 'whatsapp',
+    seguimiento: 'pendiente'
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -375,7 +386,8 @@ function marcarSinWhatsapp(i){
     contexto: card.dataset.ctx,
     fecha_contacto: new Date().toISOString(),
     metodo: 'sin_whatsapp',
-    sms_enviado: false
+    sms_enviado: false,
+    seguimiento: 'pendiente'
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -406,31 +418,75 @@ function actualizarContadorHistorial(){
   document.getElementById('histCount').textContent = getHistorial().length;
 }
 
+let historialFiltro = '';
+
 function toggleHistorial(){
   const box = document.getElementById('historialBox');
   if (box.style.display === 'none'){
-    const hist = getHistorial().slice().reverse();
-    if (hist.length === 0){
-      box.innerHTML = '<div class="empty">Sin contactos guardados aún</div>';
-    } else {
-      box.innerHTML = hist.map(h => {
-        let metodoInfo = '💬 WhatsApp';
-        if (h.metodo === 'sin_whatsapp'){
-          metodoInfo = h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS';
-        }
-        return `
-          <div class="lead-card">
-            <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
-            <div class="lead-ctx">${h.contexto || '-'}</div>
-            <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · contactado: ${new Date(h.fecha_contacto).toLocaleString('es-MX')} · ${metodoInfo}</div>
-          </div>
-        `;
-      }).join('');
-    }
+    historialFiltro = '';
+    box.innerHTML = `
+      <input type="text" id="buscadorHistorial" placeholder="🔎 Buscar número o texto..."
+        oninput="historialFiltro=this.value; renderHistorialList()"
+        style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <div id="historialList"></div>
+    `;
+    renderHistorialList();
     box.style.display = 'block';
   } else {
     box.style.display = 'none';
   }
+}
+
+function renderHistorialList(){
+  const list = document.getElementById('historialList');
+  if (!list) return;
+  const hist = getHistorial().slice().reverse();
+  const filtro = historialFiltro.trim().toLowerCase();
+  const filtrado = filtro
+    ? hist.filter(h => h.numero.includes(filtro) || (h.contexto||'').toLowerCase().includes(filtro))
+    : hist;
+
+  if (filtrado.length === 0){
+    list.innerHTML = '<div class="empty">Sin contactos que coincidan</div>';
+    return;
+  }
+
+  list.innerHTML = filtrado.map(h => {
+    let metodoInfo = '💬 WhatsApp';
+    if (h.metodo === 'sin_whatsapp'){
+      metodoInfo = h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS';
+    }
+    const seg = h.seguimiento || 'pendiente';
+    const numKey = h.numero.replace(/'/g, "\\'");
+    const fechaKey = h.fecha_contacto.replace(/'/g, "\\'");
+    const mensajeFollowUp = encodeURIComponent(`Qué tal maestro 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
+    return `
+      <div class="lead-card">
+        <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
+        <div class="lead-ctx">${h.contexto || '-'}</div>
+        <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · contactado: ${new Date(h.fecha_contacto).toLocaleString('es-MX')} · ${metodoInfo}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <select onchange="actualizarSeguimiento('${numKey}','${fechaKey}',this.value)" style="font-size:12px;padding:4px;border-radius:6px;border:1px solid #ccc">
+            <option value="pendiente" ${seg==='pendiente'?'selected':''}>⏳ Pendiente</option>
+            <option value="respondio" ${seg==='respondio'?'selected':''}>✅ Respondió</option>
+            <option value="no_respondio" ${seg==='no_respondio'?'selected':''}>❌ No respondió</option>
+            <option value="compro" ${seg==='compro'?'selected':''}>💰 Compró</option>
+          </select>
+          <a class="btn-wa" style="font-size:12px;padding:4px 8px" href="https://wa.me/${h.numero}?text=${mensajeFollowUp}" target="_blank">🔁 Reenviar oferta</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function actualizarSeguimiento(numero, fecha_contacto, valor){
+  const historial = getHistorial();
+  const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
+  if (entry) { entry.seguimiento = valor; saveHistorial(historial); }
+  fetch(RAILWAY_URL+'/api/seguimiento', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ numero, fecha_contacto, seguimiento: valor })
+  }).catch(function(){});
 }
 
 function descargarBackup(){

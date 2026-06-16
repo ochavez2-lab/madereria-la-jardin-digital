@@ -23,9 +23,12 @@ pool.query(`
     metodo TEXT DEFAULT 'whatsapp',
     sms_enviado BOOLEAN DEFAULT FALSE,
     fecha_sms TEXT,
+    seguimiento TEXT DEFAULT 'pendiente',
     UNIQUE (numero, fecha_contacto)
   )
-`).catch(console.error);
+`).then(() => pool.query(`
+  ALTER TABLE leads_historial ADD COLUMN IF NOT EXISTS seguimiento TEXT DEFAULT 'pendiente'
+`)).catch(console.error);
 
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
@@ -45,12 +48,12 @@ app.post('/api/sync', async (req, res) => {
       if (!e.numero || !e.fecha_contacto) continue;
       const r = await pool.query(
         `INSERT INTO leads_historial
-          (numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          (numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          ON CONFLICT (numero, fecha_contacto) DO NOTHING`,
         [e.numero, e.categoria||null, e.fecha_pub||null, e.dia_horario||null,
          (e.contexto||'').slice(0,200), e.fecha_contacto, e.metodo||'whatsapp',
-         !!e.sms_enviado, e.fecha_sms||null]
+         !!e.sms_enviado, e.fecha_sms||null, e.seguimiento||'pendiente']
       );
       inserted += r.rowCount;
     }
@@ -58,10 +61,22 @@ app.post('/api/sync', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/seguimiento', async (req, res) => {
+  const { numero, fecha_contacto, seguimiento } = req.body || {};
+  if (!numero || !fecha_contacto || !seguimiento) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query(
+      'UPDATE leads_historial SET seguimiento=$1 WHERE numero=$2 AND fecha_contacto=$3',
+      [seguimiento, numero, fecha_contacto]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/all', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms FROM leads_historial ORDER BY fecha_contacto'
+      'SELECT numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento FROM leads_historial ORDER BY fecha_contacto'
     );
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
