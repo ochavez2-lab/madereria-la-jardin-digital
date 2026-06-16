@@ -157,7 +157,7 @@ async function syncHistorial(){
   try {
     var local = getHistorial();
     var ctrl = new AbortController();
-    var timer = setTimeout(function(){ ctrl.abort(); }, 20000);
+    var timer = setTimeout(function(){ ctrl.abort(); }, 45000);
     function sbGet(path){ return fetch(SB_URL+path, {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}, signal:ctrl.signal}); }
 
     // Paso 1: Obtener solo claves de Supabase (request muy ligero ~4KB)
