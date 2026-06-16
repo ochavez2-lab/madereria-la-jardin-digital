@@ -173,9 +173,14 @@ async function syncHistorial(){
     var r = await fetch(SB_URL + '/rest/v1/leads_historial?select=numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms&order=fecha_contacto', { headers: _sbH() });
     if (!r.ok) return false;
     var remote = await r.json();
-    if (Array.isArray(remote) && remote.length !== local.length){
-      saveHistorial(remote);
-      actualizarContadorHistorial();
+    // Solo AGREGAR entradas que no tenemos localmente — nunca borrar datos locales
+    if (Array.isArray(remote) && remote.length > 0){
+      var localKeys = new Set(local.map(function(h){ return h.numero + '|' + h.fecha_contacto; }));
+      var nuevosDeRemoto = remote.filter(function(e){ return e && e.numero && e.fecha_contacto && !localKeys.has(e.numero + '|' + e.fecha_contacto); });
+      if (nuevosDeRemoto.length > 0){
+        saveHistorial(local.concat(nuevosDeRemoto));
+        actualizarContadorHistorial();
+      }
     }
     return true;
   } catch(e){ return false; }
