@@ -229,7 +229,7 @@ function construirMensaje(){
   return `Qué tal maestro 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
 }
 
-function procesar(){
+async function procesar(){
   const texto = document.getElementById('raw').value;
   const fechaPub = document.getElementById('fechaPub').value || new Date().toISOString().slice(0,10);
   const diaHorario = document.getElementById('diaHorario').value || '-';
@@ -239,6 +239,10 @@ function procesar(){
     document.getElementById('resumenBox').innerHTML = '';
     return;
   }
+
+  // Sincronizar con Supabase antes de mostrar resultados para tener los ya-contactados actualizados
+  document.getElementById('resumenBox').innerHTML = '<div class="resumen"><div class="chip">🔄 Verificando contactos...</div></div>';
+  await syncHistorial();
 
   const encontrados = extraerNumeros(texto);
   const historial = getHistorial();
@@ -450,7 +454,7 @@ function descargarBackup(){
 mergeSeed();
 actualizarContadorHistorial();
 syncHistorial();
-setInterval(syncHistorial, 3 * 60 * 1000);
+setInterval(syncHistorial, 30 * 1000);
 </script>
 </body>
 </html>
