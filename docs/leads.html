@@ -154,11 +154,15 @@ function saveHistorial(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); 
 async function syncHistorial(){
   try {
     const local = getHistorial();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 55000);
     const res = await fetch(API_URL + '/sync', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ entries: local })
+      body: JSON.stringify({ entries: local }),
+      signal: ctrl.signal
     });
+    clearTimeout(timer);
     if (!res.ok) return false;
     const merged = await res.json();
     if (Array.isArray(merged) && merged.length){
@@ -166,15 +170,17 @@ async function syncHistorial(){
       actualizarContadorHistorial();
     }
     return true;
-  } catch(e) { return false; /* sin conexión: seguimos con los datos locales */ }
+  } catch(e) { return false; }
 }
 
 async function actualizarAhora(btn){
   const original = btn.textContent;
-  btn.textContent = '🔄 Actualizando...';
+  btn.textContent = '🔄 Despertando servidor...';
+  const t = setTimeout(() => { btn.textContent = '⏳ Espera ~50 seg (servidor dormido)...'; }, 5000);
   const ok = await syncHistorial();
-  btn.textContent = ok ? '✅ Actualizado' : '⚠️ Sin conexión al servidor';
-  setTimeout(() => { btn.textContent = original; }, 2000);
+  clearTimeout(t);
+  btn.textContent = ok ? '✅ Actualizado' : '⚠️ Sin conexión — intenta de nuevo';
+  setTimeout(() => { btn.textContent = original; }, 3000);
 }
 
 function normalizarNumero(digits){
