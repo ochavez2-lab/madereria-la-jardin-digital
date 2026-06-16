@@ -85,8 +85,8 @@ const PRODUCTOS_DEFAULT = [
 
 // ── Database (Supabase persistent + file fallback) ────────────────────────────
 let _cache = null;
-const SB_URL = process.env.SUPABASE_URL;
-const SB_KEY = process.env.SUPABASE_KEY;
+const SB_URL = process.env.SUPABASE_URL || 'https://kbyssabqdjcgpiimxxvs.supabase.co';
+const SB_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtieXNzYWJxZGpjZ3BpaW14eHZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjczMzgsImV4cCI6MjA5NzE0MzMzOH0.kKmTlUhTMgUIQaHuIaU9PqRErtSnyGOpEyFumPnxuhc';
 
 function _sbHeaders() {
   return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
