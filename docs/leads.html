@@ -157,36 +157,45 @@ async function syncHistorial(){
   try {
     var local = getHistorial();
     var ctrl = new AbortController();
-    var timer = setTimeout(function(){ ctrl.abort(); }, 10000);
-    // Subir todos los contactos locales a Supabase (upsert — no duplica gracias a UNIQUE)
-    if (local.length > 0){
-      var rows = local.map(function(e){
-        return { numero: e.numero, categoria: e.categoria||null, fecha_pub: e.fecha_pub||null,
-          dia_horario: e.dia_horario||null, contexto: e.contexto||null,
-          fecha_contacto: e.fecha_contacto, metodo: e.metodo||'whatsapp',
-          sms_enviado: !!e.sms_enviado, fecha_sms: e.fecha_sms||null };
+    var timer = setTimeout(function(){ ctrl.abort(); }, 20000);
+    function sbGet(path){ return fetch(SB_URL+path, {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}, signal:ctrl.signal}); }
+
+    // Paso 1: Obtener solo claves de Supabase (request muy ligero ~4KB)
+    var rk = await sbGet('/rest/v1/leads_historial?select=numero,fecha_contacto');
+    if (!rk.ok){ clearTimeout(timer); return 'E'+rk.status; }
+    var sbKeys = await rk.json();
+    var sbSet = new Set(sbKeys.map(function(h){ return h.numero+'|'+h.fecha_contacto; }));
+
+    // Paso 2: Subir SOLO entradas nuevas (después del 1er sync, normalmente 0-2)
+    var toPost = local.filter(function(e){ return e&&e.numero&&e.fecha_contacto&&!sbSet.has(e.numero+'|'+e.fecha_contacto); });
+    if (toPost.length > 0){
+      var rows = toPost.map(function(e){
+        return {numero:e.numero, categoria:e.categoria||null, fecha_pub:e.fecha_pub||null,
+          dia_horario:e.dia_horario||null, contexto:(e.contexto||'').slice(0,200),
+          fecha_contacto:e.fecha_contacto, metodo:e.metodo||'whatsapp',
+          sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null};
       });
-      var w = await fetch(SB_URL + '/rest/v1/leads_historial', {
-        method: 'POST', headers: _sbH(), body: JSON.stringify(rows), signal: ctrl.signal
+      var w = await fetch(SB_URL+'/rest/v1/leads_historial', {
+        method:'POST', headers:_sbH(), body:JSON.stringify(rows), signal:ctrl.signal
       });
-      if (!w.ok){ clearTimeout(timer); return 'E' + w.status; }
+      if (!w.ok){ clearTimeout(timer); return 'E'+w.status; }
     }
-    // Descargar lista completa de Supabase (ya tiene datos de ambos celulares)
-    var r = await fetch(SB_URL + '/rest/v1/leads_historial?select=numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms&order=fecha_contacto', { headers: _sbH(), signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!r.ok) return 'E' + r.status;
-    var remote = await r.json();
-    // Solo AGREGAR entradas que no tenemos localmente — nunca borrar datos locales
-    if (Array.isArray(remote) && remote.length > 0){
-      var localKeys = new Set(local.map(function(h){ return h.numero + '|' + h.fecha_contacto; }));
-      var nuevosDeRemoto = remote.filter(function(e){ return e && e.numero && e.fecha_contacto && !localKeys.has(e.numero + '|' + e.fecha_contacto); });
-      if (nuevosDeRemoto.length > 0){
-        saveHistorial(local.concat(nuevosDeRemoto));
-        actualizarContadorHistorial();
-      }
+
+    // Paso 3: Descargar entradas del otro celular que no tenemos localmente
+    var localSet = new Set(local.map(function(h){ return h.numero+'|'+h.fecha_contacto; }));
+    var hayNuevosEnSB = sbKeys.some(function(h){ return h&&h.numero&&h.fecha_contacto&&!localSet.has(h.numero+'|'+h.fecha_contacto); });
+    if (hayNuevosEnSB){
+      var rf = await sbGet('/rest/v1/leads_historial?select=numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms');
+      clearTimeout(timer);
+      if (!rf.ok) return 'E'+rf.status;
+      var remote = await rf.json();
+      var nuevos = remote.filter(function(e){ return e&&e.numero&&e.fecha_contacto&&!localSet.has(e.numero+'|'+e.fecha_contacto); });
+      if (nuevos.length > 0){ saveHistorial(local.concat(nuevos)); actualizarContadorHistorial(); }
+    } else {
+      clearTimeout(timer);
     }
     return true;
-  } catch(e){ return e.name === 'AbortError' ? 'timeout' : (e.message||'red'); }
+  } catch(e){ return e.name==='AbortError'?'timeout':(e.message||'red'); }
 }
 
 async function actualizarAhora(btn){
