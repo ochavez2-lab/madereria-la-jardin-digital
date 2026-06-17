@@ -224,20 +224,51 @@ function normalizarNumero(digits){
   return null; // muy corto, descartar
 }
 
+function dividirBlobLargo(m){
+  // Cuando el match junta varios números separados solo por espacio
+  // (ej. "6641102454 6648448045"), los separa en lugar de descartarlos.
+  const tokens = m.trim().split(/\s+/);
+  const resultados = [];
+  let buffer = '';
+  let bufferCompleto = false;
+  tokens.forEach(tok => {
+    const d = tok.replace(/\D/g,'');
+    if (!d) return;
+    if (!buffer){
+      buffer = d;
+      bufferCompleto = d.length >= 7;
+      return;
+    }
+    if (!bufferCompleto && d.length <= 4 && (buffer.length + d.length) <= 13){
+      buffer += d;
+      bufferCompleto = buffer.length >= 7;
+    } else {
+      if (buffer.length >= 10 && buffer.length <= 13) resultados.push(buffer);
+      buffer = d;
+      bufferCompleto = d.length >= 7;
+    }
+  });
+  if (buffer.length >= 10 && buffer.length <= 13) resultados.push(buffer);
+  return resultados;
+}
+
 function extraerNumeros(texto){
   const lineas = texto.split('\n');
   const encontrados = [];
-  const regex = /[\d][\d\s\-.()]{7,17}\d/g;
+  const regex = /[\d][\d\s\-.()]{7,40}\d/g;
 
   lineas.forEach(linea => {
     const matches = linea.match(regex);
     if (!matches) return;
     matches.forEach(m => {
       const soloDigitos = m.replace(/\D/g,'');
-      if (soloDigitos.length < 10 || soloDigitos.length > 13) return;
-      const norm = normalizarNumero(soloDigitos);
-      if (!norm) return;
-      encontrados.push({ numero: norm, contexto: linea.trim() });
+      if (soloDigitos.length < 10) return;
+      const candidatos = soloDigitos.length <= 13 ? [soloDigitos] : dividirBlobLargo(m);
+      candidatos.forEach(c => {
+        const norm = normalizarNumero(c);
+        if (!norm) return;
+        encontrados.push({ numero: norm, contexto: linea.trim() });
+      });
     });
   });
   return encontrados;
