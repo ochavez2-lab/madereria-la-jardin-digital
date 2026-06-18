@@ -33,11 +33,6 @@ header p{color:#5c4a1f;font-size:11px;margin-top:4px;font-weight:600}
 textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;outline:none}
 textarea:focus{border-color:var(--gold)}
 
-.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.meta-row input{border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-family:inherit;outline:none}
-.meta-row input:focus{border-color:var(--gold)}
-.meta-row label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px}
-
 .btn-main{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;margin-top:12px}
 .btn-main:active{filter:brightness(0.95)}
 
@@ -84,9 +79,13 @@ textarea:focus{border-color:var(--gold)}
 .theme-dot{width:24px;height:24px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0}
 .theme-dot.activo{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
 
-.donut-wrap{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:10px}
-.donut{width:90px;height:90px;border-radius:50%}
-.donut-legend{font-size:11px;color:#555;display:flex;flex-direction:column;gap:3px}
+.tablero-wrap{overflow-x:auto}
+.tablero-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+.tablero-table th,.tablero-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)}
+.tablero-table th:first-child,.tablero-table td:first-child{text-align:left}
+.tablero-table thead th{background:var(--dark);color:var(--gold);font-weight:800}
+.tablero-table tbody tr:nth-child(even){background:rgba(0,0,0,.03)}
+.tablero-table tfoot td{font-weight:900;border-top:2px solid var(--gold);border-bottom:none}
 </style>
 </head>
 <body>
@@ -113,16 +112,6 @@ textarea:focus{border-color:var(--gold)}
     <h2>1. Pega los comentarios de Facebook</h2>
     <p style="font-size:12px;font-weight:700;color:var(--blue);margin:-4px 0 10px">🤖 El sistema detecta el oficio de cada comentario solo, leyendo el texto</p>
     <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
-    <div class="meta-row">
-      <div>
-        <label>Fecha publicación</label>
-        <input type="date" id="fechaPub">
-      </div>
-      <div>
-        <label>Día/horario que piden</label>
-        <input type="text" id="diaHorario" placeholder="ej. lunes a sábado">
-      </div>
-    </div>
     <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
   </div>
 
@@ -396,8 +385,7 @@ function construirMensaje(cat, nombre){
 
 async function procesar(){
   const texto = document.getElementById('raw').value;
-  const fechaPub = document.getElementById('fechaPub').value || new Date().toISOString().slice(0,10);
-  const diaHorario = document.getElementById('diaHorario').value || '-';
+  const fechaPub = new Date().toISOString().slice(0,10);
 
   if (!texto.trim()){
     document.getElementById('resultados').innerHTML = '<div class="empty">Pega algún texto primero 👆</div>';
@@ -460,7 +448,7 @@ async function procesar(){
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
       : `📂 categoría base (sin detectar oficio en el texto)`;
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
         <div class="lead-num">${display}</div>
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
@@ -538,7 +526,6 @@ function marcarContactado(i){
     numero: card.dataset.numero,
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
-    dia_horario: card.dataset.dia,
     contexto: card.dataset.ctx,
     fecha_contacto: new Date().toISOString(),
     metodo: 'whatsapp',
@@ -560,7 +547,6 @@ function marcarSinWhatsapp(i){
     numero: numero,
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
-    dia_horario: card.dataset.dia,
     contexto: card.dataset.ctx,
     fecha_contacto: new Date().toISOString(),
     metodo: 'sin_whatsapp',
@@ -653,7 +639,8 @@ function toggleHistorial(){
       <div style="text-align:center;font-size:13px;color:#b8860b;font-weight:600;margin-bottom:10px;font-style:italic">
         ✨ Tus contactos, tus clientes, tu futuro ✨
       </div>
-      <div id="histResumen" style="margin-bottom:10px"></div>
+      <h2 style="margin-bottom:8px">📊 Tablero de Cotizaciones</h2>
+      <div id="histResumen" style="margin-bottom:14px"></div>
       <input type="text" id="buscadorHistorial" placeholder="🔎 Buscar número o texto..."
         oninput="historialFiltro=this.value; renderHistorialList()"
         style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
@@ -696,27 +683,46 @@ function renderHistorialList(){
     if (conteos[s] !== undefined) conteos[s]++;
   });
   if (resumenBox){
-    const total = todos.length || 1;
-    const pPend = conteos.pendiente / total * 100;
-    const pResp = conteos.respondio / total * 100;
-    const pNo = conteos.no_respondio / total * 100;
-    const pCompro = conteos.compro / total * 100;
-    const a1 = pPend;
-    const a2 = a1 + pResp;
-    const a3 = a2 + pNo;
-    const donutCss = `conic-gradient(${ESTADOS_INFO.pendiente.color} 0% ${a1}%, ${ESTADOS_INFO.respondio.color} ${a1}% ${a2}%, ${ESTADOS_INFO.no_respondio.color} ${a2}% ${a3}%, ${ESTADOS_INFO.compro.color} ${a3}% 100%)`;
+    // Tabla por categoría x estado
+    const porCat = {};
+    todos.forEach(h => {
+      const cat = h.categoria || 'otro';
+      const s = h.seguimiento || 'pendiente';
+      if (!porCat[cat]) porCat[cat] = { pendiente:0, respondio:0, no_respondio:0, compro:0, total:0 };
+      if (porCat[cat][s] !== undefined) porCat[cat][s]++;
+      porCat[cat].total++;
+    });
+    const catsOrdenadas = Object.keys(porCat).sort((a,b) => porCat[b].total - porCat[a].total);
+    const filasCat = catsOrdenadas.map(cat => {
+      const c = porCat[cat];
+      return `
+        <tr>
+          <td>${CATEGORIA_LABEL[cat] || cat}</td>
+          <td>${c.total}</td>
+          <td>${c.pendiente}</td>
+          <td>${c.respondio}</td>
+          <td>${c.no_respondio}</td>
+          <td>${c.compro}</td>
+        </tr>`;
+    }).join('');
     resumenBox.innerHTML = `
-      <div class="donut-wrap">
-        <div class="donut" style="background:${donutCss}"></div>
-        <div class="donut-legend">
-          <span>⏳ Pendiente: ${conteos.pendiente} (${pPend.toFixed(0)}%)</span>
-          <span>✅ Respondió: ${conteos.respondio} (${pResp.toFixed(0)}%)</span>
-          <span>❌ No respondió: ${conteos.no_respondio} (${pNo.toFixed(0)}%)</span>
-          <span>💰 Compró: ${conteos.compro} (${pCompro.toFixed(0)}%)</span>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:#555;justify-content:center">
-        <span>📋 ${todos.length} total</span>
+      <div class="tablero-wrap">
+        <table class="tablero-table">
+          <thead>
+            <tr><th>Oficio</th><th>Total</th><th>⏳ Pend.</th><th>✅ Resp.</th><th>❌ No resp.</th><th>💰 Compró</th></tr>
+          </thead>
+          <tbody>${filasCat}</tbody>
+          <tfoot>
+            <tr>
+              <td>TOTAL</td>
+              <td>${todos.length}</td>
+              <td>${conteos.pendiente}</td>
+              <td>${conteos.respondio}</td>
+              <td>${conteos.no_respondio}</td>
+              <td>${conteos.compro}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     `;
   }
@@ -893,7 +899,7 @@ function descargarBackup(){
     alert('Aún no tienes contactos guardados.');
     return;
   }
-  const headers = ['numero','categoria','fecha_pub','dia_horario','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota'];
+  const headers = ['numero','categoria','fecha_pub','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota'];
   let csv = headers.join(',') + '\n';
   hist.forEach(h => {
     const fila = headers.map(k => {
