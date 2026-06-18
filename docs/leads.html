@@ -44,7 +44,19 @@ textarea:focus{border-color:var(--gold)}
 .lead-card.done{opacity:.45}
 .lead-card.repetido{border-color:#f3c2c2;background:#fff6f6;opacity:1}
 .lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
-.lead-ctx{font-size:11px;color:var(--muted);background:#f7f4ef;border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4}
+.lead-ctx{font-size:11px;color:var(--muted);background:#f7f4ef;border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4;cursor:pointer;position:relative}
+.lead-ctx.expanded{max-height:none}
+.lead-ctx::after{content:'▾ tocar para leer completo';display:block;font-size:9px;color:var(--blue);font-weight:700;margin-top:4px}
+.lead-ctx.expanded::after{content:'▴ tocar para cerrar'}
+
+.estado-chips{display:flex;gap:5px;flex-wrap:wrap}
+.estado-chip{font-size:11px;padding:6px 10px;border-radius:14px;border:1.5px solid #ddd;background:#fff;color:#555;cursor:pointer;font-weight:700}
+.estado-chip.activo{color:#fff;border-color:transparent}
+
+.nota-box{margin-top:6px}
+.nota-box textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-family:inherit;resize:vertical;min-height:40px;outline:none}
+.nota-box textarea:focus{border-color:var(--gold)}
+.btn-nota{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-top:4px}
 .lead-actions{display:flex;gap:8px}
 .btn-wa{flex:1;background:#25d366;color:#fff;text-align:center;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;text-decoration:none}
 .btn-done{flex:1;background:#eee;color:#666;border:none;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer}
@@ -209,7 +221,7 @@ async function syncHistorial(){
           dia_horario:e.dia_horario||null, contexto:(e.contexto||'').slice(0,200),
           fecha_contacto:e.fecha_contacto, metodo:e.metodo||'whatsapp',
           sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null,
-          seguimiento:e.seguimiento||'pendiente'};
+          seguimiento:e.seguimiento||'pendiente', nota:e.nota||null};
       });
       var w = await fetch(RAILWAY_URL+'/api/sync', {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rows), signal:ctrl.signal
@@ -233,9 +245,10 @@ async function syncHistorial(){
         local.push(e);
         localMap[key] = e;
         cambios = true;
-      } else if (e.seguimiento && e.seguimiento !== existing.seguimiento){
-        existing.seguimiento = e.seguimiento;
-        cambios = true;
+      } else {
+        if (e.seguimiento && e.seguimiento !== existing.seguimiento){ existing.seguimiento = e.seguimiento; cambios = true; }
+        if (e.categoria && e.categoria !== existing.categoria){ existing.categoria = e.categoria; cambios = true; }
+        if (e.nota && e.nota !== existing.nota){ existing.nota = e.nota; cambios = true; }
       }
     });
     if (cambios){ saveHistorial(local); actualizarContadorHistorial(); }
@@ -388,7 +401,7 @@ async function procesar(){
       <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
         <div class="lead-num">${display}</div>
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
-        <div class="lead-ctx">${n.contexto}</div>
+        <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
         <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
         <div style="margin-top:6px">
           <select onchange="cambiarCategoriaLead(${i}, this.value)" style="font-size:12px;padding:4px;border-radius:6px;border:1px solid #ccc">
@@ -436,7 +449,7 @@ async function procesar(){
       html += `
         <div class="lead-card repetido">
           <div class="lead-num">${display}</div>
-          <div class="lead-ctx">${n.contexto}</div>
+          <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
           <span class="badge-rojo">${badge}</span>
           ${extra}
         </div>
@@ -700,19 +713,23 @@ function renderHistorialCard(h){
       : `<span style="color:#999">hace ${dias} día${dias === 1 ? '' : 's'}</span>`;
     const nombreHist = extraerNombre(h.contexto || '');
     const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist ? nombreHist.split(/\s+/)[0] : 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
+    const chipsEstado = Object.keys(ESTADOS_INFO).map(k => {
+      const activo = seg === k;
+      return `<span class="estado-chip${activo ? ' activo' : ''}" style="${activo ? `background:${ESTADOS_INFO[k].color};border-color:${ESTADOS_INFO[k].color}` : ''}" onclick="actualizarSeguimiento('${numKey}','${fechaKey}','${k}')">${ESTADOS_INFO[k].label}</span>`;
+    }).join('');
+    const notaIdSafe = (h.numero + '_' + h.fecha_contacto).replace(/[^a-zA-Z0-9]/g, '');
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg}">
         <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
         ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
-        <div class="lead-ctx">${resaltarNombre(h.contexto || '-')}</div>
+        <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${resaltarNombre(h.contexto || '-')}</div>
         <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge} · ${metodoInfo}</div>
+        <div class="estado-chips">${chipsEstado}</div>
+        <div class="nota-box">
+          <textarea id="nota-${notaIdSafe}" placeholder="📝 Notas reales (lo que pidió por chat: medidas, cantidades, etc.)">${(h.nota || '').replace(/</g,'&lt;')}</textarea>
+          <button class="btn-nota" onclick="actualizarNota('${numKey}','${fechaKey}', document.getElementById('nota-${notaIdSafe}').value)">💾 Guardar nota</button>
+        </div>
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          <select onchange="actualizarSeguimiento('${numKey}','${fechaKey}',this.value)" style="font-size:12px;padding:4px;border-radius:6px;border:1px solid #ccc">
-            <option value="pendiente" ${seg==='pendiente'?'selected':''}>⏳ Pendiente</option>
-            <option value="respondio" ${seg==='respondio'?'selected':''}>✅ Respondió</option>
-            <option value="no_respondio" ${seg==='no_respondio'?'selected':''}>❌ No respondió</option>
-            <option value="compro" ${seg==='compro'?'selected':''}>💰 Compró</option>
-          </select>
           <a class="btn-wa" style="font-size:12px;padding:4px 8px" href="https://wa.me/${h.numero}?text=${mensajeFollowUp}" target="_blank">🔁 Reenviar oferta</a>
         </div>
       </div>
@@ -727,6 +744,16 @@ function actualizarSeguimiento(numero, fecha_contacto, valor){
   fetch(RAILWAY_URL+'/api/seguimiento', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ numero, fecha_contacto, seguimiento: valor })
+  }).catch(function(){});
+}
+
+function actualizarNota(numero, fecha_contacto, valor){
+  const historial = getHistorial();
+  const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
+  if (entry) { entry.nota = valor; saveHistorial(historial); }
+  fetch(RAILWAY_URL+'/api/nota', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ numero, fecha_contacto, nota: valor })
   }).catch(function(){});
 }
 
