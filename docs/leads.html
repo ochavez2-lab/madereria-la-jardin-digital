@@ -633,18 +633,35 @@ function marcarSinWhatsapp(i){
   syncHistorial();
 }
 
+function marcarSmsEnviadoEn(entry){
+  entry.sms_enviado = true;
+  entry.fecha_sms = new Date().toISOString();
+  fetch(RAILWAY_URL+'/api/sms', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ numero: entry.numero, fecha_contacto: entry.fecha_contacto })
+  }).catch(function(){});
+}
+
 function marcarSmsEnviado(numero, btn){
   const historial = getHistorial();
   const entry = historial.slice().reverse().find(h => h.numero === numero && h.metodo === 'sin_whatsapp');
   if (entry){
-    entry.sms_enviado = true;
-    entry.fecha_sms = new Date().toISOString();
+    marcarSmsEnviadoEn(entry);
     saveHistorial(historial);
-    syncHistorial();
   }
   const card = btn.closest('.lead-card');
   const actions = card.querySelectorAll('.lead-actions');
   actions[actions.length - 1].innerHTML = '<span class="badge-rojo">📵📩 Sin WhatsApp · SMS enviado</span>';
+}
+
+function marcarSmsEnviadoHistorial(numero, fecha_contacto){
+  const historial = getHistorial();
+  const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
+  if (entry){
+    marcarSmsEnviadoEn(entry);
+    saveHistorial(historial);
+  }
+  renderHistorialList();
 }
 
 function toggleUbicacionTabla(){
@@ -679,9 +696,49 @@ function resaltarNombre(texto){
   return texto.replace(m[0], '<b>' + m[0] + '</b>');
 }
 
+// Muletillas comunes en comentarios de Facebook que NO son nombres de
+// persona ni de compañía, para no confundirlas al buscar nombre.
+const PALABRAS_FILLER = new Set([
+  'la','el','los','las','de','del','en','con','por','para','sin','su','sus','mi','tu',
+  'ala','alas','asus','aaus','aorden','aordenes','aqui','aquí','aca','acá','asu',
+  'buenos','buenas','buen','buena','hola','que','tal','disponible',
+  'informacion','información','presupuesto','gratis','garantizado','garantizada','garantizados',
+  'garantia','garantía','trabajo','trabajos','llamadas','llame','marque','márqueme','marqueme','marquele',
+  'cotizacion','cotización','recomendado','recomendable','recomendada','gusto','ordenes','órdenes',
+  'orden','tel','cel','whatsapp','mensaje','contacto','ofrezco','listo','lista','dia','día','dias','días',
+  'economico','económico','economica','económica','super','precio','precios','accesible','experiencia',
+  'necesaria','proyecto','señor','señora','noches','tardes','semana','mes','años','año',
+  'profesionales','responsable','detallista','verdad','servicio','servicios',
+  'muy','bueno','buena','bien','mal','malo','mala','mucho','mucha','poco','poca',
+  'todo','toda','todos','todas','este','esta','esto','eso','esa','ese','mismo','misma','también','tambien',
+  'porque','cuando','donde','como','cómo','quien','quién','cual','cuál','nuestro','nuestra','usted','ustedes',
+  'sobre','hasta','desde','entre','hacia','hace','hizo','puede','pueden','podemos','debe','deben','puedo',
+  'quiero','quiere','necesito','necesita','tiene','tengo','tienen','hay','soy','eres','somos','son','estoy',
+  'estamos','están','sera','será','seria','sería','es','fue','va','van','vamos','garantizo','garantiza','ase','asé',
+  'ayudo','ayuda','referencias','confianza','maestro','maestra','albañil','albanil','plomero','electricista',
+  'contratista','constructor','compromiso','igual','perimetrales','piedra','cimentaciones','cimentaciónes',
+  'bardas','barda','honestidad','momento'
+]);
+
 function extraerNombre(texto){
-  const m = (texto || '').match(/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/);
-  return m ? m[0] : null;
+  const t = (texto || '').trim();
+  if (!t) return null;
+  // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte).
+  const m = t.match(/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/);
+  if (m) return m[0];
+  // 2. Nombre de compañía/negocio: palabra con mayúscula inicial + otra palabra,
+  // descartando muletillas típicas de los comentarios ("Ala orden", "Buenos días", etc.)
+  const palabras = t.split(/\s+/);
+  for (let i = 0; i < palabras.length - 1; i++){
+    const w = palabras[i];
+    if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}$/.test(w)) continue;
+    if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
+    const w2 = palabras[i + 1];
+    if (!/^[a-zA-ZÁÉÍÓÚÑáéíóúñ]{2,}$/.test(w2)) continue;
+    if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
+    return w + ' ' + w2;
+  }
+  return null;
 }
 
 function autoExpirarPendientes(){
@@ -893,10 +950,7 @@ function renderHistorialList(){
 }
 
 function renderHistorialCard(h){
-    let metodoInfo = '💬 WhatsApp';
-    if (h.metodo === 'sin_whatsapp'){
-      metodoInfo = h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS';
-    }
+    const sinWhatsapp = h.metodo === 'sin_whatsapp';
     const seg = h.seguimiento || 'pendiente';
     const info = ESTADOS_INFO[seg] || ESTADOS_INFO.pendiente;
     const numKey = h.numero.replace(/'/g, "\\'");
@@ -912,6 +966,15 @@ function renderHistorialCard(h){
       return `<span class="estado-chip${activo ? ' activo' : ''}" style="${activo ? `background:${ESTADOS_INFO[k].color};border-color:${ESTADOS_INFO[k].color}` : ''}" onclick="actualizarSeguimiento('${numKey}','${fechaKey}','${k}')">${ESTADOS_INFO[k].label}</span>`;
     }).join('');
     const notaIdSafe = (h.numero + '_' + h.fecha_contacto).replace(/[^a-zA-Z0-9]/g, '');
+    const sinWhatsappBadge = sinWhatsapp
+      ? `<div style="margin:4px 0"><span class="badge-rojo" style="font-size:14px;padding:8px 16px">${h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS'}</span></div>`
+      : '';
+    const accionFinal = sinWhatsapp
+      ? (h.sms_enviado
+          ? ''
+          : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="sms:+${h.numero}">📩 Enviar SMS</a>
+             <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
+      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="https://wa.me/${h.numero}?text=${mensajeFollowUp}" target="_blank">🔁 Reenviar oferta</a>`;
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
@@ -920,14 +983,15 @@ function renderHistorialCard(h){
         ${h.post_url ? `<a href="${h.post_url}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${resaltarNombre(h.contexto || '-')}</div>
-        <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge} · ${metodoInfo}</div>
+        <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge}</div>
+        ${sinWhatsappBadge}
         <div class="estado-chips">${chipsEstado}</div>
         <div class="nota-box">
           <textarea id="nota-${notaIdSafe}" placeholder="📝 Notas reales (lo que pidió por chat: medidas, cantidades, etc.)">${(h.nota || '').replace(/</g,'&lt;')}</textarea>
           <button class="btn-nota" onclick="actualizarNota('${numKey}','${fechaKey}', document.getElementById('nota-${notaIdSafe}').value)">💾 Guardar nota</button>
         </div>
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          <a class="btn-wa" style="font-size:12px;padding:4px 8px" href="https://wa.me/${h.numero}?text=${mensajeFollowUp}" target="_blank">🔁 Reenviar oferta</a>
+          ${accionFinal}
         </div>
       </div>
     `;
