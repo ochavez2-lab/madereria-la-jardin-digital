@@ -252,6 +252,31 @@ function detectarRol(texto){
   return null;
 }
 
+// Mapa de LADA (código de área) a ciudad/estado, para saber de dónde es
+// cada lead cuando preguntan "¿de qué estado es este número?".
+const LADA_INFO = {
+  '664': { ciudad: 'Tijuana',    estado: 'Baja California' },
+  '663': { ciudad: 'Tijuana',    estado: 'Baja California' },
+  '665': { ciudad: 'Tecate',     estado: 'Baja California' },
+  '661': { ciudad: 'Rosarito',   estado: 'Baja California' },
+  '686': { ciudad: 'Mexicali',   estado: 'Baja California' },
+  '646': { ciudad: 'Ensenada',   estado: 'Baja California' },
+  '612': { ciudad: 'La Paz',     estado: 'Baja California Sur' },
+  '637': { ciudad: 'Caborca/Altar', estado: 'Sonora' },
+  '777': { ciudad: 'Cuernavaca', estado: 'Morelos' },
+  '918': { ciudad: 'Campeche',   estado: 'Campeche' },
+  '223': { ciudad: 'Tepeaca',    estado: 'Puebla' }
+};
+
+function obtenerUbicacion(numero){
+  // numero viene normalizado como 52 + 10 dígitos: los primeros 3 dígitos
+  // después del 52 son el LADA.
+  const lada = numero.slice(2, 5);
+  const info = LADA_INFO[lada];
+  if (!info) return { lada, label: `📍 LADA ${lada} (sin identificar)` };
+  return { lada, label: `📍 ${info.ciudad}, ${info.estado}` };
+}
+
 let catActual = 'otro';
 
 (function(){
@@ -443,11 +468,23 @@ async function procesar(){
     .map(k => `<div class="chip gray">${CATEGORIA_LABEL[k] || k} ${conteoRoles[k]}</div>`)
     .join('');
 
+  const conteoUbicacion = {};
+  nuevos.forEach(n => {
+    const u = obtenerUbicacion(n.numero).label;
+    conteoUbicacion[u] = (conteoUbicacion[u] || 0) + 1;
+  });
+  const chipsUbicacion = Object.keys(conteoUbicacion)
+    .map(k => `<div class="chip gray">${k} ${conteoUbicacion[k]}</div>`)
+    .join('');
+
   document.getElementById('resumenBox').innerHTML = `
     <div class="resumen">
       <div class="chip">✅ ${nuevos.length} nuevos</div>
       <div class="chip gray">🔁 ${repetidos.length} ya contactados</div>
       ${chipsRoles}
+    </div>
+    <div class="resumen">
+      ${chipsUbicacion}
     </div>
   `;
 
@@ -470,6 +507,7 @@ async function procesar(){
     html += `
       <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
         <div class="lead-num">${display}</div>
+        <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
         <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
@@ -519,6 +557,7 @@ async function procesar(){
       html += `
         <div class="lead-card repetido">
           <div class="lead-num">${display}</div>
+          <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
           <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
           <span class="badge-rojo">${badge}</span>
           ${extra}
@@ -725,6 +764,15 @@ function renderHistorialList(){
           <td>${c.compro}</td>
         </tr>`;
     }).join('');
+    const porUbic = {};
+    todos.forEach(h => {
+      const ubic = obtenerUbicacion(h.numero).label;
+      if (!porUbic[ubic]) porUbic[ubic] = 0;
+      porUbic[ubic]++;
+    });
+    const ubicsOrdenadas = Object.keys(porUbic).sort((a,b) => porUbic[b] - porUbic[a]);
+    const filasUbic = ubicsOrdenadas.map(u => `<tr><td>${u}</td><td>${porUbic[u]}</td></tr>`).join('');
+
     resumenBox.innerHTML = `
       <div class="tablero-wrap">
         <table class="tablero-table">
@@ -742,6 +790,12 @@ function renderHistorialList(){
               <td>${conteos.compro}</td>
             </tr>
           </tfoot>
+        </table>
+      </div>
+      <div class="tablero-wrap" style="margin-top:10px">
+        <table class="tablero-table">
+          <thead><tr><th>Ciudad / Estado</th><th>Total</th></tr></thead>
+          <tbody>${filasUbic}</tbody>
         </table>
       </div>
     `;
@@ -843,6 +897,7 @@ function renderHistorialCard(h){
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
         <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
+        <div style="font-size:11px;color:#999">${obtenerUbicacion(h.numero).label}</div>
         ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${resaltarNombre(h.contexto || '-')}</div>
         <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge} · ${metodoInfo}</div>
