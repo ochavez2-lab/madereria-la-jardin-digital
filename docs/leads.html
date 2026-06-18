@@ -646,8 +646,12 @@ function renderHistorialList(){
   let hist = todos.slice();
 
   const filtro = historialFiltro.trim().toLowerCase();
+  const filtroDigitos = filtro.replace(/\D/g, '');
   if (filtro){
-    hist = hist.filter(h => h.numero.includes(filtro) || (h.contexto || '').toLowerCase().includes(filtro));
+    hist = hist.filter(h =>
+      (filtroDigitos && h.numero.includes(filtroDigitos)) ||
+      (h.contexto || '').toLowerCase().includes(filtro)
+    );
   }
 
   if (historialEstadoFiltro !== 'todos'){
