@@ -561,6 +561,24 @@ function extraerNombre(texto){
   return m ? m[0] : null;
 }
 
+function autoExpirarPendientes(){
+  const historial = getHistorial();
+  let cambios = false;
+  historial.forEach(function(h){
+    const seg = h.seguimiento || 'pendiente';
+    if (seg === 'pendiente' && diasDesde(h.fecha_contacto) >= 15){
+      h.seguimiento = 'no_respondio';
+      cambios = true;
+      fetch(RAILWAY_URL+'/api/seguimiento', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ numero: h.numero, fecha_contacto: h.fecha_contacto, seguimiento: 'no_respondio' })
+      }).catch(function(){});
+    }
+  });
+  if (cambios) saveHistorial(historial);
+  return cambios;
+}
+
 function toggleHistorial(){
   const box = document.getElementById('historialBox');
   if (box.style.display === 'none'){
@@ -568,6 +586,7 @@ function toggleHistorial(){
     historialEstadoFiltro = 'todos';
     historialCatFiltro = 'todos';
     historialOrden = 'antiguo';
+    autoExpirarPendientes();
     box.innerHTML = `
       <div style="text-align:center;font-size:13px;color:#b8860b;font-weight:600;margin-bottom:10px;font-style:italic">
         ✨ Tus contactos, tus clientes, tu futuro ✨
@@ -806,6 +825,7 @@ function descargarBackup(){
 
 mergeSeed();
 reclasificarHistorialAntiguo();
+autoExpirarPendientes();
 actualizarContadorHistorial();
 syncHistorial();
 setInterval(syncHistorial, 10 * 1000);
