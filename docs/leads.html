@@ -5,23 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Leads → WhatsApp · La Jardín</title>
 <style>
-:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888}
+:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888;--blue:#3b82f6;--purple:#8b5cf6;--green:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);padding-bottom:60px}
+body{font-family:-apple-system,Inter,sans-serif;background:linear-gradient(160deg,#fdf9f0,#f4ecdb 45%,#ede2c9);color:var(--text);padding-bottom:60px;min-height:100vh}
 
-header{background:var(--dark);padding:18px 16px;text-align:center}
-header h1{color:var(--gold);font-size:18px;font-weight:900;letter-spacing:1px}
-header p{color:#666;font-size:11px;margin-top:4px}
+header{background:linear-gradient(135deg,#1a1410,#2b2014);padding:22px 16px;text-align:center;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+header h1{color:var(--gold2);font-size:19px;font-weight:900;letter-spacing:1px;text-shadow:0 0 14px rgba(232,201,106,.35)}
+header p{color:#a89878;font-size:11px;margin-top:4px}
 
 .wrap{max-width:600px;margin:0 auto;padding:16px}
 
-.section{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
-.section h2{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)}
+.section{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent,var(--gold));border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+.section h2{font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text)}
+.section.acc-blue{--accent:var(--blue)}
+.section.acc-amber{--accent:var(--gold)}
+.section.acc-purple{--accent:var(--purple)}
+.section.acc-green{--accent:var(--green)}
 
-.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.cat-btn{border:1.5px solid var(--border);background:linear-gradient(135deg,#fff,#faf6ec);border-radius:14px;padding:14px 8px;font-size:13px;font-weight:800;color:var(--text);cursor:pointer;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .12s,box-shadow .12s}
-.cat-btn:active{transform:scale(.96)}
-.cat-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border-color:var(--gold);box-shadow:0 5px 16px rgba(201,168,76,.5);transform:scale(1.03)}
+.cat-select{width:100%;border:1.5px solid var(--border);background:#fff;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:var(--text);outline:none}
+.cat-select:focus{border-color:var(--gold)}
 
 textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;outline:none}
 textarea:focus{border-color:var(--gold)}
@@ -38,7 +40,7 @@ textarea:focus{border-color:var(--gold)}
 .resumen .chip{background:var(--dark);color:var(--gold);font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px}
 .resumen .chip.gray{background:#eee;color:#888}
 
-.lead-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.lead-card{background:#fff;border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .lead-card.done{opacity:.45}
 .lead-card.repetido{border-color:#f3c2c2;background:#fff6f6;opacity:1}
 .lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
@@ -53,7 +55,7 @@ textarea:focus{border-color:var(--gold)}
 
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 0}
 
-.historial-toggle{text-align:center;font-size:12px;color:var(--gold);font-weight:700;padding:10px;cursor:pointer;text-decoration:underline}
+.historial-toggle{text-align:center;font-size:12px;color:var(--purple);font-weight:800;padding:10px;cursor:pointer;text-decoration:underline}
 .warn{background:#fff8e6;border:1px solid #f0d896;border-radius:10px;padding:10px 12px;font-size:11px;color:#7a5a10;margin-bottom:14px;line-height:1.5}
 </style>
 </head>
@@ -70,22 +72,9 @@ textarea:focus{border-color:var(--gold)}
     ⚠️ Los enlaces abren WhatsApp con el mensaje listo. <b>Envía uno por uno, espaciado</b> (15-30 seg entre cada uno) para no arriesgar tu número. Usa WhatsApp Business si puedes.
   </div>
 
-  <div class="section">
-    <h2>1. Tipo de publicación</h2>
-    <p style="font-size:13px;font-weight:700;color:var(--gold);margin:-4px 0 10px">💪 Elige el oficio y vamos a buscar clientes</p>
-    <div class="cats" id="cats">
-      <div class="cat-btn on" data-cat="cimbrado">🧱 Cimbrado</div>
-      <div class="cat-btn" data-cat="bloques_albanil">👷 Bloques / Albañil</div>
-      <div class="cat-btn" data-cat="yeseros">🎨 Yeseros / Acabados</div>
-      <div class="cat-btn" data-cat="constructores">🏗️ Constructores</div>
-      <div class="cat-btn" data-cat="contratistas">📋 Contratistas</div>
-      <div class="cat-btn" data-cat="otro">📦 Otro</div>
-    </div>
-    <p style="font-size:11px;color:#999;margin-top:8px">Se usa solo si no detectamos el oficio en el texto del comentario. Puedes corregir cada lead individualmente abajo.</p>
-  </div>
-
-  <div class="section">
-    <h2>2. Pega los comentarios de Facebook</h2>
+  <div class="section acc-blue">
+    <h2>1. Pega los comentarios de Facebook</h2>
+    <p style="font-size:12px;font-weight:700;color:var(--blue);margin:-4px 0 10px">🤖 El sistema detecta el oficio de cada comentario solo, leyendo el texto</p>
     <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
     <div class="meta-row">
       <div>
@@ -98,6 +87,12 @@ textarea:focus{border-color:var(--gold)}
       </div>
     </div>
     <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
+  </div>
+
+  <div class="section acc-amber">
+    <h2>2. Categoría de respaldo (opcional)</h2>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Solo se usa si no logramos detectar el oficio en el texto. Puedes corregir cada lead individualmente abajo.</p>
+    <select id="catDefault" class="cat-select"></select>
   </div>
 
   <div id="resumenBox"></div>
@@ -178,15 +173,16 @@ function detectarRol(texto){
   return null;
 }
 
-let catActual = 'cimbrado';
+let catActual = 'otro';
 
-document.getElementById('cats').addEventListener('click', function(e){
-  const btn = e.target.closest('.cat-btn');
-  if(!btn) return;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  catActual = btn.dataset.cat;
-});
+(function(){
+  const sel = document.getElementById('catDefault');
+  sel.innerHTML = Object.keys(CATEGORIA_LABEL).map(function(k){
+    return '<option value="' + k + '">' + CATEGORIA_LABEL[k] + '</option>';
+  }).join('');
+  sel.value = catActual;
+  sel.addEventListener('change', function(){ catActual = sel.value; });
+})();
 
 function getHistorial(){
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch(e){ return []; }
@@ -680,6 +676,26 @@ function actualizarSeguimiento(numero, fecha_contacto, valor){
   }).catch(function(){});
 }
 
+function reclasificarHistorialAntiguo(){
+  const FLAG = 'lj_reclasificado_v1';
+  if (localStorage.getItem(FLAG)) return;
+  const historial = getHistorial();
+  let cambios = 0;
+  historial.forEach(function(h){
+    const rol = detectarRol(h.contexto);
+    if (rol && rol !== h.categoria){
+      h.categoria = rol;
+      cambios++;
+      fetch(RAILWAY_URL+'/api/categoria', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ numero: h.numero, fecha_contacto: h.fecha_contacto, categoria: rol })
+      }).catch(function(){});
+    }
+  });
+  if (cambios) saveHistorial(historial);
+  localStorage.setItem(FLAG, '1');
+}
+
 function descargarBackup(){
   const hist = getHistorial();
   if (hist.length === 0){
@@ -708,6 +724,7 @@ function descargarBackup(){
 }
 
 mergeSeed();
+reclasificarHistorialAntiguo();
 actualizarContadorHistorial();
 syncHistorial();
 setInterval(syncHistorial, 10 * 1000);
