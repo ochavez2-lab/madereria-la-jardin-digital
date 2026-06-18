@@ -9,9 +9,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,Inter,sans-serif;background:linear-gradient(160deg,#fdf9f0,#f4ecdb 45%,#ede2c9);color:var(--text);padding-bottom:60px;min-height:100vh}
 
-header{background:linear-gradient(135deg,#1a1410,#2b2014);padding:22px 16px;text-align:center;box-shadow:0 2px 14px rgba(0,0,0,.25)}
-header h1{color:var(--gold2);font-size:19px;font-weight:900;letter-spacing:1px;text-shadow:0 0 14px rgba(232,201,106,.35)}
-header p{color:#a89878;font-size:11px;margin-top:4px}
+header{background:linear-gradient(135deg,var(--gold),var(--gold2));padding:22px 16px;text-align:center;box-shadow:0 2px 14px rgba(201,168,76,.3)}
+header h1{color:#2b2014;font-size:19px;font-weight:900;letter-spacing:1px}
+header p{color:#5c4a1f;font-size:11px;margin-top:4px;font-weight:600}
 
 .wrap{max-width:600px;margin:0 auto;padding:16px}
 
@@ -313,9 +313,10 @@ function extraerNumeros(texto){
   return encontrados;
 }
 
-function construirMensaje(cat){
+function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
-  return `Qué tal maestro 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
+  const primerNombre = nombre ? nombre.split(/\s+/)[0] : 'maestro';
+  return `Qué tal ${primerNombre} 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
 }
 
 async function procesar(){
@@ -378,13 +379,15 @@ async function procesar(){
   let html = '';
   nuevos.forEach((n, i) => {
     const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
-    const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal));
+    const nombre = extraerNombre(n.contexto);
+    const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal, nombre));
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
       : `📂 categoría base (sin detectar oficio en el texto)`;
     html += `
       <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
         <div class="lead-num">${display}</div>
+        ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
         <div class="lead-ctx">${n.contexto}</div>
         <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
         <div style="margin-top:6px">
@@ -409,7 +412,7 @@ async function procesar(){
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
       const catRepetido = (entry && entry.categoria) || n.rolDetectado || catActual;
-      const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido));
+      const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido, extraerNombre(n.contexto)));
       let badge, extra = '';
       if (entry && entry.metodo === 'sin_whatsapp'){
         if (entry.sms_enviado){
@@ -449,7 +452,7 @@ function cambiarCategoriaLead(i, nuevaCat){
   if (!card) return;
   card.dataset.cat = nuevaCat;
   const link = card.querySelector('.btn-wa');
-  if (link) link.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(construirMensaje(nuevaCat));
+  if (link) link.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(construirMensaje(nuevaCat, extraerNombre(card.dataset.ctx)));
 }
 
 function marcarContactado(i){
@@ -520,6 +523,7 @@ function actualizarContadorHistorial(){
 
 let historialFiltro = '';
 let historialEstadoFiltro = 'todos';
+let historialCatFiltro = 'todos';
 let historialOrden = 'antiguo';
 
 const ESTADOS_INFO = {
@@ -539,11 +543,17 @@ function resaltarNombre(texto){
   return texto.replace(m[0], '<b>' + m[0] + '</b>');
 }
 
+function extraerNombre(texto){
+  const m = (texto || '').match(/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/);
+  return m ? m[0] : null;
+}
+
 function toggleHistorial(){
   const box = document.getElementById('historialBox');
   if (box.style.display === 'none'){
     historialFiltro = '';
     historialEstadoFiltro = 'todos';
+    historialCatFiltro = 'todos';
     historialOrden = 'antiguo';
     box.innerHTML = `
       <div style="text-align:center;font-size:13px;color:#b8860b;font-weight:600;margin-bottom:10px;font-style:italic">
@@ -554,6 +564,7 @@ function toggleHistorial(){
         oninput="historialFiltro=this.value; renderHistorialList()"
         style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
       <div id="histFiltros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="histFiltrosCat" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <select id="histOrdenSel" onchange="historialOrden=this.value; renderHistorialList()"
         style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;">
         <option value="antiguo" selected>⏱️ Más antiguos primero (para dar seguimiento)</option>
@@ -568,10 +579,18 @@ function toggleHistorial(){
   }
 }
 
+function bucketTiempo(dias){
+  if (dias <= 0) return '🟢 Hoy';
+  if (dias <= 7) return '🟡 Esta semana';
+  if (dias <= 30) return '🟠 Este mes';
+  return '🔴 Hace más de un mes — ¡dale seguimiento!';
+}
+
 function renderHistorialList(){
   const list = document.getElementById('historialList');
   const resumenBox = document.getElementById('histResumen');
   const filtrosBox = document.getElementById('histFiltros');
+  const filtrosCatBox = document.getElementById('histFiltrosCat');
   if (!list) return;
 
   const todos = getHistorial();
@@ -610,6 +629,20 @@ function renderHistorialList(){
     }).join('');
   }
 
+  // Chips de filtro por oficio detectado
+  if (filtrosCatBox){
+    const conteoCat = {};
+    todos.forEach(h => { conteoCat[h.categoria] = (conteoCat[h.categoria] || 0) + 1; });
+    const catChips = [{ v: 'todos', label: '🔧 Todos los oficios' }].concat(
+      Object.keys(conteoCat).map(k => ({ v: k, label: `${CATEGORIA_LABEL[k] || k} ${conteoCat[k]}` }))
+    );
+    filtrosCatBox.innerHTML = catChips.map(c => {
+      const activo = historialCatFiltro === c.v;
+      return `<span onclick="historialCatFiltro='${c.v}'; renderHistorialList()"
+        style="cursor:pointer;font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid ${activo ? 'var(--blue)' : '#ddd'};background:${activo ? 'var(--blue)' : '#fff'};color:${activo ? '#fff' : '#555'}">${c.label}</span>`;
+    }).join('');
+  }
+
   let hist = todos.slice();
 
   const filtro = historialFiltro.trim().toLowerCase();
@@ -619,6 +652,10 @@ function renderHistorialList(){
 
   if (historialEstadoFiltro !== 'todos'){
     hist = hist.filter(h => (h.seguimiento || 'pendiente') === historialEstadoFiltro);
+  }
+
+  if (historialCatFiltro !== 'todos'){
+    hist = hist.filter(h => h.categoria === historialCatFiltro);
   }
 
   hist.sort((a, b) => {
@@ -632,7 +669,19 @@ function renderHistorialList(){
     return;
   }
 
+  let bucketAnterior = null;
   list.innerHTML = hist.map(h => {
+    const bucketActual = bucketTiempo(diasDesde(h.fecha_contacto));
+    let encabezado = '';
+    if (bucketActual !== bucketAnterior){
+      encabezado = `<div style="font-size:12px;font-weight:800;color:#777;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.5px">${bucketActual}</div>`;
+      bucketAnterior = bucketActual;
+    }
+    return encabezado + renderHistorialCard(h);
+  }).join('');
+}
+
+function renderHistorialCard(h){
     let metodoInfo = '💬 WhatsApp';
     if (h.metodo === 'sin_whatsapp'){
       metodoInfo = h.sms_enviado ? '📵📩 Sin WhatsApp · SMS enviado' : '📵 Sin WhatsApp · sin SMS';
@@ -645,12 +694,14 @@ function renderHistorialList(){
     const diasBadge = dias >= 7
       ? `<span style="color:#e74c3c;font-weight:600">⏰ hace ${dias} días sin seguimiento</span>`
       : `<span style="color:#999">hace ${dias} día${dias === 1 ? '' : 's'}</span>`;
-    const mensajeFollowUp = encodeURIComponent(`Qué tal maestro 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
+    const nombreHist = extraerNombre(h.contexto || '');
+    const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist ? nombreHist.split(/\s+/)[0] : 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg}">
         <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
+        ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
         <div class="lead-ctx">${resaltarNombre(h.contexto || '-')}</div>
-        <div style="font-size:11px;color:#999">📂 ${h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge} · ${metodoInfo}</div>
+        <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge} · ${metodoInfo}</div>
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <select onchange="actualizarSeguimiento('${numKey}','${fechaKey}',this.value)" style="font-size:12px;padding:4px;border-radius:6px;border:1px solid #ccc">
             <option value="pendiente" ${seg==='pendiente'?'selected':''}>⏳ Pendiente</option>
@@ -662,7 +713,6 @@ function renderHistorialList(){
         </div>
       </div>
     `;
-  }).join('');
 }
 
 function actualizarSeguimiento(numero, fecha_contacto, valor){
