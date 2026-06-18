@@ -637,6 +637,12 @@ function marcarSmsEnviado(numero, btn){
   actions[actions.length - 1].innerHTML = '<span class="badge-rojo">📵📩 Sin WhatsApp · SMS enviado</span>';
 }
 
+function toggleUbicacionTabla(){
+  const box = document.getElementById('ubicacionTablaBox');
+  if (!box) return;
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
 function actualizarContadorHistorial(){
   document.getElementById('histCount').textContent = getHistorial().length;
 }
@@ -792,11 +798,14 @@ function renderHistorialList(){
           </tfoot>
         </table>
       </div>
-      <div class="tablero-wrap" style="margin-top:10px">
-        <table class="tablero-table">
-          <thead><tr><th>Ciudad / Estado</th><th>Total</th></tr></thead>
-          <tbody>${filasUbic}</tbody>
-        </table>
+      <div class="historial-toggle" style="font-size:11px;padding:6px" onclick="toggleUbicacionTabla()">📍 Ver segmentación por ciudad/estado</div>
+      <div id="ubicacionTablaBox" style="display:none;margin-top:6px">
+        <div class="tablero-wrap">
+          <table class="tablero-table">
+            <thead><tr><th>Ciudad / Estado</th><th>Total</th></tr></thead>
+            <tbody>${filasUbic}</tbody>
+          </table>
+        </div>
       </div>
     `;
   }
