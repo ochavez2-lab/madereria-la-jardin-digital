@@ -450,26 +450,30 @@ function extraerGrupo(texto){
   //   Nombre del grupo  ·
   //   Nombre de quien publicó
   //   ·
-  //   fecha de publicación
+  //   fecha de publicación (a veces ilegible si el copiado viene de una captura)
   //   ·
-  // Buscamos la línea de fecha y subimos saltando los separadores "·"
-  // sueltos para llegar al nombre del grupo.
+  // En vez de depender de la fecha (que a veces sale corrupta), buscamos
+  // cerca del inicio del texto una línea que termine en "·" (el grupo va
+  // pegado al separador) o que esté seguida de una línea que es solo "·".
+  // Limitamos la búsqueda a las primeras líneas para no confundirnos con
+  // texto de comentarios más abajo.
   const lineas = (texto || '').split('\n').map(l => l.trim()).filter(l => l && l !== 'Facebook');
-  const reFecha = /\d{1,2}\s+de\s+[a-záéíóúñ]+(\s+a\s+la?s?\s+\d{1,2}:\d{2})?/i;
   const esSeparador = l => /^·+$/.test(l);
-
-  const idxFecha = lineas.findIndex(l => reFecha.test(l) && !esSeparador(l));
-  if (idxFecha < 1) return null;
-
-  let i = idxFecha - 1;
-  while (i >= 0 && esSeparador(lineas[i])) i--;
-  if (i < 0) return null; // línea del nombre de quien publicó
-  i--;
-  while (i >= 0 && esSeparador(lineas[i])) i--;
-  if (i < 0) return null;
-
-  const grupo = lineas[i].replace(/\s*·+\s*$/, '').trim();
-  return grupo || null;
+  const MAX_SCAN = 6;
+  let revisadas = 0;
+  for (let i = 0; i < lineas.length && revisadas < MAX_SCAN; i++){
+    const l = lineas[i];
+    if (esSeparador(l)) continue;
+    if (/^publicaci[oó]n de /i.test(l)) { revisadas++; continue; }
+    revisadas++;
+    if (/·\s*$/.test(l)){
+      const grupo = l.replace(/·\s*$/, '').trim();
+      if (grupo) return grupo;
+      continue;
+    }
+    if (esSeparador(lineas[i + 1] || '')) return l;
+  }
+  return null;
 }
 
 async function procesar(){
