@@ -314,7 +314,7 @@ async function syncHistorial(){
           fecha_contacto:e.fecha_contacto, metodo:e.metodo||'whatsapp',
           sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null,
           seguimiento:e.seguimiento||'pendiente', nota:e.nota||null,
-          post_url:e.post_url||null};
+          post_url:e.post_url||null, grupo:e.grupo||null};
       });
       var w = await fetch(RAILWAY_URL+'/api/sync', {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rows), signal:ctrl.signal
@@ -445,10 +445,38 @@ function extraerLinkPublicacion(texto){
   return m ? m[0].replace(/[)\]>,.]+$/, '') : null;
 }
 
+function extraerGrupo(texto){
+  // El encabezado de un post copiado de Facebook trae normalmente:
+  //   Nombre del grupo  ·
+  //   Nombre de quien publicó
+  //   ·
+  //   fecha de publicación
+  //   ·
+  // Buscamos la línea de fecha y subimos saltando los separadores "·"
+  // sueltos para llegar al nombre del grupo.
+  const lineas = (texto || '').split('\n').map(l => l.trim()).filter(l => l && l !== 'Facebook');
+  const reFecha = /\d{1,2}\s+de\s+[a-záéíóúñ]+(\s+a\s+la?s?\s+\d{1,2}:\d{2})?/i;
+  const esSeparador = l => /^·+$/.test(l);
+
+  const idxFecha = lineas.findIndex(l => reFecha.test(l) && !esSeparador(l));
+  if (idxFecha < 1) return null;
+
+  let i = idxFecha - 1;
+  while (i >= 0 && esSeparador(lineas[i])) i--;
+  if (i < 0) return null; // línea del nombre de quien publicó
+  i--;
+  while (i >= 0 && esSeparador(lineas[i])) i--;
+  if (i < 0) return null;
+
+  const grupo = lineas[i].replace(/\s*·+\s*$/, '').trim();
+  return grupo || null;
+}
+
 async function procesar(){
   const texto = document.getElementById('raw').value;
   const fechaPub = new Date().toISOString().slice(0,10);
   const linkPub = extraerLinkPublicacion(texto);
+  const grupoPub = extraerGrupo(texto);
 
   if (!texto.trim()){
     document.getElementById('resultados').innerHTML = '<div class="empty">Pega algún texto primero 👆</div>';
@@ -504,6 +532,7 @@ async function procesar(){
     <div class="resumen">
       ${chipsUbicacion}
     </div>
+    ${grupoPub ? `<div class="resumen"><div class="chip gray">👥 Grupo: ${grupoPub}</div></div>` : ''}
   `;
 
   if (nuevos.length === 0 && repetidos.length === 0){
@@ -523,9 +552,10 @@ async function procesar(){
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
       : `📂 categoría base (sin detectar oficio en el texto)`;
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
+        ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
@@ -608,7 +638,8 @@ function marcarContactado(i){
     fecha_contacto: new Date().toISOString(),
     metodo: 'whatsapp',
     seguimiento: 'pendiente',
-    post_url: card.dataset.link || null
+    post_url: card.dataset.link || null,
+    grupo: card.dataset.grupo || null
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -631,7 +662,8 @@ function marcarSinWhatsapp(i){
     metodo: 'sin_whatsapp',
     sms_enviado: false,
     seguimiento: 'pendiente',
-    post_url: card.dataset.link || null
+    post_url: card.dataset.link || null,
+    grupo: card.dataset.grupo || null
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -994,6 +1026,7 @@ function renderHistorialCard(h){
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
         <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(h.numero).label}</div>
+        ${h.grupo ? `<div style="font-size:11px;color:#999">👥 ${h.grupo}</div>` : ''}
         ${h.post_url ? `<a href="${h.post_url}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${resaltarNombre(h.contexto || '-')}</div>
@@ -1093,7 +1126,7 @@ function descargarBackup(){
     alert('Aún no tienes contactos guardados.');
     return;
   }
-  const headers = ['numero','categoria','fecha_pub','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota','post_url'];
+  const headers = ['numero','categoria','fecha_pub','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota','post_url','grupo'];
   let csv = headers.join(',') + '\n';
   hist.forEach(h => {
     const fila = headers.map(k => {
