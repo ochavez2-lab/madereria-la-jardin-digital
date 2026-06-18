@@ -73,6 +73,18 @@ app.post('/api/seguimiento', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/categoria', async (req, res) => {
+  const { numero, fecha_contacto, categoria } = req.body || {};
+  if (!numero || !fecha_contacto || !categoria) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query(
+      'UPDATE leads_historial SET categoria=$1 WHERE numero=$2 AND fecha_contacto=$3',
+      [categoria, numero, fecha_contacto]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/all', async (req, res) => {
   try {
     const r = await pool.query(
