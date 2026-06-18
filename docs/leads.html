@@ -133,7 +133,23 @@ textarea:focus{border-color:var(--gold)}
 
 <script>
 const LS_KEY = 'lj_leads_historial';
+const LS_DELETED_KEY = 'lj_deleted_keys';
 const RAILWAY_URL = 'https://madereria-la-jardin-digital-production.up.railway.app';
+
+function getDeletedKeys(){
+  try { return JSON.parse(localStorage.getItem(LS_DELETED_KEY)) || []; } catch(e){ return []; }
+}
+function marcarComoEliminado(numero, fecha_contacto){
+  const keys = getDeletedKeys();
+  const k = numero+'|'+fecha_contacto;
+  if (!keys.includes(k)){
+    keys.push(k);
+    localStorage.setItem(LS_DELETED_KEY, JSON.stringify(keys));
+  }
+}
+function fueEliminado(numero, fecha_contacto){
+  return getDeletedKeys().includes(numero+'|'+fecha_contacto);
+}
 
 function aplicarZoom(){
   const s = parseFloat(localStorage.getItem('lj_zoom') || '1');
@@ -179,7 +195,7 @@ function mergeSeed(){
   const existentes = new Set(hist.map(h=>h.numero));
   let agregados = false;
   SEED_HISTORIAL.forEach(s=>{
-    if(!existentes.has(s.numero)){
+    if(!existentes.has(s.numero) && !fueEliminado(s.numero, s.fecha_contacto)){
       hist.push(s);
       existentes.add(s.numero);
       agregados = true;
@@ -291,6 +307,10 @@ async function syncHistorial(){
     remote.forEach(function(e){
       if (!e||!e.numero||!e.fecha_contacto) return;
       var key = e.numero+'|'+e.fecha_contacto;
+      if (fueEliminado(e.numero, e.fecha_contacto)){
+        eliminarEnServidor(e.numero, e.fecha_contacto);
+        return;
+      }
       var existing = localMap[key];
       if (!existing){
         local.push(e);
@@ -863,14 +883,24 @@ function confirmarEliminarLead(numero, fecha_contacto){
   const pin = prompt('🔒 Ingrese el PIN para eliminar este contacto:');
   if (pin === null) return;
   if (pin !== '2525') { alert('PIN incorrecto.'); return; }
+  marcarComoEliminado(numero, fecha_contacto);
   const historial = getHistorial().filter(h => !(h.numero === numero && h.fecha_contacto === fecha_contacto));
   saveHistorial(historial);
   renderHistorialList();
   actualizarContadorHistorial();
+  eliminarEnServidor(numero, fecha_contacto);
+}
+
+function eliminarEnServidor(numero, fecha_contacto, intento){
+  intento = intento || 1;
   fetch(RAILWAY_URL+'/api/eliminar', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ numero, fecha_contacto })
-  }).catch(function(){});
+  }).then(function(r){
+    if (!r.ok && intento < 3) setTimeout(function(){ eliminarEnServidor(numero, fecha_contacto, intento+1); }, 3000);
+  }).catch(function(){
+    if (intento < 3) setTimeout(function(){ eliminarEnServidor(numero, fecha_contacto, intento+1); }, 3000);
+  });
 }
 
 function reclasificarHistorialAntiguo(){
