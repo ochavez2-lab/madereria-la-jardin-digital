@@ -71,6 +71,7 @@ textarea:focus{border-color:var(--gold)}
 
   <div class="section">
     <h2>1. Tipo de publicación</h2>
+    <p style="font-size:11px;color:#999;margin:-6px 0 8px">Se usa solo si no detectamos el oficio en el texto del comentario. Puedes corregir cada lead individualmente abajo.</p>
     <div class="cats" id="cats">
       <div class="cat-btn on" data-cat="cimbrado">🧱 Cimbrado</div>
       <div class="cat-btn" data-cat="bloques_albanil">👷 Bloques / Albañil</div>
@@ -133,8 +134,47 @@ const TEMPLATES = {
   yeseros:         { gancho: 'Vi que hace acabados.',           cierre: 'Si ocupa madera o material pa\' terminar, se lo dejo el mismo día en obra.' },
   constructores:   { gancho: 'Vi que maneja obra.',             cierre: 'Manejo volumen, factura y entrega en obra el mismo día. ¿En qué proyecto anda? Le paso lista por volumen.' },
   contratistas:    { gancho: 'Vi que anda contratando obra.',   cierre: 'Le surto a tiempo pa\' que no pare la obra. ¿Qué ocupa pa\' la próxima etapa?' },
+  plomeria:        { gancho: 'Vi que hace trabajos de plomería.', cierre: '¿Ocupa madera o material pa\' su próxima chamba? Se lo entrego el mismo día.' },
+  electricidad:    { gancho: 'Vi que hace instalaciones eléctricas.', cierre: '¿Ocupa material pa\' su próximo proyecto? Le entrego rápido.' },
+  pisos_azulejo:   { gancho: 'Vi que instala pisos y azulejo.', cierre: '¿Ocupa madera o triplay de base pa\' su próxima instalación? Se lo dejo en obra.' },
+  pintura:         { gancho: 'Vi que hace trabajos de pintura.', cierre: '¿Ocupa material pa\' preparar la obra antes de pintar? Le surto rápido.' },
+  techos:          { gancho: 'Vi que hace techos e impermeabilización.', cierre: '¿Ocupa material pa\' su próximo techo? Le entrego el mismo día.' },
+  demolicion:      { gancho: 'Vi que hace trabajos de demolición.', cierre: '¿Va a reconstruir después? Le tengo el material listo pa\' cuando lo necesite.' },
+  herreria:        { gancho: 'Vi que hace trabajos de herrería y soldadura.', cierre: '¿Ocupa madera o material pa\' combinar con su trabajo? Se lo entrego rápido.' },
   otro:            { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la próxima colada? Con gusto le cotizo.' }
 };
+
+const CATEGORIA_LABEL = {
+  cimbrado: '🧱 Cimbrado', bloques_albanil: '👷 Bloques/Albañil', yeseros: '🎨 Yeseros/Acabados',
+  constructores: '🏗️ Constructores', contratistas: '📋 Contratistas', plomeria: '🚰 Plomería',
+  electricidad: '⚡ Electricidad', pisos_azulejo: '🟫 Pisos/Azulejo', pintura: '🖌️ Pintura',
+  techos: '🏠 Techos/Imperm.', demolicion: '🔨 Demolición', herreria: '🔩 Herrería/Soldadura', otro: '📦 Otro'
+};
+
+// Detecta el oficio real a partir del texto del propio comentario,
+// porque un lote de Facebook casi siempre viene revuelto (varios oficios mezclados).
+const ROLE_PATTERNS = [
+  ['plomeria', /plomer/],
+  ['electricidad', /electricist|el[eé]ctric/],
+  ['pisos_azulejo', /azulejo|loseta|\bpisos?\b/],
+  ['pintura', /pintor|pintura/],
+  ['techos', /impermeabiliz|gotera|\btecho/],
+  ['demolicion', /demolic|demoler|escombro/],
+  ['herreria', /herrer|soldador|soldadura/],
+  ['yeseros', /\byeso\b|aplanado/],
+  ['bloques_albanil', /alba[ñn]il|\bbloque|tabique|barda/],
+  ['cimbrado', /cimbra|colado|colada|castillo/],
+  ['contratistas', /contratista/],
+  ['constructores', /constructor|construcci[oó]n|casas? de madera|remodelaci[oó]n/]
+];
+
+function detectarRol(texto){
+  const t = (texto || '').toLowerCase();
+  for (const [cat, re] of ROLE_PATTERNS){
+    if (re.test(t)) return cat;
+  }
+  return null;
+}
 
 let catActual = 'cimbrado';
 
@@ -267,15 +307,16 @@ function extraerNumeros(texto){
       candidatos.forEach(c => {
         const norm = normalizarNumero(c);
         if (!norm) return;
-        encontrados.push({ numero: norm, contexto: linea.trim() });
+        const ctx = linea.trim();
+        encontrados.push({ numero: norm, contexto: ctx, rolDetectado: detectarRol(ctx) });
       });
     });
   });
   return encontrados;
 }
 
-function construirMensaje(){
-  const t = TEMPLATES[catActual];
+function construirMensaje(cat){
+  const t = TEMPLATES[cat] || TEMPLATES.otro;
   return `Qué tal maestro 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
 }
 
@@ -310,11 +351,21 @@ async function procesar(){
   const nuevos = unicos.filter(u => !histNums.has(u.numero));
   const repetidos = unicos.filter(u => histNums.has(u.numero));
 
+  // Categoría final de cada nuevo: lo detectado en su propio texto, o si no
+  // se detectó nada, la categoría base que elegiste arriba.
+  nuevos.forEach(n => { n.catFinal = n.rolDetectado || catActual; });
+
+  const conteoRoles = {};
+  nuevos.forEach(n => { conteoRoles[n.catFinal] = (conteoRoles[n.catFinal] || 0) + 1; });
+  const chipsRoles = Object.keys(conteoRoles)
+    .map(k => `<div class="chip gray">${CATEGORIA_LABEL[k] || k} ${conteoRoles[k]}</div>`)
+    .join('');
+
   document.getElementById('resumenBox').innerHTML = `
     <div class="resumen">
       <div class="chip">✅ ${nuevos.length} nuevos</div>
       <div class="chip gray">🔁 ${repetidos.length} ya contactados</div>
-      <div class="chip gray">📂 ${catActual.replace('_',' ')}</div>
+      ${chipsRoles}
     </div>
   `;
 
@@ -323,16 +374,26 @@ async function procesar(){
     return;
   }
 
-  const mensaje = construirMensaje();
-  const mensajeEnc = encodeURIComponent(mensaje);
+  const opcionesCategoria = Object.keys(CATEGORIA_LABEL)
+    .map(k => `<option value="${k}">${CATEGORIA_LABEL[k]}</option>`).join('');
 
   let html = '';
   nuevos.forEach((n, i) => {
     const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
+    const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal));
+    const etiquetaDeteccion = n.rolDetectado
+      ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
+      : `📂 categoría base (sin detectar oficio en el texto)`;
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${catActual}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-dia="${diaHorario.replace(/"/g,'&quot;')}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}">
         <div class="lead-num">${display}</div>
         <div class="lead-ctx">${n.contexto}</div>
+        <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
+        <div style="margin-top:6px">
+          <select onchange="cambiarCategoriaLead(${i}, this.value)" style="font-size:12px;padding:4px;border-radius:6px;border:1px solid #ccc">
+            ${opcionesCategoria.replace(`value="${n.catFinal}"`, `value="${n.catFinal}" selected`)}
+          </select>
+        </div>
         <div class="lead-actions">
           <a class="btn-wa" href="https://wa.me/${n.numero}?text=${mensajeEnc}" target="_blank">💬 Abrir WhatsApp</a>
         </div>
@@ -349,6 +410,8 @@ async function procesar(){
     repetidos.forEach(n => {
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
+      const catRepetido = (entry && entry.categoria) || n.rolDetectado || catActual;
+      const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido));
       let badge, extra = '';
       if (entry && entry.metodo === 'sin_whatsapp'){
         if (entry.sms_enviado){
@@ -381,6 +444,14 @@ async function procesar(){
   }
 
   document.getElementById('resultados').innerHTML = html;
+}
+
+function cambiarCategoriaLead(i, nuevaCat){
+  const card = document.getElementById('lead-' + i);
+  if (!card) return;
+  card.dataset.cat = nuevaCat;
+  const link = card.querySelector('.btn-wa');
+  if (link) link.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(construirMensaje(nuevaCat));
 }
 
 function marcarContactado(i){
