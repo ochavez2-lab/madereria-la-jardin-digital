@@ -18,9 +18,10 @@ header p{color:#666;font-size:11px;margin-top:4px}
 .section{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
 .section h2{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)}
 
-.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.cat-btn{border:1.5px solid var(--border);background:#fff;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center}
-.cat-btn.on{background:var(--dark);color:var(--gold);border-color:var(--dark)}
+.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cat-btn{border:1.5px solid var(--border);background:linear-gradient(135deg,#fff,#faf6ec);border-radius:14px;padding:14px 8px;font-size:13px;font-weight:800;color:var(--text);cursor:pointer;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .12s,box-shadow .12s}
+.cat-btn:active{transform:scale(.96)}
+.cat-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;border-color:var(--gold);box-shadow:0 5px 16px rgba(201,168,76,.5);transform:scale(1.03)}
 
 textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;outline:none}
 textarea:focus{border-color:var(--gold)}
@@ -71,7 +72,7 @@ textarea:focus{border-color:var(--gold)}
 
   <div class="section">
     <h2>1. Tipo de publicación</h2>
-    <p style="font-size:11px;color:#999;margin:-6px 0 8px">Se usa solo si no detectamos el oficio en el texto del comentario. Puedes corregir cada lead individualmente abajo.</p>
+    <p style="font-size:13px;font-weight:700;color:var(--gold);margin:-4px 0 10px">💪 Elige el oficio y vamos a buscar clientes</p>
     <div class="cats" id="cats">
       <div class="cat-btn on" data-cat="cimbrado">🧱 Cimbrado</div>
       <div class="cat-btn" data-cat="bloques_albanil">👷 Bloques / Albañil</div>
@@ -80,6 +81,7 @@ textarea:focus{border-color:var(--gold)}
       <div class="cat-btn" data-cat="contratistas">📋 Contratistas</div>
       <div class="cat-btn" data-cat="otro">📦 Otro</div>
     </div>
+    <p style="font-size:11px;color:#999;margin-top:8px">Se usa solo si no detectamos el oficio en el texto del comentario. Puedes corregir cada lead individualmente abajo.</p>
   </div>
 
   <div class="section">
