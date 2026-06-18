@@ -89,6 +89,18 @@ app.post('/api/categoria', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/metodo', async (req, res) => {
+  const { numero, fecha_contacto, metodo } = req.body || {};
+  if (!numero || !fecha_contacto || !metodo) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query(
+      'UPDATE leads_historial SET metodo=$1 WHERE numero=$2 AND fecha_contacto=$3',
+      [metodo, numero, fecha_contacto]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/nota', async (req, res) => {
   const { numero, fecha_contacto, nota } = req.body || {};
   if (!numero || !fecha_contacto) return res.status(400).json({ error: 'faltan datos' });
