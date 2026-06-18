@@ -30,6 +30,8 @@ pool.query(`
   ALTER TABLE leads_historial ADD COLUMN IF NOT EXISTS seguimiento TEXT DEFAULT 'pendiente'
 `)).then(() => pool.query(`
   ALTER TABLE leads_historial ADD COLUMN IF NOT EXISTS nota TEXT
+`)).then(() => pool.query(`
+  ALTER TABLE leads_historial ADD COLUMN IF NOT EXISTS post_url TEXT
 `)).catch(console.error);
 
 app.get('/ping', (req, res) => res.json({ ok: true }));
@@ -50,12 +52,12 @@ app.post('/api/sync', async (req, res) => {
       if (!e.numero || !e.fecha_contacto) continue;
       const r = await pool.query(
         `INSERT INTO leads_historial
-          (numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          (numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota,post_url)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
          ON CONFLICT (numero, fecha_contacto) DO NOTHING`,
         [e.numero, e.categoria||null, e.fecha_pub||null, e.dia_horario||null,
          (e.contexto||'').slice(0,200), e.fecha_contacto, e.metodo||'whatsapp',
-         !!e.sms_enviado, e.fecha_sms||null, e.seguimiento||'pendiente', e.nota||null]
+         !!e.sms_enviado, e.fecha_sms||null, e.seguimiento||'pendiente', e.nota||null, e.post_url||null]
       );
       inserted += r.rowCount;
     }
@@ -114,7 +116,7 @@ app.post('/api/eliminar', async (req, res) => {
 app.get('/api/all', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota FROM leads_historial ORDER BY fecha_contacto'
+      'SELECT numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota,post_url FROM leads_historial ORDER BY fecha_contacto'
     );
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
