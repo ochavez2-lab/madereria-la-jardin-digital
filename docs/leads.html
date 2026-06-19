@@ -278,10 +278,12 @@ const ROLE_PATTERNS = [
 
 function detectarRol(texto){
   const t = (texto || '').toLowerCase();
-  // Si el anuncio dice que hace "construcción en general" (contratista que ofrece
-  // de todo: plomería, electricidad, acabados, etc.), nos interesa más como
-  // prospecto de Constructores que como un oficio específico mencionado de paso.
-  if (/construcci[oó]n en general/.test(t)) return 'constructores';
+  // Si el anuncio es de un albañil/contratista que ofrece "de todo" (pisos, azulejo,
+  // impermeabilización, etc. mencionados de paso junto con su oficio principal),
+  // nos interesa más como prospecto de Albañilería/Constructores que como el
+  // oficio específico que se mencionó de pasada en medio del texto.
+  if (/alba[ñn]iler[ií]a/.test(t) && /general/.test(t)) return 'bloques_albanil';
+  if (/construcci[oó]n\s*(y\s*)?en general/.test(t)) return 'constructores';
   for (const [cat, re] of ROLE_PATTERNS){
     if (re.test(t)) return cat;
   }
@@ -555,6 +557,20 @@ async function procesar(){
   const nuevos = unicos.filter(u => !histNums.has(u.numero));
   const repetidos = unicos.filter(u => histNums.has(u.numero));
 
+  // Cuando un mismo comentario/línea trae varios números (ej. tarjetas de
+  // diferentes sucursales o números repetidos del mismo anuncio), los
+  // marcamos como "mismo texto" para que no se confundan como clientes
+  // distintos e independientes.
+  const contextoGrupos = {};
+  unicos.forEach(u => {
+    const key = u.contexto.trim();
+    if (!contextoGrupos[key]) contextoGrupos[key] = [];
+    contextoGrupos[key].push(u.numero);
+  });
+  const otrosDelMismoTexto = (numero, contexto) =>
+    (contextoGrupos[contexto.trim()] || []).filter(num => num !== numero);
+  const formatoNum = num => '+' + num.slice(0,2) + ' ' + num.slice(2,5) + ' ' + num.slice(5,8) + ' ' + num.slice(8);
+
   // Categoría final de cada nuevo: lo detectado en su propio comentario; si no dice
   // nada, el oficio que indica el nombre del grupo (ej. "Carpinteros en tijuana");
   // y solo si ninguno de los dos dice nada, la categoría base que elegiste arriba.
@@ -605,12 +621,14 @@ async function procesar(){
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
       : (rolGrupo ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupo] || rolGrupo}` : `📂 categoría base (sin detectar oficio en el texto)`);
+    const mismoTexto = otrosDelMismoTexto(n.numero, n.contexto);
     html += `
       <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
         ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
+        ${mismoTexto.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTexto.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
         ${direccion ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${direccion} (ver mapa)</a>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
@@ -658,10 +676,12 @@ async function procesar(){
             <a class="btn-wa" href="https://wa.me/${n.numero}?text=${mensajeEnc}" target="_blank" onclick="marcarPiqueado(this)">💬 Reenviar WhatsApp</a>
           </div>`;
       }
+      const mismoTextoRep = otrosDelMismoTexto(n.numero, n.contexto);
       html += `
         <div class="lead-card repetido">
           <div class="lead-num">${display}</div>
           <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
+          ${mismoTextoRep.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTextoRep.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
           ${extraerDireccion(n.contexto) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extraerDireccion(n.contexto) + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${extraerDireccion(n.contexto)} (ver mapa)</a>` : ''}
           <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
           <span class="badge-rojo">${badge}</span>
@@ -862,7 +882,8 @@ const PALABRAS_FILLER = new Set([
   'tablaroca','remodelacion','remodelación','remodelaciones','ampliacion','ampliación','ampliaciones',
   'sr','sra','srs','manda','mande','mandar','mandame','mándame','manden','medidas','master','wood',
   'calidad','pudo','nuevo','nueva','nuevos','nuevas','usa','traido','traída','closets','gabinetes',
-  'detalles','privado','fotos','interesa','interesan','interesados','aproximada','aproximado'
+  'detalles','privado','fotos','interesa','interesan','interesados','aproximada','aproximado',
+  'tarjetas','tarjeta','visa','mastercard','aceptamos','atiende'
 ]);
 
 function extraerNombre(texto){
