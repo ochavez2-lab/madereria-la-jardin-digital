@@ -449,12 +449,48 @@ function dividirBlobLargo(m){
   return resultados;
 }
 
+// Cuando el texto viene copiado tal cual de Facebook, cada comentario trae
+// el nombre de perfil de quien comenta en su propia línea, justo arriba del
+// texto del comentario (antes del teléfono). Es más confiable que adivinar
+// un nombre dentro del texto, porque es el nombre real de la cuenta.
+const NOMBRE_PERFIL_SKIP = /^(responder|compartir|editado|me gusta|ver traducci[oó]n|autor)$/i;
+const NOMBRE_PERFIL_FECHA = /^\d+\s*(d(í|i)a|semana|hora|minuto|mes|a[ñn]o)s?$/i;
+const CONECTORES_NOMBRE = new Set(['de','del','la','las','los','y']);
+
+function pareceNombrePerfil(linea){
+  const l = (linea || '').trim();
+  if (!l) return false;
+  if (NOMBRE_PERFIL_SKIP.test(l)) return false;
+  if (NOMBRE_PERFIL_FECHA.test(l)) return false;
+  if (/^·+$/.test(l)) return false;
+  if (/\d/.test(l)) return false;
+  const principal = l.split('·')[0].trim();
+  const palabras = principal.split(/\s+/).filter(Boolean);
+  if (palabras.length < 1 || palabras.length > 6) return false;
+  const valido = palabras.every(w => CONECTORES_NOMBRE.has(w.toLowerCase()) || /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ'’.-]*$/.test(w));
+  if (!valido) return false;
+  if (palabras.some(w => PALABRAS_FILLER.has(w.toLowerCase()))) return false;
+  return true;
+}
+
+function extraerNombrePerfil(lineas, idx){
+  for (let i = idx - 1; i >= 0; i--){
+    const l = (lineas[i] || '').trim();
+    if (!l) continue;
+    // Conservamos la línea completa (ej. "Lemus Adolfo · Muebles Xander") porque
+    // cuando el perfil es una página de negocio, Facebook muestra nombre personal
+    // y nombre de empresa juntos separados por "·", y ambos son útiles.
+    return pareceNombrePerfil(l) ? l.replace(/\s*·\s*/g, ' · ').trim() : null;
+  }
+  return null;
+}
+
 function extraerNumeros(texto){
   const lineas = texto.split('\n');
   const encontrados = [];
   const regex = /[\d][\d\s\-.()]{7,40}\d/g;
 
-  lineas.forEach(linea => {
+  lineas.forEach((linea, idx) => {
     const matches = linea.match(regex);
     if (!matches) return;
     matches.forEach(m => {
@@ -465,7 +501,7 @@ function extraerNumeros(texto){
         const norm = normalizarNumero(c);
         if (!norm) return;
         const ctx = linea.trim();
-        encontrados.push({ numero: norm, contexto: ctx, rolDetectado: detectarRol(ctx) });
+        encontrados.push({ numero: norm, contexto: ctx, nombrePerfil: extraerNombrePerfil(lineas, idx), rolDetectado: detectarRol(ctx) });
       });
     });
   });
@@ -615,7 +651,8 @@ async function procesar(){
   let html = '';
   nuevos.forEach((n, i) => {
     const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
-    const nombre = extraerNombre(n.contexto);
+    const nombreTexto = extraerNombre(n.contexto);
+    const nombre = n.nombrePerfil || nombreTexto;
     const direccion = extraerDireccion(n.contexto);
     const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal, nombre));
     const etiquetaDeteccion = n.rolDetectado
@@ -623,13 +660,14 @@ async function procesar(){
       : (rolGrupo ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupo] || rolGrupo}` : `📂 categoría base (sin detectar oficio en el texto)`);
     const mismoTexto = otrosDelMismoTexto(n.numero, n.contexto);
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-nombreperfil="${(n.nombrePerfil || '').replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
         ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${mismoTexto.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTexto.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
-        ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
+        ${n.nombrePerfil ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${n.nombrePerfil} <span style="font-weight:400;color:#999">(perfil de Facebook)</span></div>` : ''}
+        ${(nombreTexto && nombreTexto !== n.nombrePerfil) ? `<div style="font-size:11px;color:#999">🏢 ${nombreTexto} (nombre/empresa mencionado en el texto)</div>` : ''}
         ${direccion ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${direccion} (ver mapa)</a>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
         <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
@@ -655,7 +693,7 @@ async function procesar(){
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
       const catRepetido = (entry && entry.categoria) || n.rolDetectado || rolGrupo || catActual;
-      const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido, extraerNombre(n.contexto)));
+      const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido, n.nombrePerfil || extraerNombre(n.contexto)));
       let badge, extra = '';
       if (entry && entry.metodo === 'sin_whatsapp'){
         if (entry.sms_enviado){
@@ -682,6 +720,7 @@ async function procesar(){
           <div class="lead-num">${display}</div>
           <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
           ${mismoTextoRep.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTextoRep.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
+          ${n.nombrePerfil ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${n.nombrePerfil} <span style="font-weight:400;color:#999">(perfil de Facebook)</span></div>` : ''}
           ${extraerDireccion(n.contexto) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extraerDireccion(n.contexto) + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${extraerDireccion(n.contexto)} (ver mapa)</a>` : ''}
           <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
           <span class="badge-rojo">${badge}</span>
@@ -704,7 +743,7 @@ function cambiarCategoriaLead(i, nuevaCat){
   if (!card) return;
   card.dataset.cat = nuevaCat;
   const link = card.querySelector('.btn-wa');
-  if (link) link.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(construirMensaje(nuevaCat, extraerNombre(card.dataset.ctx)));
+  if (link) link.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(construirMensaje(nuevaCat, card.dataset.nombreperfil || extraerNombre(card.dataset.ctx)));
 }
 
 function marcarContactado(i){
@@ -716,6 +755,7 @@ function marcarContactado(i){
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
     contexto: card.dataset.ctx,
+    nombrePerfil: card.dataset.nombreperfil || null,
     fecha_contacto: new Date().toISOString(),
     metodo: 'whatsapp',
     seguimiento: 'pendiente',
@@ -739,6 +779,7 @@ function marcarSinWhatsapp(i){
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
     contexto: card.dataset.ctx,
+    nombrePerfil: card.dataset.nombreperfil || null,
     fecha_contacto: new Date().toISOString(),
     metodo: 'sin_whatsapp',
     sms_enviado: false,
@@ -1212,7 +1253,8 @@ function renderHistorialCard(h){
     const diasBadge = dias >= 7
       ? `<span style="color:#e74c3c;font-weight:600">⏰ hace ${dias} días sin seguimiento</span>`
       : `<span style="color:#999">hace ${dias} día${dias === 1 ? '' : 's'}</span>`;
-    const nombreHist = extraerNombre(h.contexto || '');
+    const nombreTextoHist = extraerNombre(h.contexto || '');
+    const nombreHist = h.nombrePerfil || nombreTextoHist;
     const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
     const chipsEstado = Object.keys(ESTADOS_INFO).map(k => {
       const activo = seg === k;
