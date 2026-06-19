@@ -237,7 +237,7 @@ const TEMPLATES = {
   cimbrado:        { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la próxima colada? Con gusto le cotizo.' },
   bloques_albanil: { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la obra esta semana? Le surto el mismo día.' },
   yeseros:         { gancho: 'Vi que hace acabados.',           cierre: 'Si ocupa madera o material pa\' terminar, se lo dejo el mismo día en obra.' },
-  constructores:   { gancho: 'Vi que maneja obra.',             cierre: 'Manejo volumen, factura y entrega en obra el mismo día. ¿En qué proyecto anda? Le paso lista por volumen.' },
+  constructores:   { gancho: 'Vi que maneja obra.',             cierre: 'Manejo volumen y entrega en obra el mismo día. ¿En qué proyecto anda? Le paso lista por volumen.' },
   contratistas:    { gancho: 'Vi que anda contratando obra.',   cierre: 'Le surto a tiempo pa\' que no pare la obra. ¿Qué ocupa pa\' la próxima etapa?' },
   plomeria:        { gancho: 'Vi que hace trabajos de plomería.', cierre: '¿Ocupa madera o material pa\' su próxima chamba? Se lo entrego el mismo día.' },
   electricidad:    { gancho: 'Vi que hace instalaciones eléctricas.', cierre: '¿Ocupa material pa\' su próximo proyecto? Le entrego rápido.' },
@@ -834,28 +834,47 @@ const PALABRAS_FILLER = new Set([
   'bardas','barda','honestidad','momento',
   'electricidad','plomeria','plomería','carpinteria','carpintería','herreria','herrería','pintura',
   'jardineria','jardinería','ladrillo','ladrillos','block','blocks','cemento','varilla','varillas',
-  'arena','grava','acabados','zapatas','corridas','riego','imagen','boleto','texto'
+  'arena','grava','acabados','zapatas','corridas','riego','imagen','boleto','texto',
+  'construccion','construcción','general','terminado','terminados','carpinteria','carpintería',
+  'emplastes','emplaste','obra','obran','negra','fontaneria','fontanería','bloque','gmail','com',
+  'tablaroca','remodelacion','remodelación','remodelaciones','ampliacion','ampliación','ampliaciones'
 ]);
 
 function extraerNombre(texto){
   const t = (texto || '').trim();
   if (!t) return null;
-  // Texto auto-generado por Facebook para describir una imagen (OCR de un boleto,
-  // anuncio, etc.) — no es un comentario real de una persona, así que no hay
-  // nombre que extraer de ahí.
-  if (/^puede ser (una|un) imagen/i.test(t)) return null;
-  // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte).
-  const m = t.match(/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/);
-  if (m) return m[0];
+  const palabras = t.split(/\s+/);
+  // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte),
+  // descartando muletillas y palabras de oficio/material ("Electricidad Ladrillo" no es nombre).
+  for (let i = 0; i < palabras.length - 1; i++){
+    const w = palabras[i];
+    if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w)) continue;
+    if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
+    const w2 = palabras[i + 1];
+    if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w2)) continue;
+    if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
+    return w + ' ' + w2;
+  }
   // 2. Nombre de compañía/negocio: palabra con mayúscula inicial + otra palabra,
   // descartando muletillas típicas de los comentarios ("Ala orden", "Buenos días", etc.)
-  const palabras = t.split(/\s+/);
   for (let i = 0; i < palabras.length - 1; i++){
     const w = palabras[i];
     if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}$/.test(w)) continue;
     if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
     const w2 = palabras[i + 1];
     if (!/^[a-zA-ZÁÉÍÓÚÑáéíóúñ]{2,}$/.test(w2)) continue;
+    if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
+    return w + ' ' + w2;
+  }
+  // 3. Nombre dentro de texto TODO EN MAYÚSCULAS (típico del OCR que hace Facebook
+  // de imágenes/boletos): dos palabras consecutivas en mayúsculas que no sean
+  // muletillas ni palabras de oficio/material.
+  for (let i = 0; i < palabras.length - 1; i++){
+    const w = palabras[i];
+    if (!/^[A-ZÁÉÍÓÚÑ]{3,}$/.test(w)) continue;
+    if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
+    const w2 = palabras[i + 1];
+    if (!/^[A-ZÁÉÍÓÚÑ]{3,}$/.test(w2)) continue;
     if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
     return w + ' ' + w2;
   }
