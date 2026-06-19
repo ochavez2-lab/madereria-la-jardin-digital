@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Leads → WhatsApp · La Jardín</title>
 <style>
-:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888;--blue:#3b82f6;--purple:#8b5cf6;--green:#16a34a;--page-bg:linear-gradient(160deg,#fdf9f0,#f4ecdb 45%,#ede2c9);--card-bg:#fff}
+:root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888;--blue:#3b82f6;--purple:#8b5cf6;--green:#16a34a;--page-bg:linear-gradient(160deg,#fdf9f0,#f4ecdb 45%,#ede2c9);--card-bg:#fff;--ctx-bg:#f7f4ef;--repetido-bg:#fff6f6}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,Inter,sans-serif;background:var(--page-bg);color:var(--text);padding-bottom:60px;min-height:100vh}
 
-body[data-theme="negro"]{--page-bg:#15120d;--card-bg:#231d15;--text:#f0ebe0;--border:#3a3226;--muted:#a89a82}
+body[data-theme="negro"]{--page-bg:#15120d;--card-bg:#231d15;--text:#f0ebe0;--border:#3a3226;--muted:#a89a82;--ctx-bg:#1c1710;--repetido-bg:#2b1816}
 body[data-theme="azul"]{--page-bg:linear-gradient(160deg,#eaf2ff,#dbe9ff 45%,#cfe0fb);--card-bg:#fff;--text:#1a1a1a;--border:#cdddf5}
 body[data-theme="rojo"]{--page-bg:linear-gradient(160deg,#fff0ee,#ffe1dc 45%,#ffd1ca);--card-bg:#fff;--text:#1a1a1a;--border:#f5d3cd}
 body[data-theme="amarillo"]{--page-bg:linear-gradient(160deg,#fffaeb,#fff3c4 45%,#ffe98a);--card-bg:#fff;--text:#1a1a1a;--border:#f0e2a0}
@@ -42,15 +42,15 @@ textarea:focus{border-color:var(--gold)}
 
 .lead-card{background:var(--card-bg);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .lead-card.done{opacity:.45}
-.lead-card.repetido{border-color:#f3c2c2;background:#fff6f6;opacity:1}
+.lead-card.repetido{border-color:#f3c2c2;background:var(--repetido-bg);opacity:1}
 .lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
-.lead-ctx{font-size:11px;color:var(--muted);background:#f7f4ef;border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4;cursor:pointer;position:relative}
+.lead-ctx{font-size:11px;color:var(--muted);background:var(--ctx-bg);border-radius:8px;padding:8px;max-height:60px;overflow:hidden;line-height:1.4;cursor:pointer;position:relative}
 .lead-ctx.expanded{max-height:none}
 .lead-ctx::after{content:'▾ tocar para leer completo';display:block;font-size:9px;color:var(--blue);font-weight:700;margin-top:4px}
 .lead-ctx.expanded::after{content:'▴ tocar para cerrar'}
 
 .estado-chips{display:flex;gap:5px;flex-wrap:wrap}
-.estado-chip{font-size:11px;padding:6px 10px;border-radius:14px;border:1.5px solid #ddd;background:var(--card-bg);color:#555;cursor:pointer;font-weight:700}
+.estado-chip{font-size:11px;padding:6px 10px;border-radius:14px;border:1.5px solid var(--border);background:var(--card-bg);color:var(--text);cursor:pointer;font-weight:700}
 .estado-chip.activo{color:#fff;border-color:transparent}
 
 .nota-box{margin-top:6px}
@@ -79,6 +79,18 @@ textarea:focus{border-color:var(--gold)}
 .theme-dot{width:24px;height:24px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0}
 .theme-dot.activo{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
 
+.stage-tabs{display:flex;gap:8px;margin-bottom:14px}
+.stage-tab{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 6px;font-size:12px;font-weight:800;cursor:pointer}
+.stage-tab.activo{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;border-color:transparent}
+
+.meta-selector{display:flex;gap:8px}
+.meta-btn{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer}
+.meta-btn.activo{background:var(--green);color:#fff;border-color:transparent}
+
+.tareas-circulos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.circulo-tarea{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--card-bg)}
+.circulo-tarea.hecho{background:var(--green);border-color:var(--green);color:#fff;font-weight:900}
+
 .tablero-wrap{overflow-x:auto}
 .tablero-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
 .tablero-table th,.tablero-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)}
@@ -104,6 +116,13 @@ textarea:focus{border-color:var(--gold)}
 
 <div class="wrap">
 
+  <div class="stage-tabs">
+    <button class="stage-tab activo" id="tabStage1" onclick="mostrarStage(1)">1. Procesar números</button>
+    <button class="stage-tab" id="tabStage2" onclick="mostrarStage(2)">2. Mis tareas</button>
+  </div>
+
+  <div id="stage1">
+
   <div class="warn">
     ⚠️ Los enlaces abren WhatsApp con el mensaje listo. <b>Envía uno por uno, espaciado</b> (15-30 seg entre cada uno) para no arriesgar tu número. Usa WhatsApp Business si puedes.
   </div>
@@ -128,6 +147,23 @@ textarea:focus{border-color:var(--gold)}
   <div class="historial-toggle" onclick="descargarBackup()">⬇️ Descargar respaldo (Excel)</div>
   <div class="historial-toggle" onclick="actualizarAhora(this)" id="syncToggle">🔄 Actualizar</div>
   <div id="historialBox" style="display:none"></div>
+
+  </div>
+
+  <div id="stage2" style="display:none">
+
+  <div class="section acc-green">
+    <h2>🎯 Meta de hoy</h2>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Elige cuántos contactos quieres lograr hoy. Cuenta a todos los que marques (tú y tus empleados, desde cualquier celular).</p>
+    <div id="metaSelector" class="meta-selector"></div>
+  </div>
+
+  <div class="section acc-green">
+    <div id="tareasResumen"></div>
+    <div id="tareasCirculos" class="tareas-circulos"></div>
+  </div>
+
+  </div>
 
 </div>
 
@@ -719,6 +755,53 @@ function toggleUbicacionTabla(){
 
 function actualizarContadorHistorial(){
   document.getElementById('histCount').textContent = getHistorial().length;
+  renderTareas();
+}
+
+const LS_META_KEY = 'lj_meta_diaria';
+const METAS_DISPONIBLES = [10, 20, 50];
+
+function mostrarStage(n){
+  document.getElementById('stage1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('tabStage1').classList.toggle('activo', n === 1);
+  document.getElementById('tabStage2').classList.toggle('activo', n === 2);
+  if (n === 2) renderTareas();
+}
+
+function elegirMeta(meta){
+  localStorage.setItem(LS_META_KEY, meta);
+  renderTareas();
+}
+
+function contactadosHoy(){
+  const hoy = new Date().toISOString().slice(0, 10);
+  return getHistorial().filter(h => (h.fecha_contacto || '').slice(0, 10) === hoy).length;
+}
+
+function renderTareas(){
+  const sel = document.getElementById('metaSelector');
+  const resumen = document.getElementById('tareasResumen');
+  const circulos = document.getElementById('tareasCirculos');
+  if (!sel || !resumen || !circulos) return;
+
+  const meta = parseInt(localStorage.getItem(LS_META_KEY) || '20', 10);
+  sel.innerHTML = METAS_DISPONIBLES.map(function(m){
+    return '<button class="meta-btn' + (m === meta ? ' activo' : '') + '" onclick="elegirMeta(' + m + ')">' + m + '</button>';
+  }).join('');
+
+  const hechos = contactadosHoy();
+  const faltan = Math.max(0, meta - hechos);
+  resumen.innerHTML = '<div style="font-size:15px;font-weight:900">' + hechos + ' de ' + meta + ' contactos hoy</div>' +
+    (faltan > 0
+      ? '<div style="font-size:12px;color:#999;margin-top:2px">Te faltan ' + faltan + ' pa\' llegar a la meta 💪</div>'
+      : '<div style="font-size:12px;color:var(--green);font-weight:700;margin-top:2px">🎉 ¡Meta cumplida!</div>');
+
+  let html = '';
+  for (let i = 0; i < meta; i++){
+    html += '<div class="circulo-tarea' + (i < hechos ? ' hecho' : '') + '">' + (i < hechos ? '✓' : '') + '</div>';
+  }
+  circulos.innerHTML = html;
 }
 
 let historialFiltro = '';
