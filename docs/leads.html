@@ -260,20 +260,28 @@ const CATEGORIA_LABEL = {
 
 // Detecta el oficio real a partir del texto del propio comentario,
 // porque un lote de Facebook casi siempre viene revuelto (varios oficios mezclados).
+// IMPORTANTE: el orden es de prioridad, no alfabético. Cuando un mismo texto
+// menciona varios oficios a la vez (ej. un contratista que "hace de todo,
+// plomería incluida"), gana el PRIMER patrón que haga match en esta lista.
+// Por eso van primero los oficios que sí compran madera/material de
+// construcción (contratistas, constructores, albañiles, cimbra, carpintería)
+// y al final los oficios "ordinarios" que no compran madera (plomería,
+// electricidad, etc.) — esos solo deben ganar si no hay ningún indicio de
+// construcción/contratista en el texto.
 const ROLE_PATTERNS = [
-  ['plomeria', /plomer/],
-  ['electricidad', /electricist|el[eé]ctric/],
-  ['pisos_azulejo', /azulejo|loseta|\bpisos?\b/],
-  ['pintura', /pintor|pintura/],
-  ['techos', /impermeabiliz|gotera|\btecho/],
-  ['demolicion', /demolic|demoler|escombro/],
-  ['herreria', /herrer|soldador|soldadura/],
-  ['carpinteros', /carpinter/],
-  ['yeseros', /\byeso\b|aplanado/],
-  ['bloques_albanil', /alba[ñn]il|\bbloque|tabique|barda/],
-  ['cimbrado', /cimbra|colado|colada|castillo/],
   ['contratistas', /contratista/],
-  ['constructores', /constructor|construcci[oó]n|casas? de madera|remodelaci[oó]n/]
+  ['constructores', /constructor|construcci[oó]n|casas? de madera|remodelaci[oó]n/],
+  ['cimbrado', /cimbra|colado|colada|castillo/],
+  ['bloques_albanil', /alba[ñn]il|\bbloque|tabique|barda/],
+  ['carpinteros', /carpinter/],
+  ['herreria', /herrer|soldador|soldadura/],
+  ['demolicion', /demolic|demoler|escombro/],
+  ['techos', /impermeabiliz|gotera|\btecho/],
+  ['yeseros', /\byeso\b|aplanado/],
+  ['pintura', /pintor|pintura/],
+  ['pisos_azulejo', /azulejo|loseta|\bpisos?\b/],
+  ['electricidad', /electricist|el[eé]ctric/],
+  ['plomeria', /plomer/]
 ];
 
 function detectarRol(texto){
@@ -1357,7 +1365,7 @@ function eliminarEnServidor(numero, fecha_contacto, intento){
 }
 
 function reclasificarHistorialAntiguo(){
-  const FLAG = 'lj_reclasificado_v2';
+  const FLAG = 'lj_reclasificado_v3';
   if (localStorage.getItem(FLAG)) return;
   const historial = getHistorial();
   let cambios = 0;
