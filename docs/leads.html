@@ -275,6 +275,10 @@ const ROLE_PATTERNS = [
 
 function detectarRol(texto){
   const t = (texto || '').toLowerCase();
+  // Si el anuncio dice que hace "construcción en general" (contratista que ofrece
+  // de todo: plomería, electricidad, acabados, etc.), nos interesa más como
+  // prospecto de Constructores que como un oficio específico mencionado de paso.
+  if (/construcci[oó]n en general/.test(t)) return 'constructores';
   for (const [cat, re] of ROLE_PATTERNS){
     if (re.test(t)) return cat;
   }
