@@ -246,6 +246,7 @@ const TEMPLATES = {
   techos:          { gancho: 'Vi que hace techos e impermeabilización.', cierre: '¿Ocupa material pa\' su próximo techo? Le entrego el mismo día.' },
   demolicion:      { gancho: 'Vi que hace trabajos de demolición.', cierre: '¿Va a reconstruir después? Le tengo el material listo pa\' cuando lo necesite.' },
   herreria:        { gancho: 'Vi que hace trabajos de herrería y soldadura.', cierre: '¿Ocupa madera o material pa\' combinar con su trabajo? Se lo entrego rápido.' },
+  carpinteros:     { gancho: 'Vi que hace trabajos de carpintería.', oferta: 'manejamos triplay birch, tabla shelby y barrotes CDX número 1, entrega gratis desde 50 pzs', cierre: '¿Qué material ocupa pa\' su próximo mueble o trabajo? Se lo entrego el mismo día.' },
   otro:            { gancho: 'Vi que anda en obra.',            cierre: '¿Qué ocupa pa\' la próxima colada? Con gusto le cotizo.' }
 };
 
@@ -253,7 +254,8 @@ const CATEGORIA_LABEL = {
   cimbrado: '🧱 Cimbrado', bloques_albanil: '👷 Bloques/Albañil', yeseros: '🎨 Yeseros/Acabados',
   constructores: '🏗️ Constructores', contratistas: '📋 Contratistas', plomeria: '🚰 Plomería',
   electricidad: '⚡ Electricidad', pisos_azulejo: '🟫 Pisos/Azulejo', pintura: '🖌️ Pintura',
-  techos: '🏠 Techos/Imperm.', demolicion: '🔨 Demolición', herreria: '🔩 Herrería/Soldadura', otro: '📦 Otro'
+  techos: '🏠 Techos/Imperm.', demolicion: '🔨 Demolición', herreria: '🔩 Herrería/Soldadura',
+  carpinteros: '🪚 Carpintería', otro: '📦 Otro'
 };
 
 // Detecta el oficio real a partir del texto del propio comentario,
@@ -266,6 +268,7 @@ const ROLE_PATTERNS = [
   ['techos', /impermeabiliz|gotera|\btecho/],
   ['demolicion', /demolic|demoler|escombro/],
   ['herreria', /herrer|soldador|soldadura/],
+  ['carpinteros', /carpinter/],
   ['yeseros', /\byeso\b|aplanado/],
   ['bloques_albanil', /alba[ñn]il|\bbloque|tabique|barda/],
   ['cimbrado', /cimbra|colado|colada|castillo/],
@@ -470,7 +473,8 @@ function extraerNumeros(texto){
 function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const primerNombre = nombre ? nombre.split(/\s+/)[0] : 'maestro';
-  return `Qué tal ${primerNombre} 👋 ${t.gancho} Le hablo de Maderería La Jardín, manejamos Cimbraplay, triplay CDX y barrote pa' cimbra, entrega gratis desde 50 pzs. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
+  const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
+  return `Qué tal ${primerNombre} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
 }
 
 function extraerLinkPublicacion(texto){
@@ -541,9 +545,11 @@ async function procesar(){
   const nuevos = unicos.filter(u => !histNums.has(u.numero));
   const repetidos = unicos.filter(u => histNums.has(u.numero));
 
-  // Categoría final de cada nuevo: lo detectado en su propio texto, o si no
-  // se detectó nada, la categoría base que elegiste arriba.
-  nuevos.forEach(n => { n.catFinal = n.rolDetectado || catActual; });
+  // Categoría final de cada nuevo: lo detectado en su propio comentario; si no dice
+  // nada, el oficio que indica el nombre del grupo (ej. "Carpinteros en tijuana");
+  // y solo si ninguno de los dos dice nada, la categoría base que elegiste arriba.
+  const rolGrupo = grupoPub ? detectarRol(grupoPub) : null;
+  nuevos.forEach(n => { n.catFinal = n.rolDetectado || rolGrupo || catActual; });
 
   const conteoRoles = {};
   nuevos.forEach(n => { conteoRoles[n.catFinal] = (conteoRoles[n.catFinal] || 0) + 1; });
@@ -587,7 +593,7 @@ async function procesar(){
     const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal, nombre));
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
-      : `📂 categoría base (sin detectar oficio en el texto)`;
+      : (rolGrupo ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupo] || rolGrupo}` : `📂 categoría base (sin detectar oficio en el texto)`);
     html += `
       <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
@@ -618,7 +624,7 @@ async function procesar(){
     repetidos.forEach(n => {
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
-      const catRepetido = (entry && entry.categoria) || n.rolDetectado || catActual;
+      const catRepetido = (entry && entry.categoria) || n.rolDetectado || rolGrupo || catActual;
       const mensajeEnc = encodeURIComponent(construirMensaje(catRepetido, extraerNombre(n.contexto)));
       let badge, extra = '';
       if (entry && entry.metodo === 'sin_whatsapp'){
@@ -826,7 +832,9 @@ const PALABRAS_FILLER = new Set([
   'muy','bueno','buena','bien','mal','malo','mala','mucho','mucha','poco','poca',
   'todo','toda','todos','todas','este','esta','esto','eso','esa','ese','mismo','misma','también','tambien',
   'porque','cuando','donde','como','cómo','quien','quién','cual','cuál','nuestro','nuestra','usted','ustedes',
-  'sobre','hasta','desde','entre','hacia','hace','hizo','puede','pueden','podemos','debe','deben','puedo',
+  'sobre','hasta','desde','entre','hacia','hace','hizo','puede','pueden','podemos','debe','deben','puedo','puedes',
+  'escribir','escribirnos','escribeme','escríbeme','contacta','contactanos','contáctanos','contactenos','contáctenos',
+  'llamanos','llámanos','marcanos','márcanos','muebles','diseño','diseno','medida','col','calle','avenida',
   'quiero','quiere','necesito','necesita','tiene','tengo','tienen','hay','soy','eres','somos','son','estoy',
   'estamos','están','sera','será','seria','sería','es','fue','va','van','vamos','garantizo','garantiza','ase','asé',
   'ayudo','ayuda','referencias','confianza','maestro','maestra','albañil','albanil','plomero','electricista',
@@ -843,7 +851,10 @@ const PALABRAS_FILLER = new Set([
 function extraerNombre(texto){
   const t = (texto || '').trim();
   if (!t) return null;
-  const palabras = t.split(/\s+/);
+  // Quita comillas/puntuación pegada a los bordes de cada palabra (típico al
+  // copiar texto de OCR de Facebook: comillas, comas, puntos finales, etc.).
+  const limpiar = w => w.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+|[^A-Za-zÁÉÍÓÚÑáéíóúñ]+$/g, '');
+  const palabras = t.split(/\s+/).map(limpiar).filter(Boolean);
   // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte),
   // descartando muletillas y palabras de oficio/material ("Electricidad Ladrillo" no es nombre).
   for (let i = 0; i < palabras.length - 1; i++){
@@ -868,8 +879,9 @@ function extraerNombre(texto){
   }
   // 3. Nombre dentro de texto TODO EN MAYÚSCULAS (típico del OCR que hace Facebook
   // de imágenes/boletos): dos palabras consecutivas en mayúsculas que no sean
-  // muletillas ni palabras de oficio/material.
-  for (let i = 0; i < palabras.length - 1; i++){
+  // muletillas ni palabras de oficio/material. Se busca de atrás pa' delante porque
+  // en estos anuncios la persona casi siempre firma su nombre al final del texto.
+  for (let i = palabras.length - 2; i >= 0; i--){
     const w = palabras[i];
     if (!/^[A-ZÁÉÍÓÚÑ]{3,}$/.test(w)) continue;
     if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
