@@ -518,11 +518,15 @@ function extraerDireccion(texto){
   return dir;
 }
 
+// Ubicación real de Maderería La Jardín en Google Maps. Se incluye en todos los
+// mensajes de WhatsApp (primer contacto y seguimiento) como CTA corto.
+const MAPS_LINK = 'https://maps.app.goo.gl/1TvsExXLBBznxwCHA?g_st=ic';
+
 function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const saludo = nombre || 'maestro';
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
-  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
+  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} ${t.cierre} 📲 664 709 3835`;
 }
 
 function extraerLinkPublicacion(texto){
@@ -1255,7 +1259,7 @@ function renderHistorialCard(h){
       : `<span style="color:#999">hace ${dias} día${dias === 1 ? '' : 's'}</span>`;
     const nombreTextoHist = extraerNombre(h.contexto || '');
     const nombreHist = h.nombrePerfil || nombreTextoHist;
-    const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz 📲 664 709 3835`);
+    const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 664 709 3835`);
     const chipsEstado = Object.keys(ESTADOS_INFO).map(k => {
       const activo = seg === k;
       return `<span class="estado-chip${activo ? ' activo' : ''}" style="${activo ? `background:${ESTADOS_INFO[k].color};border-color:${ESTADOS_INFO[k].color}` : ''}" onclick="actualizarSeguimiento('${numKey}','${fechaKey}','${k}')">${ESTADOS_INFO[k].label}</span>`;
