@@ -84,10 +84,6 @@ textarea:focus{border-color:var(--gold)}
 .stage-tab{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 6px;font-size:12px;font-weight:800;cursor:pointer}
 .stage-tab.activo{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;border-color:transparent}
 
-.meta-selector{display:flex;gap:8px}
-.meta-btn{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer}
-.meta-btn.activo{background:var(--green);color:#fff;border-color:transparent}
-
 .tareas-circulos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .circulo-tarea{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--card-bg)}
 .circulo-tarea.hecho{background:var(--green);border-color:var(--green);color:#fff;font-weight:900}
@@ -154,12 +150,8 @@ textarea:focus{border-color:var(--gold)}
   <div id="stage2" style="display:none">
 
   <div class="section acc-green">
-    <h2>🎯 Meta de hoy</h2>
-    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Elige cuántos contactos quieres lograr hoy. Cuenta a todos los que marques (tú y tus empleados, desde cualquier celular).</p>
-    <div id="metaSelector" class="meta-selector"></div>
-  </div>
-
-  <div class="section acc-green">
+    <h2>🎯 Contactos de hoy</h2>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Se cuenta solo, automáticamente, a todos los que marques (tú y tus empleados, desde cualquier celular).</p>
     <div id="tareasResumen"></div>
     <div id="tareasCirculos" class="tareas-circulos"></div>
   </div>
@@ -764,9 +756,6 @@ function actualizarContadorHistorial(){
   renderTareas();
 }
 
-const LS_META_KEY = 'lj_meta_diaria';
-const METAS_DISPONIBLES = [10, 20, 50];
-
 function mostrarStage(n){
   document.getElementById('stage1').style.display = n === 1 ? 'block' : 'none';
   document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
@@ -775,37 +764,22 @@ function mostrarStage(n){
   if (n === 2) renderTareas();
 }
 
-function elegirMeta(meta){
-  localStorage.setItem(LS_META_KEY, meta);
-  renderTareas();
-}
-
 function contactadosHoy(){
   const hoy = new Date().toISOString().slice(0, 10);
   return getHistorial().filter(h => (h.fecha_contacto || '').slice(0, 10) === hoy).length;
 }
 
 function renderTareas(){
-  const sel = document.getElementById('metaSelector');
   const resumen = document.getElementById('tareasResumen');
   const circulos = document.getElementById('tareasCirculos');
-  if (!sel || !resumen || !circulos) return;
-
-  const meta = parseInt(localStorage.getItem(LS_META_KEY) || '20', 10);
-  sel.innerHTML = METAS_DISPONIBLES.map(function(m){
-    return '<button class="meta-btn' + (m === meta ? ' activo' : '') + '" onclick="elegirMeta(' + m + ')">' + m + '</button>';
-  }).join('');
+  if (!resumen || !circulos) return;
 
   const hechos = contactadosHoy();
-  const faltan = Math.max(0, meta - hechos);
-  resumen.innerHTML = '<div style="font-size:15px;font-weight:900">' + hechos + ' de ' + meta + ' contactos hoy</div>' +
-    (faltan > 0
-      ? '<div style="font-size:12px;color:#999;margin-top:2px">Te faltan ' + faltan + ' pa\' llegar a la meta</div>'
-      : '<div style="font-size:12px;color:var(--green);font-weight:700;margin-top:2px">🎉 ¡Meta cumplida!</div>');
+  resumen.innerHTML = '<div style="font-size:15px;font-weight:900">' + hechos + ' contactos hoy</div>';
 
   let html = '';
-  for (let i = 0; i < meta; i++){
-    html += '<div class="circulo-tarea' + (i < hechos ? ' hecho' : '') + '">' + (i < hechos ? '✓' : '') + '</div>';
+  for (let i = 0; i < hechos; i++){
+    html += '<div class="circulo-tarea hecho">✓</div>';
   }
   circulos.innerHTML = html;
 }
