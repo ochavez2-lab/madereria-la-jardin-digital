@@ -827,12 +827,19 @@ const PALABRAS_FILLER = new Set([
   'estamos','están','sera','será','seria','sería','es','fue','va','van','vamos','garantizo','garantiza','ase','asé',
   'ayudo','ayuda','referencias','confianza','maestro','maestra','albañil','albanil','plomero','electricista',
   'contratista','constructor','compromiso','igual','perimetrales','piedra','cimentaciones','cimentaciónes',
-  'bardas','barda','honestidad','momento'
+  'bardas','barda','honestidad','momento',
+  'electricidad','plomeria','plomería','carpinteria','carpintería','herreria','herrería','pintura',
+  'jardineria','jardinería','ladrillo','ladrillos','block','blocks','cemento','varilla','varillas',
+  'arena','grava','acabados','zapatas','corridas','riego','imagen','boleto','texto'
 ]);
 
 function extraerNombre(texto){
   const t = (texto || '').trim();
   if (!t) return null;
+  // Texto auto-generado por Facebook para describir una imagen (OCR de un boleto,
+  // anuncio, etc.) — no es un comentario real de una persona, así que no hay
+  // nombre que extraer de ahí.
+  if (/^puede ser (una|un) imagen/i.test(t)) return null;
   // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte).
   const m = t.match(/[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+/);
   if (m) return m[0];
