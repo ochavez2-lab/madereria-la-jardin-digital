@@ -470,11 +470,21 @@ function extraerNumeros(texto){
   return encontrados;
 }
 
+function extraerDireccion(texto){
+  const t = texto || '';
+  const re = /\b(?:av\.?|avenida|calle|blvd\.?|boulevard|colonia|col\.?|fraccionamiento|fracc\.?|privada|andador|carretera)\b[a-záéíóúñ0-9°#\-.,\s]{3,60}/i;
+  const m = t.match(re);
+  if (!m) return null;
+  const dir = m[0].replace(/\s+/g, ' ').replace(/[,.\s]+$/, '').trim();
+  if (dir.length < 6 || !/\d/.test(dir)) return null;
+  return dir;
+}
+
 function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
-  const primerNombre = nombre ? nombre.split(/\s+/)[0] : 'maestro';
+  const saludo = nombre || 'maestro';
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
-  return `Qué tal ${primerNombre} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
+  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. ${t.cierre} 📲 664 709 3835`;
 }
 
 function extraerLinkPublicacion(texto){
@@ -590,6 +600,7 @@ async function procesar(){
   nuevos.forEach((n, i) => {
     const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
     const nombre = extraerNombre(n.contexto);
+    const direccion = extraerDireccion(n.contexto);
     const mensajeEnc = encodeURIComponent(construirMensaje(n.catFinal, nombre));
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
@@ -601,6 +612,7 @@ async function procesar(){
         ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${nombre ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombre}</div>` : ''}
+        ${direccion ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${direccion} (ver mapa)</a>` : ''}
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
         <div style="font-size:11px;color:#999;margin-top:2px">${etiquetaDeteccion}</div>
         <div style="margin-top:6px">
@@ -650,6 +662,7 @@ async function procesar(){
         <div class="lead-card repetido">
           <div class="lead-num">${display}</div>
           <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
+          ${extraerDireccion(n.contexto) ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(extraerDireccion(n.contexto) + ', Tijuana, Baja California')}" target="_blank" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">📍 ${extraerDireccion(n.contexto)} (ver mapa)</a>` : ''}
           <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${n.contexto}</div>
           <span class="badge-rojo">${badge}</span>
           ${extra}
