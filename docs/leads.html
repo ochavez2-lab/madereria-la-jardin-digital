@@ -810,6 +810,7 @@ function renderTareas(){
 let historialFiltro = '';
 let historialEstadoFiltro = 'todos';
 let historialCatFiltro = 'todos';
+let historialFechaFiltro = 'todos';
 let historialOrden = 'antiguo';
 
 const ESTADOS_INFO = {
@@ -933,6 +934,7 @@ function toggleHistorial(){
     historialFiltro = '';
     historialEstadoFiltro = 'todos';
     historialCatFiltro = 'todos';
+    historialFechaFiltro = 'todos';
     historialOrden = 'antiguo';
     autoExpirarPendientes();
     box.innerHTML = `
@@ -945,6 +947,7 @@ function toggleHistorial(){
         oninput="historialFiltro=this.value; renderHistorialList()"
         style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
       <div id="histFiltros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="histFiltrosFecha" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <div id="histFiltrosCat" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <select id="histOrdenSel" onchange="historialOrden=this.value; renderHistorialList()"
         style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;">
@@ -995,6 +998,7 @@ function renderHistorialList(){
     const catsOrdenadas = Object.keys(porCat).sort((a,b) => porCat[b].total - porCat[a].total);
     const filasCat = catsOrdenadas.map(cat => {
       const c = porCat[cat];
+      const tasa = c.total ? Math.round((c.respondio + c.compro) / c.total * 100) : 0;
       return `
         <tr>
           <td>${CATEGORIA_LABEL[cat] || cat}</td>
@@ -1003,8 +1007,34 @@ function renderHistorialList(){
           <td>${c.respondio}</td>
           <td>${c.no_respondio}</td>
           <td>${c.compro}</td>
+          <td>${tasa}%</td>
         </tr>`;
     }).join('');
+
+    // Comparativa: ¿de verdad sirve hablarles por su nombre/oficio detectado?
+    const conDatoDetectado = { total: 0, resp: 0 };
+    const sinDatoDetectado = { total: 0, resp: 0 };
+    todos.forEach(h => {
+      const tieneNombre = !!extraerNombre(h.contexto || '');
+      const tieneOficio = !!(h.categoria && h.categoria !== 'otro');
+      const bucket = (tieneNombre || tieneOficio) ? conDatoDetectado : sinDatoDetectado;
+      bucket.total++;
+      if (h.seguimiento === 'respondio' || h.seguimiento === 'compro') bucket.resp++;
+    });
+    const tasaCon = conDatoDetectado.total ? Math.round(conDatoDetectado.resp / conDatoDetectado.total * 100) : 0;
+    const tasaSin = sinDatoDetectado.total ? Math.round(sinDatoDetectado.resp / sinDatoDetectado.total * 100) : 0;
+    const comparativaHtml = `
+      <div class="tablero-wrap" style="margin-top:10px">
+        <table class="tablero-table">
+          <thead><tr><th>Mensaje</th><th>Total</th><th>✅ Tasa de respuesta</th></tr></thead>
+          <tbody>
+            <tr><td>👤 Con nombre/oficio detectado</td><td>${conDatoDetectado.total}</td><td>${tasaCon}%</td></tr>
+            <tr><td>📦 Genérico (sin nombre ni oficio)</td><td>${sinDatoDetectado.total}</td><td>${tasaSin}%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:#999;margin-top:4px">📈 Esto demuestra si vale la pena personalizar el mensaje con nombre u oficio detectado.</div>
+    `;
     const porUbic = {};
     todos.forEach(h => {
       const ubic = obtenerUbicacion(h.numero).label;
@@ -1014,11 +1044,12 @@ function renderHistorialList(){
     const ubicsOrdenadas = Object.keys(porUbic).sort((a,b) => porUbic[b] - porUbic[a]);
     const filasUbic = ubicsOrdenadas.map(u => `<tr><td>${u}</td><td>${porUbic[u]}</td></tr>`).join('');
 
+    const tasaTotal = todos.length ? Math.round((conteos.respondio + conteos.compro) / todos.length * 100) : 0;
     resumenBox.innerHTML = `
       <div class="tablero-wrap">
         <table class="tablero-table">
           <thead>
-            <tr><th>Oficio</th><th>Total</th><th>⏳ Pend.</th><th>✅ Resp.</th><th>❌ No resp.</th><th>💰 Compró</th></tr>
+            <tr><th>Oficio</th><th>Total</th><th>⏳ Pend.</th><th>✅ Resp.</th><th>❌ No resp.</th><th>💰 Compró</th><th>✅ Tasa</th></tr>
           </thead>
           <tbody>${filasCat}</tbody>
           <tfoot>
@@ -1029,10 +1060,12 @@ function renderHistorialList(){
               <td>${conteos.respondio}</td>
               <td>${conteos.no_respondio}</td>
               <td>${conteos.compro}</td>
+              <td>${tasaTotal}%</td>
             </tr>
           </tfoot>
         </table>
       </div>
+      ${comparativaHtml}
       <div class="historial-toggle" style="font-size:11px;padding:6px" onclick="toggleUbicacionTabla()">📍 Ver segmentación por ciudad/estado</div>
       <div id="ubicacionTablaBox" style="display:none;margin-top:6px">
         <div class="tablero-wrap">
@@ -1061,6 +1094,22 @@ function renderHistorialList(){
     }).join('');
   }
 
+  // Chips de filtro por fecha de contacto
+  const filtrosFechaBox = document.getElementById('histFiltrosFecha');
+  if (filtrosFechaBox){
+    const chipsFecha = [
+      { v: 'todos', label: '📅 Todas las fechas' },
+      { v: 'hoy', label: '🟢 Hoy' },
+      { v: 'semana', label: '🟡 Esta semana' },
+      { v: 'mes', label: '🟠 Este mes' }
+    ];
+    filtrosFechaBox.innerHTML = chipsFecha.map(c => {
+      const activo = historialFechaFiltro === c.v;
+      return `<span onclick="historialFechaFiltro='${c.v}'; renderHistorialList()"
+        style="cursor:pointer;font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid ${activo ? '#27ae60' : '#ddd'};background:${activo ? '#27ae60' : '#fff'};color:${activo ? '#fff' : '#555'}">${c.label}</span>`;
+    }).join('');
+  }
+
   // Chips de filtro por oficio detectado
   if (filtrosCatBox){
     const conteoCat = {};
@@ -1082,7 +1131,11 @@ function renderHistorialList(){
   if (filtro){
     hist = hist.filter(h =>
       (filtroDigitos && h.numero.includes(filtroDigitos)) ||
-      (h.contexto || '').toLowerCase().includes(filtro)
+      (h.contexto || '').toLowerCase().includes(filtro) ||
+      (h.grupo || '').toLowerCase().includes(filtro) ||
+      (CATEGORIA_LABEL[h.categoria] || h.categoria || '').toLowerCase().includes(filtro) ||
+      obtenerUbicacion(h.numero).label.toLowerCase().includes(filtro) ||
+      (extraerNombre(h.contexto || '') || '').toLowerCase().includes(filtro)
     );
   }
 
@@ -1092,6 +1145,16 @@ function renderHistorialList(){
 
   if (historialCatFiltro !== 'todos'){
     hist = hist.filter(h => h.categoria === historialCatFiltro);
+  }
+
+  if (historialFechaFiltro !== 'todos'){
+    hist = hist.filter(h => {
+      const dias = diasDesde(h.fecha_contacto);
+      if (historialFechaFiltro === 'hoy') return dias <= 0;
+      if (historialFechaFiltro === 'semana') return dias <= 7;
+      if (historialFechaFiltro === 'mes') return dias <= 30;
+      return true;
+    });
   }
 
   hist.sort((a, b) => {
