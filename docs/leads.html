@@ -959,7 +959,7 @@ async function procesar(){
       const nombreRep = (n.nombrePerfil || extraerNombre(n.contexto) || '').replace(/'/g, "\\'");
       const numKeyRep = n.numero.replace(/'/g, "\\'");
       const fechaKeyRep = entry ? entry.fecha_contacto.replace(/'/g, "\\'") : '';
-      const yaRespondio = entry && (entry.seguimiento === 'respondio' || entry.seguimiento === 'compro');
+      const yaRespondio = entry && ['respondio', 'compro', 'no_interesa', 'compro_otro'].includes(entry.seguimiento);
       const btnRespondioRep = entry && !yaRespondio
         ? `<button class="btn-done btn-respondio" onclick="marcarRespondioDirecto('${numKeyRep}','${fechaKeyRep}', this)">✅ Respondió</button>`
         : (yaRespondio ? `<span class="badge-rojo" style="background:#2196F3">✅ Ya respondió</span>` : '');
@@ -1189,18 +1189,7 @@ function marcarRespondioDirecto(numero, fecha_contacto, btn){
   actualizarSeguimiento(numero, fecha_contacto, 'respondio');
   const cont = btn.parentElement;
   btn.remove();
-  const span = document.createElement('span');
-  span.className = 'badge-rojo';
-  span.style.background = '#2196F3';
-  span.textContent = '✅ Ya respondió';
-  const undo = document.createElement('button');
-  undo.className = 'btn-done';
-  undo.style.fontSize = '11px';
-  undo.style.padding = '3px 8px';
-  undo.textContent = '↩️ Deshacer';
-  undo.onclick = function(){ deshacerRespondioDirecto(numero, fecha_contacto, cont); };
-  cont.appendChild(span);
-  cont.appendChild(undo);
+  mostrarOpcionesResultado(cont, numero, fecha_contacto);
 }
 
 // Por si se pica "✅ Respondió" por accidente — regresa el seguimiento a
@@ -1213,6 +1202,57 @@ function deshacerRespondioDirecto(numero, fecha_contacto, cont){
   btn.textContent = '✅ Respondió';
   btn.onclick = function(){ marcarRespondioDirecto(numero, fecha_contacto, btn); };
   cont.appendChild(btn);
+}
+
+// Una vez que el cliente ya respondió, lo más importante (y lo que se nos
+// estaba olvidando preguntar) es en qué quedó: ¿nos compró, no le interesó,
+// o le compró a la competencia? Tres botones rápidos aquí mismo, sin tener
+// que ir a buscarlo en "Mis tareas".
+function mostrarOpcionesResultado(cont, numero, fecha_contacto){
+  cont.innerHTML = '';
+  const span = document.createElement('span');
+  span.className = 'badge-rojo';
+  span.style.background = '#2196F3';
+  span.textContent = '✅ Respondió, ¿en qué quedó?';
+  cont.appendChild(span);
+  [
+    { val: 'compro', label: ESTADOS_INFO.compro.label, color: ESTADOS_INFO.compro.color },
+    { val: 'no_interesa', label: ESTADOS_INFO.no_interesa.label, color: ESTADOS_INFO.no_interesa.color },
+    { val: 'compro_otro', label: ESTADOS_INFO.compro_otro.label, color: ESTADOS_INFO.compro_otro.color }
+  ].forEach(op => {
+    const b = document.createElement('button');
+    b.className = 'btn-done';
+    b.style.fontSize = '11px';
+    b.style.padding = '3px 8px';
+    b.style.background = op.color;
+    b.textContent = op.label;
+    b.onclick = function(){ marcarResultadoDirecto(numero, fecha_contacto, op.val, cont); };
+    cont.appendChild(b);
+  });
+  const undo = document.createElement('button');
+  undo.className = 'btn-done';
+  undo.style.fontSize = '11px';
+  undo.style.padding = '3px 8px';
+  undo.textContent = '↩️ Deshacer';
+  undo.onclick = function(){ deshacerRespondioDirecto(numero, fecha_contacto, cont); };
+  cont.appendChild(undo);
+}
+
+function marcarResultadoDirecto(numero, fecha_contacto, resultado, cont){
+  actualizarSeguimiento(numero, fecha_contacto, resultado);
+  cont.innerHTML = '';
+  const span = document.createElement('span');
+  span.className = 'badge-rojo';
+  span.style.background = ESTADOS_INFO[resultado].color;
+  span.textContent = ESTADOS_INFO[resultado].label;
+  const undo = document.createElement('button');
+  undo.className = 'btn-done';
+  undo.style.fontSize = '11px';
+  undo.style.padding = '3px 8px';
+  undo.textContent = '↩️ Deshacer';
+  undo.onclick = function(){ actualizarSeguimiento(numero, fecha_contacto, 'respondio'); mostrarOpcionesResultado(cont, numero, fecha_contacto); };
+  cont.appendChild(span);
+  cont.appendChild(undo);
 }
 
 function marcarSinWhatsapp(i){
@@ -1410,7 +1450,7 @@ async function verificarTexto(){
     if (entry){
       const fecha = new Date(entry.fecha_contacto).toLocaleDateString('es-MX');
       const seg = entry.seguimiento || 'pendiente';
-      const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'compró' }[seg] || seg;
+      const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'nos compró', no_interesa: 'no le interesó', compro_otro: 'compró en otro lado' }[seg] || seg;
       estado = `<span class="badge-rojo" style="background:#2196F3">✅ Ya en historial · contactado ${fecha} · ${segLabel}</span>`;
       claseEstado = 'existente';
     } else {
@@ -1846,10 +1886,12 @@ let historialFechaFiltro = 'todos';
 let historialOrden = 'antiguo';
 
 const ESTADOS_INFO = {
-  pendiente:    { label: '⏳ Pendiente',     color: '#bbb',    bg: '#fbfaf7' },
-  respondio:    { label: '✅ Respondió',     color: '#2196F3', bg: '#eaf4fd' },
-  no_respondio: { label: '❌ No respondió',  color: '#e74c3c', bg: '#fdeceb' },
-  compro:       { label: '💰 Compró',        color: '#27ae60', bg: '#eafaf0' }
+  pendiente:    { label: '⏳ Pendiente',          color: '#bbb',    bg: '#fbfaf7' },
+  respondio:    { label: '✅ Respondió',          color: '#2196F3', bg: '#eaf4fd' },
+  no_respondio: { label: '❌ No respondió',       color: '#e74c3c', bg: '#fdeceb' },
+  compro:       { label: '💰 Nos compró',         color: '#27ae60', bg: '#eafaf0' },
+  no_interesa:  { label: '🚫 No le interesó',     color: '#888',    bg: '#f1f1f1' },
+  compro_otro:  { label: '🔀 Compró en otro lado', color: '#9b59b6', bg: '#f5edfa' }
 };
 
 function diasDesde(fechaISO){
@@ -2014,25 +2056,29 @@ function renderHistorialList(){
   const todos = getHistorial();
 
   // Resumen de contadores (sobre el total, no sobre lo filtrado)
-  const conteos = { pendiente: 0, respondio: 0, no_respondio: 0, compro: 0 };
+  const conteos = { pendiente: 0, respondio: 0, no_respondio: 0, compro: 0, no_interesa: 0, compro_otro: 0 };
   todos.forEach(h => {
     const s = h.seguimiento || 'pendiente';
     if (conteos[s] !== undefined) conteos[s]++;
   });
+  // Para la tasa de respuesta cuenta cualquier estado donde el cliente sí
+  // contestó algo, sea buena o mala noticia — solo "no_respondio" y
+  // "pendiente" significan que de verdad no hubo respuesta todavía.
+  const fueRespondido = s => s === 'respondio' || s === 'compro' || s === 'no_interesa' || s === 'compro_otro';
   if (resumenBox){
     // Tabla por categoría x estado
     const porCat = {};
     todos.forEach(h => {
       const cat = h.categoria || 'otro';
       const s = h.seguimiento || 'pendiente';
-      if (!porCat[cat]) porCat[cat] = { pendiente:0, respondio:0, no_respondio:0, compro:0, total:0 };
+      if (!porCat[cat]) porCat[cat] = { pendiente:0, respondio:0, no_respondio:0, compro:0, no_interesa:0, compro_otro:0, total:0 };
       if (porCat[cat][s] !== undefined) porCat[cat][s]++;
       porCat[cat].total++;
     });
     const catsOrdenadas = Object.keys(porCat).sort((a,b) => porCat[b].total - porCat[a].total);
     const filasCat = catsOrdenadas.map(cat => {
       const c = porCat[cat];
-      const tasa = c.total ? Math.round((c.respondio + c.compro) / c.total * 100) : 0;
+      const tasa = c.total ? Math.round((c.respondio + c.compro + c.no_interesa + c.compro_otro) / c.total * 100) : 0;
       return `
         <tr>
           <td>${CATEGORIA_LABEL[cat] || cat}</td>
@@ -2041,6 +2087,8 @@ function renderHistorialList(){
           <td>${c.respondio}</td>
           <td>${c.no_respondio}</td>
           <td>${c.compro}</td>
+          <td>${c.no_interesa}</td>
+          <td>${c.compro_otro}</td>
           <td>${tasa}%</td>
         </tr>`;
     }).join('');
@@ -2053,7 +2101,7 @@ function renderHistorialList(){
       const tieneOficio = !!(h.categoria && h.categoria !== 'otro');
       const bucket = (tieneNombre || tieneOficio) ? conDatoDetectado : sinDatoDetectado;
       bucket.total++;
-      if (h.seguimiento === 'respondio' || h.seguimiento === 'compro') bucket.resp++;
+      if (fueRespondido(h.seguimiento)) bucket.resp++;
     });
     const tasaCon = conDatoDetectado.total ? Math.round(conDatoDetectado.resp / conDatoDetectado.total * 100) : 0;
     const tasaSin = sinDatoDetectado.total ? Math.round(sinDatoDetectado.resp / sinDatoDetectado.total * 100) : 0;
@@ -2078,12 +2126,12 @@ function renderHistorialList(){
     const ubicsOrdenadas = Object.keys(porUbic).sort((a,b) => porUbic[b] - porUbic[a]);
     const filasUbic = ubicsOrdenadas.map(u => `<tr><td>${u}</td><td>${porUbic[u]}</td></tr>`).join('');
 
-    const tasaTotal = todos.length ? Math.round((conteos.respondio + conteos.compro) / todos.length * 100) : 0;
+    const tasaTotal = todos.length ? Math.round((conteos.respondio + conteos.compro + conteos.no_interesa + conteos.compro_otro) / todos.length * 100) : 0;
     resumenBox.innerHTML = `
       <div class="tablero-wrap">
         <table class="tablero-table">
           <thead>
-            <tr><th>Oficio</th><th>Total</th><th>⏳ Pend.</th><th>✅ Resp.</th><th>❌ No resp.</th><th>💰 Compró</th><th>✅ Tasa</th></tr>
+            <tr><th>Oficio</th><th>Total</th><th>⏳ Pend.</th><th>✅ Resp.</th><th>❌ No resp.</th><th>💰 Compró</th><th>🚫 No interesó</th><th>🔀 Otro lado</th><th>✅ Tasa</th></tr>
           </thead>
           <tbody>${filasCat}</tbody>
           <tfoot>
@@ -2094,6 +2142,8 @@ function renderHistorialList(){
               <td>${conteos.respondio}</td>
               <td>${conteos.no_respondio}</td>
               <td>${conteos.compro}</td>
+              <td>${conteos.no_interesa}</td>
+              <td>${conteos.compro_otro}</td>
               <td>${tasaTotal}%</td>
             </tr>
           </tfoot>
@@ -2119,7 +2169,9 @@ function renderHistorialList(){
       { v: 'pendiente', label: '⏳ Pendiente' },
       { v: 'respondio', label: '✅ Respondió' },
       { v: 'no_respondio', label: '❌ No respondió' },
-      { v: 'compro', label: '💰 Compró' }
+      { v: 'compro', label: '💰 Nos compró' },
+      { v: 'no_interesa', label: '🚫 No le interesó' },
+      { v: 'compro_otro', label: '🔀 Compró en otro lado' }
     ];
     filtrosBox.innerHTML = chips.map(c => {
       const activo = historialEstadoFiltro === c.v;
