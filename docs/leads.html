@@ -875,10 +875,11 @@ function cambiarCategoriaLead(i, nuevaCat){
 function marcarContactado(i){
   const card = document.getElementById('lead-' + i);
   if (!card) return;
+  const numero = card.dataset.numero;
   const historial = getHistorial();
   const fecha_contacto = new Date().toISOString();
   historial.push({
-    numero: card.dataset.numero,
+    numero: numero,
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
     contexto: card.dataset.ctx,
@@ -891,8 +892,33 @@ function marcarContactado(i){
   });
   saveHistorial(historial);
   card.classList.add('done');
-  card.querySelector('.btn-done').textContent = '✓ Contactado';
-  agregarBotonRespondio(card, card.dataset.numero, fecha_contacto);
+  card.dataset.fechaContacto = fecha_contacto;
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[actions.length - 1].innerHTML = `
+    <button class="btn-done" disabled>✓ Contactado</button>
+    <button class="btn-done" style="font-size:11px;padding:3px 8px" onclick="deshacerContactado(${i})">↩️ Deshacer</button>
+  `;
+  agregarBotonRespondio(card, numero, fecha_contacto);
+  actualizarContadorHistorial();
+  syncHistorial();
+}
+
+// Por si se pica "✓ Listo" o "📵 Sin WhatsApp" por accidente — quita la
+// entrada del historial y regresa la tarjeta a su estado original.
+function deshacerContactado(i){
+  const card = document.getElementById('lead-' + i);
+  if (!card) return;
+  const numero = card.dataset.numero;
+  const fecha_contacto = card.dataset.fechaContacto;
+  const historial = getHistorial().filter(h => !(h.numero === numero && h.fecha_contacto === fecha_contacto));
+  saveHistorial(historial);
+  card.classList.remove('done');
+  delete card.dataset.fechaContacto;
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[actions.length - 1].innerHTML = `
+    <button class="btn-done" onclick="marcarContactado(${i})">✓ Listo</button>
+    <button class="btn-sinwa" onclick="marcarSinWhatsapp(${i})">📵 Sin WhatsApp</button>
+  `;
   actualizarContadorHistorial();
   syncHistorial();
 }
@@ -913,10 +939,32 @@ function agregarBotonRespondio(card, numero, fecha_contacto){
 
 function marcarRespondioDirecto(numero, fecha_contacto, btn){
   actualizarSeguimiento(numero, fecha_contacto, 'respondio');
-  btn.textContent = '✅ Ya respondió';
-  btn.disabled = true;
-  btn.style.background = '#2196F3';
-  btn.style.color = '#fff';
+  const cont = btn.parentElement;
+  btn.remove();
+  const span = document.createElement('span');
+  span.className = 'badge-rojo';
+  span.style.background = '#2196F3';
+  span.textContent = '✅ Ya respondió';
+  const undo = document.createElement('button');
+  undo.className = 'btn-done';
+  undo.style.fontSize = '11px';
+  undo.style.padding = '3px 8px';
+  undo.textContent = '↩️ Deshacer';
+  undo.onclick = function(){ deshacerRespondioDirecto(numero, fecha_contacto, cont); };
+  cont.appendChild(span);
+  cont.appendChild(undo);
+}
+
+// Por si se pica "✅ Respondió" por accidente — regresa el seguimiento a
+// "pendiente" y vuelve a mostrar el botón original.
+function deshacerRespondioDirecto(numero, fecha_contacto, cont){
+  actualizarSeguimiento(numero, fecha_contacto, 'pendiente');
+  cont.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'btn-done btn-respondio';
+  btn.textContent = '✅ Respondió';
+  btn.onclick = function(){ marcarRespondioDirecto(numero, fecha_contacto, btn); };
+  cont.appendChild(btn);
 }
 
 function marcarSinWhatsapp(i){
@@ -924,13 +972,14 @@ function marcarSinWhatsapp(i){
   if (!card) return;
   const numero = card.dataset.numero;
   const historial = getHistorial();
+  const fecha_contacto = new Date().toISOString();
   historial.push({
     numero: numero,
     categoria: card.dataset.cat,
     fecha_pub: card.dataset.fecha,
     contexto: card.dataset.ctx,
     nombrePerfil: card.dataset.nombreperfil || null,
-    fecha_contacto: new Date().toISOString(),
+    fecha_contacto: fecha_contacto,
     metodo: 'sin_whatsapp',
     sms_enviado: false,
     seguimiento: 'pendiente',
@@ -939,11 +988,34 @@ function marcarSinWhatsapp(i){
   });
   saveHistorial(historial);
   card.classList.add('done');
+  card.dataset.fechaContacto = fecha_contacto;
   const actions = card.querySelectorAll('.lead-actions');
   actions[0].innerHTML = `<span class="badge-rojo">📵 Sin WhatsApp</span>`;
   actions[actions.length - 1].innerHTML = `
     <a class="btn-sms" href="sms:+${numero}">📩 Enviar SMS</a>
     <button class="btn-done" onclick="marcarSmsEnviado('${numero}', this)">✓ SMS enviado</button>
+    <button class="btn-done" style="font-size:11px;padding:3px 8px" onclick="deshacerSinWhatsapp(${i})">↩️ Deshacer</button>
+  `;
+  actualizarContadorHistorial();
+  syncHistorial();
+}
+
+// Por si se pica "📵 Sin WhatsApp" por accidente — quita la entrada del
+// historial y regresa la tarjeta a su estado original con ambos botones.
+function deshacerSinWhatsapp(i){
+  const card = document.getElementById('lead-' + i);
+  if (!card) return;
+  const numero = card.dataset.numero;
+  const fecha_contacto = card.dataset.fechaContacto;
+  const historial = getHistorial().filter(h => !(h.numero === numero && h.fecha_contacto === fecha_contacto));
+  saveHistorial(historial);
+  card.classList.remove('done');
+  delete card.dataset.fechaContacto;
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[0].innerHTML = `<a class="btn-wa" href="#" onclick="return abrirWhatsAppDesdeCard(this)">💬 Abrir WhatsApp</a>`;
+  actions[actions.length - 1].innerHTML = `
+    <button class="btn-done" onclick="marcarContactado(${i})">✓ Listo</button>
+    <button class="btn-sinwa" onclick="marcarSinWhatsapp(${i})">📵 Sin WhatsApp</button>
   `;
   actualizarContadorHistorial();
   syncHistorial();
@@ -1122,7 +1194,8 @@ const PALABRAS_FILLER = new Set([
   'sr','sra','srs','manda','mande','mandar','mandame','mándame','manden','medidas','master','wood',
   'calidad','pudo','nuevo','nueva','nuevos','nuevas','usa','traido','traída','closets','gabinetes',
   'detalles','privado','fotos','interesa','interesan','interesados','aproximada','aproximado',
-  'tarjetas','tarjeta','visa','mastercard','aceptamos','atiende'
+  'tarjetas','tarjeta','visa','mastercard','aceptamos','atiende',
+  'venta','ventas','renta','rentas','rentade'
 ]);
 
 function extraerNombre(texto){
@@ -1160,10 +1233,10 @@ function extraerNombre(texto){
   // en estos anuncios la persona casi siempre firma su nombre al final del texto.
   for (let i = palabras.length - 2; i >= 0; i--){
     const w = palabras[i];
-    if (!/^[A-ZÁÉÍÓÚÑ]{3,}$/.test(w)) continue;
+    if (!/^[A-ZÁÉÍÓÚÑ]{3,12}$/.test(w)) continue;
     if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
     const w2 = palabras[i + 1];
-    if (!/^[A-ZÁÉÍÓÚÑ]{3,}$/.test(w2)) continue;
+    if (!/^[A-ZÁÉÍÓÚÑ]{3,12}$/.test(w2)) continue;
     if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
     return w + ' ' + w2;
   }
