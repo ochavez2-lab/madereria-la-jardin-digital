@@ -45,6 +45,8 @@ textarea:focus{border-color:var(--acc1)}
 .resumen{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .resumen .chip{background:var(--dark);color:var(--acc1);font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px}
 .resumen .chip.gray{background:#eee;color:#888}
+.chip-filtro{background:#eee;color:#666;border:none;font-size:12px;font-weight:700;padding:7px 12px;border-radius:20px;cursor:pointer;margin:0 6px 6px 0}
+.chip-filtro.activo{background:var(--dark);color:var(--acc1)}
 
 .lead-card{position:relative;background:var(--card-bg);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .lead-card.done{opacity:.45}
@@ -185,6 +187,13 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   <input type="text" id="buscadorResultados" placeholder="🔎 Buscar número, nombre o texto en estos resultados..."
     oninput="filtrarResultados(this.value)"
     style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;display:none">
+  <div id="contadorPantalla" style="display:none;font-size:12px;font-weight:700;color:#666;margin-bottom:8px"></div>
+  <div id="filtrosPantalla" style="display:none;margin-bottom:10px">
+    <button class="chip-filtro activo" data-filtro="todos" onclick="filtrarPorEstado('todos')">Todos</button>
+    <button class="chip-filtro" data-filtro="pendiente" onclick="filtrarPorEstado('pendiente')">⏳ Pendientes</button>
+    <button class="chip-filtro" data-filtro="contactado" onclick="filtrarPorEstado('contactado')">✅ Contactados</button>
+    <button class="chip-filtro" data-filtro="repetido" onclick="filtrarPorEstado('repetido')">🔁 Ya antes</button>
+  </div>
   <div id="resultados"></div>
 
   <div class="historial-toggle" onclick="toggleHistorial()" id="histToggle">Ver historial de contactados (<span id="histCount">0</span>)</div>
@@ -553,8 +562,45 @@ function extraerNombrePerfil(lineas, idx){
   return null;
 }
 
+// Cuando se pega texto de varias publicaciones/grupos de Facebook seguidas
+// (varios posts copiados uno tras otro), cada bloque trae su propio
+// encabezado "Nombre del grupo ·". Antes solo se detectaba el primer
+// encabezado de TODO el texto pegado y se le pegaba ese mismo grupo a
+// TODOS los números encontrados, aunque vinieran de grupos distintos —
+// por eso salían mal etiquetados y se sentía "revuelto". Aquí se recorre
+// línea por línea y se va actualizando el grupo activo cada vez que
+// aparece un encabezado nuevo, para que cada número quede pegado al
+// grupo real de su propio bloque.
+function extraerGruposPorLinea(texto){
+  const lineasRaw = (texto || '').split('\n');
+  const esSeparador = l => /^·+$/.test(l);
+  const grupoPorLinea = new Array(lineasRaw.length).fill(null);
+  let grupoActual = null;
+  // El patrón fuerte (línea que termina en "·" pegado al nombre del grupo)
+  // es el único confiable para detectar un grupo NUEVO en medio del texto —
+  // el patrón débil (nombre en su propia línea seguido de una línea "·"
+  // sola) también lo cumple el nombre de quien publicó, así que solo se usa
+  // para el primer grupo del texto, antes de tener un grupo confirmado.
+  let grupoConfirmado = false;
+  for (let i = 0; i < lineasRaw.length; i++){
+    const l = lineasRaw[i].trim();
+    const esCandidato = l && l !== 'Facebook' && !esSeparador(l) && !/^publicaci[oó]n de /i.test(l) && !/\d/.test(l) && l.length <= 80;
+    if (esCandidato){
+      if (/·\s*$/.test(l)){
+        const grupo = l.replace(/·\s*$/, '').trim();
+        if (grupo){ grupoActual = grupo; grupoConfirmado = true; }
+      } else if (!grupoConfirmado && esSeparador((lineasRaw[i + 1] || '').trim())){
+        grupoActual = l;
+      }
+    }
+    grupoPorLinea[i] = grupoActual;
+  }
+  return grupoPorLinea;
+}
+
 function extraerNumeros(texto){
   const lineas = texto.split('\n');
+  const gruposPorLinea = extraerGruposPorLinea(texto);
   const encontrados = [];
   const regex = /[\d][\d\s\-.()]{7,40}\d/g;
 
@@ -569,7 +615,7 @@ function extraerNumeros(texto){
         const norm = normalizarNumero(c);
         if (!norm) return;
         const ctx = linea.trim();
-        encontrados.push({ numero: norm, contexto: ctx, nombrePerfil: extraerNombrePerfil(lineas, idx), rolDetectado: detectarRol(ctx) });
+        encontrados.push({ numero: norm, contexto: ctx, nombrePerfil: extraerNombrePerfil(lineas, idx), rolDetectado: detectarRol(ctx), grupo: gruposPorLinea[idx] });
       });
     });
   });
@@ -722,7 +768,7 @@ async function procesar(){
   // nada, el oficio que indica el nombre del grupo (ej. "Carpinteros en tijuana");
   // y solo si ninguno de los dos dice nada, la categoría base que elegiste arriba.
   const rolGrupo = grupoPub ? detectarRol(grupoPub) : null;
-  nuevos.forEach(n => { n.catFinal = n.rolDetectado || rolGrupo || catActual; });
+  nuevos.forEach(n => { n.catFinal = n.rolDetectado || (n.grupo ? detectarRol(n.grupo) : null) || rolGrupo || catActual; });
 
   const conteoRoles = {};
   nuevos.forEach(n => { conteoRoles[n.catFinal] = (conteoRoles[n.catFinal] || 0) + 1; });
@@ -739,6 +785,18 @@ async function procesar(){
     .map(k => `<div class="chip gray">${k} ${conteoUbicacion[k]}</div>`)
     .join('');
 
+  // Si el texto pegado trae varios grupos de Facebook seguidos, se muestra
+  // cuántos números salieron de cada uno (en vez de un solo "Grupo: X" que
+  // antes solo mostraba el primero, aunque hubiera más).
+  const conteoGrupos = {};
+  unicos.forEach(n => {
+    const g = n.grupo || grupoPub;
+    if (g) conteoGrupos[g] = (conteoGrupos[g] || 0) + 1;
+  });
+  const chipsGrupos = Object.keys(conteoGrupos)
+    .map(k => `<div class="chip gray">👥 ${k}: ${conteoGrupos[k]}</div>`)
+    .join('');
+
   document.getElementById('resumenBox').innerHTML = `
     <div class="resumen">
       <div class="chip">✅ ${nuevos.length} nuevos</div>
@@ -748,7 +806,7 @@ async function procesar(){
     <div class="resumen">
       ${chipsUbicacion}
     </div>
-    ${grupoPub ? `<div class="resumen"><div class="chip gray">👥 Grupo: ${grupoPub}</div></div>` : ''}
+    ${chipsGrupos ? `<div class="resumen">${chipsGrupos}</div>` : ''}
   `;
 
   if (nuevos.length === 0 && repetidos.length === 0){
@@ -779,15 +837,17 @@ async function procesar(){
     const nombreTexto = extraerNombre(n.contexto);
     const nombre = n.nombrePerfil || nombreTexto;
     const direccion = extraerDireccion(n.contexto);
+    const grupoCard = n.grupo || grupoPub;
+    const rolGrupoCard = n.grupo ? detectarRol(n.grupo) : rolGrupo;
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
-      : (rolGrupo ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupo] || rolGrupo}` : `📂 categoría base (sin detectar oficio en el texto)`);
+      : (rolGrupoCard ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupoCard] || rolGrupoCard}` : `📂 categoría base (sin detectar oficio en el texto)`);
     const mismoTexto = otrosDelMismoTexto(n.numero, n.contexto);
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-nombreperfil="${(n.nombrePerfil || '').replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-nombreperfil="${(n.nombrePerfil || '').replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoCard ? grupoCard.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
-        ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
+        ${grupoCard ? `<div style="font-size:11px;color:#999">👥 ${grupoCard}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${mismoTexto.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTexto.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
         ${n.nombrePerfil ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${n.nombrePerfil} <span style="font-weight:400;color:#999">(perfil de Facebook)</span></div>` : ''}
@@ -817,7 +877,7 @@ async function procesar(){
       numerosEnPantalla.add(n.numero);
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
-      const catRepetido = (entry && entry.categoria) || n.rolDetectado || rolGrupo || catActual;
+      const catRepetido = (entry && entry.categoria) || n.rolDetectado || (n.grupo ? detectarRol(n.grupo) : null) || rolGrupo || catActual;
       const nombreRep = (n.nombrePerfil || extraerNombre(n.contexto) || '').replace(/'/g, "\\'");
       const numKeyRep = n.numero.replace(/'/g, "\\'");
       const fechaKeyRep = entry ? entry.fecha_contacto.replace(/'/g, "\\'") : '';
@@ -869,13 +929,58 @@ async function procesar(){
   const buscador = document.getElementById('buscadorResultados');
   buscador.style.display = 'block';
   buscador.value = '';
+  filtrarPorEstado('todos');
+  actualizarContadorPantalla();
+}
+
+let filtroEstadoActual = 'todos';
+
+function estadoDeCard(card){
+  if (card.classList.contains('repetido')) return 'repetido';
+  if (card.classList.contains('done')) return 'contactado';
+  return 'pendiente';
 }
 
 function filtrarResultados(valor){
   const q = (valor || '').toLowerCase().trim();
   document.querySelectorAll('#resultados .lead-card').forEach(card => {
-    card.style.display = !q || card.innerText.toLowerCase().includes(q) ? '' : 'none';
+    const pasaEstado = filtroEstadoActual === 'todos' || filtroEstadoActual === estadoDeCard(card);
+    const pasaTexto = !q || card.innerText.toLowerCase().includes(q);
+    card.style.display = (pasaEstado && pasaTexto) ? '' : 'none';
   });
+}
+
+function filtrarPorEstado(estado){
+  filtroEstadoActual = estado;
+  document.querySelectorAll('#filtrosPantalla .chip-filtro').forEach(b => {
+    b.classList.toggle('activo', b.dataset.filtro === estado);
+  });
+  filtrarResultados(document.getElementById('buscadorResultados').value);
+}
+
+// Contador siempre visible de cuántos leads en pantalla están pendientes,
+// cuántos ya se marcaron como contactados (en esta sesión) y cuántos ya
+// estaban en el historial de antes — para no tener que contar tarjetas
+// a ojo entre un lote y otro.
+function actualizarContadorPantalla(){
+  const cont = document.getElementById('contadorPantalla');
+  const filtros = document.getElementById('filtrosPantalla');
+  const cards = document.querySelectorAll('#resultados .lead-card');
+  if (cards.length === 0){
+    cont.style.display = 'none';
+    filtros.style.display = 'none';
+    return;
+  }
+  let pendientes = 0, contactados = 0, repetidos = 0;
+  cards.forEach(card => {
+    const e = estadoDeCard(card);
+    if (e === 'repetido') repetidos++;
+    else if (e === 'contactado') contactados++;
+    else pendientes++;
+  });
+  cont.innerHTML = `⏳ <b>${pendientes}</b> pendientes &nbsp;·&nbsp; ✅ <b>${contactados}</b> contactados &nbsp;·&nbsp; 🔁 <b>${repetidos}</b> ya antes`;
+  cont.style.display = 'block';
+  filtros.style.display = 'block';
 }
 
 function marcarPiqueado(el){
@@ -947,6 +1052,8 @@ function marcarContactado(i){
   `;
   agregarBotonRespondio(card, numero, fecha_contacto);
   actualizarContadorHistorial();
+  actualizarContadorPantalla();
+  filtrarResultados(document.getElementById('buscadorResultados').value);
   syncHistorial();
 }
 
@@ -967,6 +1074,8 @@ function deshacerContactado(i){
     <button class="btn-sinwa" onclick="marcarSinWhatsapp(${i})">📵 Sin WhatsApp</button>
   `;
   actualizarContadorHistorial();
+  actualizarContadorPantalla();
+  filtrarResultados(document.getElementById('buscadorResultados').value);
   syncHistorial();
 }
 
@@ -1044,6 +1153,8 @@ function marcarSinWhatsapp(i){
     <button class="btn-done" style="font-size:11px;padding:3px 8px" onclick="deshacerSinWhatsapp(${i})">↩️ Deshacer</button>
   `;
   actualizarContadorHistorial();
+  actualizarContadorPantalla();
+  filtrarResultados(document.getElementById('buscadorResultados').value);
   syncHistorial();
 }
 
@@ -1065,6 +1176,8 @@ function deshacerSinWhatsapp(i){
     <button class="btn-sinwa" onclick="marcarSinWhatsapp(${i})">📵 Sin WhatsApp</button>
   `;
   actualizarContadorHistorial();
+  actualizarContadorPantalla();
+  filtrarResultados(document.getElementById('buscadorResultados').value);
   syncHistorial();
 }
 
