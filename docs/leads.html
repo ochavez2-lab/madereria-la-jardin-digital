@@ -39,8 +39,8 @@ header p{color:var(--acc-ink2);font-size:11px;margin-top:4px;font-weight:600}
 textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;outline:none}
 textarea:focus{border-color:var(--acc1)}
 
-.btn-main{width:100%;background:linear-gradient(135deg,var(--acc1),var(--acc2));color:var(--acc-text);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;margin-top:12px}
-.btn-main:active{filter:brightness(0.95)}
+.btn-main,.btn-main-alt{width:100%;background:linear-gradient(135deg,var(--acc1),var(--acc2));color:var(--acc-text);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;margin-top:12px}
+.btn-main:active,.btn-main-alt:active{filter:brightness(0.95)}
 
 .resumen{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .resumen .chip{background:var(--dark);color:var(--acc1);font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px}
@@ -173,6 +173,21 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   <div class="section acc-blue">
     <h2>1. Pega los comentarios de Facebook</h2>
     <p style="font-size:12px;font-weight:700;color:var(--blue);margin:-4px 0 10px">🤖 El sistema detecta el oficio de cada comentario solo, leyendo el texto</p>
+    <div class="historial-toggle" style="margin:-4px 0 10px;font-size:12px" onclick="document.getElementById('capturaFbBox').style.display = document.getElementById('capturaFbBox').style.display === 'none' ? 'block' : 'none'">📲 Capturar más rápido desde Facebook (instalar marcador)</div>
+    <div id="capturaFbBox" style="display:none;background:#f7f7f7;border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:#555">
+      <p style="margin:0 0 8px"><b>Qué hace:</b> mientras estás viendo Facebook normal con tu cuenta (sin riesgo de que te bloqueen), tocas este marcador y te copia automático todo el texto visible en pantalla — ya no tienes que seleccionar el comentario a mano.</p>
+      <p style="margin:0 0 8px"><b>Cómo instalarlo en tu celular (iPhone/Android), 1 sola vez:</b></p>
+      <ol style="margin:0 0 8px;padding-left:18px">
+        <li>Toca este botón para copiar el código:</li>
+      </ol>
+      <button class="btn-main-alt" style="margin-bottom:8px" onclick="copiarCodigoBookmarklet(this)">📋 Copiar código del marcador</button>
+      <ol style="margin:0;padding-left:18px" start="2">
+        <li>Ve a Facebook y guarda cualquier página en marcadores/favoritos (ej. el inicio).</li>
+        <li>Edita ese marcador/favorito: cambia el nombre a "Capturar Leads" y pega el código que copiaste en el campo de dirección/URL (borra lo que tenía antes).</li>
+        <li>Ya en un grupo de Facebook viendo los comentarios, abre tus marcadores y toca "Capturar Leads" — te avisa "Copiado".</li>
+        <li>Cambia a esta app, pega aquí abajo y le das Procesar números.</li>
+      </ol>
+    </div>
     <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
     <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
     <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="borrarTexto()">🗑️ Borrar texto</button>
@@ -735,6 +750,24 @@ function extraerGrupo(texto){
 function borrarTexto(){
   document.getElementById('raw').value = '';
   document.getElementById('raw').focus();
+}
+
+// Código del marcador (bookmarklet) que el usuario instala en su navegador
+// del celular: al tocarlo desde Facebook, copia todo el texto visible en
+// pantalla (comentarios, nombres, números) sin tener que seleccionarlo a
+// mano. No usamos navigator.clipboard ahí porque corre en facebook.com, no
+// en este dominio — execCommand('copy') funciona en cualquier sitio.
+const BOOKMARKLET_CODE = "javascript:(function(){var t=document.body.innerText;var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('Copiado '+t.length+' caracteres. Cambia a tu app de leads y pega.');}catch(e){alert('No se pudo copiar automatico, selecciona el texto a mano.');}document.body.removeChild(ta);})();";
+
+async function copiarCodigoBookmarklet(btn){
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(BOOKMARKLET_CODE);
+    btn.textContent = '✅ ¡Copiado! Pégalo en tu marcador';
+  } catch (e){
+    alert('No se pudo copiar automático. Aquí está el código, cópialo a mano:\n\n' + BOOKMARKLET_CODE);
+  }
+  setTimeout(() => { btn.textContent = original; }, 2500);
 }
 
 async function procesar(){
