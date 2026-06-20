@@ -222,7 +222,14 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Pega aquí cualquier texto (de WhatsApp, Facebook, lo que sea) y nomás revisa cuáles números ya están en tu historial y cuáles no — sin que se mezclen con la lista de la pestaña 1.</p>
     <textarea id="verificarRaw" placeholder="Pega aquí el texto para revisar..."></textarea>
     <button class="btn-main" onclick="verificarTexto()">🔍 Revisar números</button>
-    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';">🗑️ Borrar texto</button>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';actualizarContadorVerificar();">🗑️ Borrar texto</button>
+  </div>
+
+  <div id="contadorVerificar" style="display:none;font-size:12px;font-weight:700;color:#666;margin-bottom:8px"></div>
+  <div id="filtrosVerificar" style="display:none;margin-bottom:10px">
+    <button class="chip-filtro activo" data-filtro="todos" onclick="filtrarPorEstadoVerificar('todos')">Todos</button>
+    <button class="chip-filtro" data-filtro="nuevo" onclick="filtrarPorEstadoVerificar('nuevo')">🆕 Nuevos</button>
+    <button class="chip-filtro" data-filtro="existente" onclick="filtrarPorEstadoVerificar('existente')">✅ Ya en historial</button>
   </div>
 
   <div id="verificarResultados"></div>
@@ -1292,17 +1299,19 @@ async function verificarTexto(){
   unicos.forEach(u => {
     const display = '+' + u.numero.slice(0,2) + ' ' + u.numero.slice(2,5) + ' ' + u.numero.slice(5,8) + ' ' + u.numero.slice(8);
     const entry = historial.slice().reverse().find(h => h.numero === u.numero);
-    let estado;
+    let estado, claseEstado;
     if (entry){
       const fecha = new Date(entry.fecha_contacto).toLocaleDateString('es-MX');
       const seg = entry.seguimiento || 'pendiente';
       const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'compró' }[seg] || seg;
       estado = `<span class="badge-rojo" style="background:#2196F3">✅ Ya en historial · contactado ${fecha} · ${segLabel}</span>`;
+      claseEstado = 'existente';
     } else {
       estado = `<span class="badge-rojo" style="background:#16a34a">🆕 No está en tu historial todavía</span>`;
+      claseEstado = 'nuevo';
     }
     html += `
-      <div class="lead-card">
+      <div class="lead-card ${claseEstado}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(u.numero).label}</div>
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${u.contexto}</div>
@@ -1311,6 +1320,42 @@ async function verificarTexto(){
     `;
   });
   box.innerHTML = html;
+  filtroEstadoVerificarActual = 'todos';
+  document.querySelectorAll('#filtrosVerificar .chip-filtro').forEach(b => b.classList.toggle('activo', b.dataset.filtro === 'todos'));
+  actualizarContadorVerificar();
+}
+
+let filtroEstadoVerificarActual = 'todos';
+
+function filtrarPorEstadoVerificar(estado){
+  filtroEstadoVerificarActual = estado;
+  document.querySelectorAll('#filtrosVerificar .chip-filtro').forEach(b => {
+    b.classList.toggle('activo', b.dataset.filtro === estado);
+  });
+  document.querySelectorAll('#verificarResultados .lead-card').forEach(card => {
+    const esNuevo = card.classList.contains('nuevo');
+    const e = esNuevo ? 'nuevo' : 'existente';
+    card.style.display = (estado === 'todos' || estado === e) ? '' : 'none';
+  });
+}
+
+function actualizarContadorVerificar(){
+  const cont = document.getElementById('contadorVerificar');
+  const filtros = document.getElementById('filtrosVerificar');
+  const cards = document.querySelectorAll('#verificarResultados .lead-card');
+  if (cards.length === 0){
+    cont.style.display = 'none';
+    filtros.style.display = 'none';
+    return;
+  }
+  let nuevos = 0, existentes = 0;
+  cards.forEach(card => {
+    if (card.classList.contains('nuevo')) nuevos++;
+    else existentes++;
+  });
+  cont.innerHTML = `🆕 <b>${nuevos}</b> nuevos &nbsp;·&nbsp; ✅ <b>${existentes}</b> ya en historial`;
+  cont.style.display = 'block';
+  filtros.style.display = 'block';
 }
 
 // Pestaña 5: mensajes de equipo entre empleados (texto), separados en dos
