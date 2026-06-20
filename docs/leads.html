@@ -171,6 +171,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <p style="font-size:12px;font-weight:700;color:var(--blue);margin:-4px 0 10px">🤖 El sistema detecta el oficio de cada comentario solo, leyendo el texto</p>
     <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
     <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="borrarTexto()">🗑️ Borrar texto</button>
   </div>
 
   <div class="section acc-amber">
@@ -639,6 +640,11 @@ function extraerGrupo(texto){
     if (esSeparador(lineas[i + 1] || '')) return l;
   }
   return null;
+}
+
+function borrarTexto(){
+  document.getElementById('raw').value = '';
+  document.getElementById('raw').focus();
 }
 
 async function procesar(){
