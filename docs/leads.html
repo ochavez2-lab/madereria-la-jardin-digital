@@ -462,6 +462,12 @@ function dividirBlobLargo(m){
 const NOMBRE_PERFIL_SKIP = /^(responder|compartir|editado|me gusta|ver traducci[oó]n|autor)$/i;
 const NOMBRE_PERFIL_FECHA = /^\d+\s*(d(í|i)a|semana|hora|minuto|mes|a[ñn]o)s?$/i;
 const CONECTORES_NOMBRE = new Set(['de','del','la','las','los','y']);
+// Palabras que están en PALABRAS_FILLER (por servir de muletilla en texto de
+// anuncios) pero que también son apellidos reales comunes (ej. "Dias"). En
+// esta función ya estamos en una línea que de por sí no tiene dígitos y pasó
+// el patrón de fecha, así que no hay riesgo de confundir "Martin Dias" con
+// "hace 3 días".
+const NOMBRE_PERFIL_PERMITIDAS = new Set(['dia','día','dias','días']);
 
 function pareceNombrePerfil(linea){
   const l = (linea || '').trim();
@@ -475,7 +481,7 @@ function pareceNombrePerfil(linea){
   if (palabras.length < 1 || palabras.length > 6) return false;
   const valido = palabras.every(w => CONECTORES_NOMBRE.has(w.toLowerCase()) || /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ'’.-]*$/.test(w));
   if (!valido) return false;
-  if (palabras.some(w => PALABRAS_FILLER.has(w.toLowerCase()))) return false;
+  if (palabras.some(w => PALABRAS_FILLER.has(w.toLowerCase()) && !NOMBRE_PERFIL_PERMITIDAS.has(w.toLowerCase()))) return false;
   return true;
 }
 
@@ -802,21 +808,28 @@ function abrirWhatsAppDesdeCard(el){
   const nombre = card.dataset.nombreperfil || extraerNombre(card.dataset.ctx);
   const mensaje = construirMensaje(card.dataset.cat, nombre);
   marcarPiqueado(el);
-  window.open('https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(mensaje), '_blank');
-  return false;
+  el.href = 'https://wa.me/' + card.dataset.numero + '?text=' + encodeURIComponent(mensaje);
+  el.target = '_blank';
+  return true;
 }
 
 function abrirWhatsAppDirecto(numero, cat, nombre, el){
   const mensaje = construirMensaje(cat, nombre || null);
-  if (el) marcarPiqueado(el);
-  window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje), '_blank');
-  return false;
+  if (el){
+    marcarPiqueado(el);
+    el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+    el.target = '_blank';
+  }
+  return true;
 }
 
-function abrirWhatsAppFollowUp(numero, nombre){
+function abrirWhatsAppFollowUp(numero, nombre, el){
   const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
-  window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje), '_blank');
-  return false;
+  if (el){
+    el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+    el.target = '_blank';
+  }
+  return true;
 }
 
 function cambiarCategoriaLead(i, nuevaCat){
@@ -1422,7 +1435,7 @@ function renderHistorialCard(h){
           ? `<button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="deshacerSmsEnviadoHistorial('${numKey}','${fechaKey}')">↩️ Deshacer SMS enviado</button>`
           : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="sms:+${h.numero}">📩 Enviar SMS</a>
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
-      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}')">🔁 Reenviar oferta</a>`;
+      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this)">🔁 Reenviar oferta</a>`;
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
