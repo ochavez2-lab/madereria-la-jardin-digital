@@ -50,6 +50,7 @@ textarea:focus{border-color:var(--acc1)}
 
 .lead-card{position:relative;background:var(--card-bg);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .lead-card.done{opacity:.45}
+.lead-card.ya-otro{border-left-color:#c0392b;background:#fdf1f1}
 .lead-card.piqueado::before{content:'';position:absolute;top:10px;right:10px;width:11px;height:11px;border-radius:50%;background:#e53935;box-shadow:0 0 0 2px var(--card-bg)}
 .lead-card.repetido{border-color:#f3c2c2;background:var(--repetido-bg);opacity:1}
 .lead-num{font-size:16px;font-weight:900;font-family:'Georgia',serif}
@@ -524,8 +525,29 @@ async function syncHistorial(){
       }
     });
     if (cambios){ saveHistorial(local); actualizarContadorHistorial(); }
+    revisarDuplicadosEnPantalla();
     return true;
   } catch(e){ return e.name==='AbortError'?'timeout':(e.message||'red'); }
+}
+
+// Si dos personas pegan la misma lista de Facebook y van mandando WhatsApp
+// al mismo tiempo, las tarjetas ya en pantalla se quedan tal como estaban
+// cuando se procesó el texto — no se actualizan solas. Por eso aquí, cada
+// vez que se sincroniza con el servidor (cada 10s, o al instante si alguien
+// más acaba de marcar "Contactado"), revisamos las tarjetas pendientes que
+// siguen en pantalla y si alguna ya quedó en el historial (la marcó otra
+// persona/dispositivo mientras tanto), la bloqueamos para no mandarla doble.
+function revisarDuplicadosEnPantalla(){
+  const histNums = new Set(getHistorial().map(h => h.numero));
+  document.querySelectorAll('#resultados .lead-card').forEach(card => {
+    if (card.classList.contains('done') || card.classList.contains('ya-otro')) return;
+    const numero = card.dataset.numero;
+    if (!numero || !histNums.has(numero)) return;
+    card.classList.add('ya-otro');
+    const actions = card.querySelectorAll('.lead-actions');
+    const ultima = actions[actions.length - 1];
+    if (ultima) ultima.innerHTML = '<button class="btn-done" disabled>⚠️ Ya lo contactó otra persona, no lo vuelvas a mandar</button>';
+  });
 }
 
 async function actualizarAhora(btn){
@@ -1713,9 +1735,26 @@ function ignorarNotifMensajes(){
   marcarNotifMensajesVista();
 }
 
+// Los navegadores bloquean el sonido automático hasta que el usuario haya
+// tocado algo en la página, así que dejamos el AudioContext listo (y lo
+// "despertamos" si quedó dormido) desde el primer toque, en vez de crear uno
+// nuevo cada vez — así si el aviso aparece antes de tocar nada, en cuanto
+// tocas cualquier botón el contexto queda activo para el próximo aviso.
+let __audioCtxAviso = null;
+function inicializarAudioAviso(){
+  try {
+    if (!__audioCtxAviso) __audioCtxAviso = new (window.AudioContext || window.webkitAudioContext)();
+    if (__audioCtxAviso.state === 'suspended') __audioCtxAviso.resume();
+  } catch (e){}
+}
+document.addEventListener('click', inicializarAudioAviso);
+document.addEventListener('touchstart', inicializarAudioAviso);
+
 function reproducirSonidoAviso(){
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    inicializarAudioAviso();
+    const ctx = __audioCtxAviso;
+    if (!ctx || ctx.state === 'suspended') return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
@@ -1724,7 +1763,8 @@ function reproducirSonidoAviso(){
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    setTimeout(() => { osc.stop(); ctx.close(); }, 220);
+    setTimeout(() => { osc.stop(); }, 220);
+    setTimeout(() => { osc.frequency.value = 660; }, 130);
   } catch (e){}
 }
 
