@@ -116,13 +116,20 @@ app.post('/api/nota', async (req, res) => {
 });
 
 app.post('/api/sms', async (req, res) => {
-  const { numero, fecha_contacto } = req.body || {};
+  const { numero, fecha_contacto, enviado } = req.body || {};
   if (!numero || !fecha_contacto) return res.status(400).json({ error: 'faltan datos' });
   try {
-    await pool.query(
-      "UPDATE leads_historial SET sms_enviado=TRUE, fecha_sms=$1 WHERE numero=$2 AND fecha_contacto=$3",
-      [new Date().toISOString(), numero, fecha_contacto]
-    );
+    if (enviado === false){
+      await pool.query(
+        "UPDATE leads_historial SET sms_enviado=FALSE, fecha_sms=NULL WHERE numero=$1 AND fecha_contacto=$2",
+        [numero, fecha_contacto]
+      );
+    } else {
+      await pool.query(
+        "UPDATE leads_historial SET sms_enviado=TRUE, fecha_sms=$1 WHERE numero=$2 AND fecha_contacto=$3",
+        [new Date().toISOString(), numero, fecha_contacto]
+      );
+    }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
