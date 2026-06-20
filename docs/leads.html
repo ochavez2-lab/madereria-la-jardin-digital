@@ -599,45 +599,8 @@ function extraerNombrePerfil(lineas, idx){
   return null;
 }
 
-// Cuando se pega texto de varias publicaciones/grupos de Facebook seguidas
-// (varios posts copiados uno tras otro), cada bloque trae su propio
-// encabezado "Nombre del grupo ·". Antes solo se detectaba el primer
-// encabezado de TODO el texto pegado y se le pegaba ese mismo grupo a
-// TODOS los números encontrados, aunque vinieran de grupos distintos —
-// por eso salían mal etiquetados y se sentía "revuelto". Aquí se recorre
-// línea por línea y se va actualizando el grupo activo cada vez que
-// aparece un encabezado nuevo, para que cada número quede pegado al
-// grupo real de su propio bloque.
-function extraerGruposPorLinea(texto){
-  const lineasRaw = (texto || '').split('\n');
-  const esSeparador = l => /^·+$/.test(l);
-  const grupoPorLinea = new Array(lineasRaw.length).fill(null);
-  let grupoActual = null;
-  // El patrón fuerte (línea que termina en "·" pegado al nombre del grupo)
-  // es el único confiable para detectar un grupo NUEVO en medio del texto —
-  // el patrón débil (nombre en su propia línea seguido de una línea "·"
-  // sola) también lo cumple el nombre de quien publicó, así que solo se usa
-  // para el primer grupo del texto, antes de tener un grupo confirmado.
-  let grupoConfirmado = false;
-  for (let i = 0; i < lineasRaw.length; i++){
-    const l = lineasRaw[i].trim();
-    const esCandidato = l && l !== 'Facebook' && !esSeparador(l) && !/^publicaci[oó]n de /i.test(l) && !/\d/.test(l) && l.length <= 80;
-    if (esCandidato){
-      if (/·\s*$/.test(l)){
-        const grupo = l.replace(/·\s*$/, '').trim();
-        if (grupo){ grupoActual = grupo; grupoConfirmado = true; }
-      } else if (!grupoConfirmado && esSeparador((lineasRaw[i + 1] || '').trim())){
-        grupoActual = l;
-      }
-    }
-    grupoPorLinea[i] = grupoActual;
-  }
-  return grupoPorLinea;
-}
-
 function extraerNumeros(texto){
   const lineas = texto.split('\n');
-  const gruposPorLinea = extraerGruposPorLinea(texto);
   const encontrados = [];
   const regex = /[\d][\d\s\-.()]{7,40}\d/g;
 
@@ -652,7 +615,7 @@ function extraerNumeros(texto){
         const norm = normalizarNumero(c);
         if (!norm) return;
         const ctx = linea.trim();
-        encontrados.push({ numero: norm, contexto: ctx, nombrePerfil: extraerNombrePerfil(lineas, idx), rolDetectado: detectarRol(ctx), grupo: gruposPorLinea[idx] });
+        encontrados.push({ numero: norm, contexto: ctx, nombrePerfil: extraerNombrePerfil(lineas, idx), rolDetectado: detectarRol(ctx) });
       });
     });
   });
@@ -805,7 +768,7 @@ async function procesar(){
   // nada, el oficio que indica el nombre del grupo (ej. "Carpinteros en tijuana");
   // y solo si ninguno de los dos dice nada, la categoría base que elegiste arriba.
   const rolGrupo = grupoPub ? detectarRol(grupoPub) : null;
-  nuevos.forEach(n => { n.catFinal = n.rolDetectado || (n.grupo ? detectarRol(n.grupo) : null) || rolGrupo || catActual; });
+  nuevos.forEach(n => { n.catFinal = n.rolDetectado || rolGrupo || catActual; });
 
   const conteoRoles = {};
   nuevos.forEach(n => { conteoRoles[n.catFinal] = (conteoRoles[n.catFinal] || 0) + 1; });
@@ -822,18 +785,6 @@ async function procesar(){
     .map(k => `<div class="chip gray">${k} ${conteoUbicacion[k]}</div>`)
     .join('');
 
-  // Si el texto pegado trae varios grupos de Facebook seguidos, se muestra
-  // cuántos números salieron de cada uno (en vez de un solo "Grupo: X" que
-  // antes solo mostraba el primero, aunque hubiera más).
-  const conteoGrupos = {};
-  unicos.forEach(n => {
-    const g = n.grupo || grupoPub;
-    if (g) conteoGrupos[g] = (conteoGrupos[g] || 0) + 1;
-  });
-  const chipsGrupos = Object.keys(conteoGrupos)
-    .map(k => `<div class="chip gray">👥 ${k}: ${conteoGrupos[k]}</div>`)
-    .join('');
-
   document.getElementById('resumenBox').innerHTML = `
     <div class="resumen">
       <div class="chip">✅ ${nuevos.length} nuevos</div>
@@ -843,7 +794,7 @@ async function procesar(){
     <div class="resumen">
       ${chipsUbicacion}
     </div>
-    ${chipsGrupos ? `<div class="resumen">${chipsGrupos}</div>` : ''}
+    ${grupoPub ? `<div class="resumen"><div class="chip gray">👥 Grupo: ${grupoPub}</div></div>` : ''}
   `;
 
   if (nuevos.length === 0 && repetidos.length === 0){
@@ -874,17 +825,15 @@ async function procesar(){
     const nombreTexto = extraerNombre(n.contexto);
     const nombre = n.nombrePerfil || nombreTexto;
     const direccion = extraerDireccion(n.contexto);
-    const grupoCard = n.grupo || grupoPub;
-    const rolGrupoCard = n.grupo ? detectarRol(n.grupo) : rolGrupo;
     const etiquetaDeteccion = n.rolDetectado
       ? `🤖 detectado: ${CATEGORIA_LABEL[n.rolDetectado] || n.rolDetectado}`
-      : (rolGrupoCard ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupoCard] || rolGrupoCard}` : `📂 categoría base (sin detectar oficio en el texto)`);
+      : (rolGrupo ? `👥 detectado por grupo: ${CATEGORIA_LABEL[rolGrupo] || rolGrupo}` : `📂 categoría base (sin detectar oficio en el texto)`);
     const mismoTexto = otrosDelMismoTexto(n.numero, n.contexto);
     html += `
-      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-nombreperfil="${(n.nombrePerfil || '').replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoCard ? grupoCard.replace(/"/g,'&quot;') : ''}">
+      <div class="lead-card" id="lead-${i}" data-numero="${n.numero}" data-cat="${n.catFinal}" data-fecha="${fechaPub}" data-ctx="${n.contexto.replace(/"/g,'&quot;')}" data-nombreperfil="${(n.nombrePerfil || '').replace(/"/g,'&quot;')}" data-link="${linkPub ? linkPub.replace(/"/g,'&quot;') : ''}" data-grupo="${grupoPub ? grupoPub.replace(/"/g,'&quot;') : ''}">
         <div class="lead-num">${display}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(n.numero).label}</div>
-        ${grupoCard ? `<div style="font-size:11px;color:#999">👥 ${grupoCard}</div>` : ''}
+        ${grupoPub ? `<div style="font-size:11px;color:#999">👥 ${grupoPub}</div>` : ''}
         ${linkPub ? `<a href="${linkPub}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${mismoTexto.length > 0 ? `<div style="font-size:11px;color:#e67e22;font-weight:700">⚠️ Mismo texto/anuncio que: ${mismoTexto.map(formatoNum).join(', ')} (posiblemente el mismo cliente)</div>` : ''}
         ${n.nombrePerfil ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${n.nombrePerfil} <span style="font-weight:400;color:#999">(perfil de Facebook)</span></div>` : ''}
@@ -914,7 +863,7 @@ async function procesar(){
       numerosEnPantalla.add(n.numero);
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
-      const catRepetido = (entry && entry.categoria) || n.rolDetectado || (n.grupo ? detectarRol(n.grupo) : null) || rolGrupo || catActual;
+      const catRepetido = (entry && entry.categoria) || n.rolDetectado || rolGrupo || catActual;
       const nombreRep = (n.nombrePerfil || extraerNombre(n.contexto) || '').replace(/'/g, "\\'");
       const numKeyRep = n.numero.replace(/'/g, "\\'");
       const fechaKeyRep = entry ? entry.fecha_contacto.replace(/'/g, "\\'") : '';
