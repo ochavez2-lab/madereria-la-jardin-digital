@@ -150,6 +150,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab activo" id="tabStage1" onclick="mostrarStage(1)">1. Procesar números</button>
     <button class="stage-tab" id="tabStage2" onclick="mostrarStage(2)">2. Mis tareas</button>
     <button class="stage-tab" id="tabStage3" onclick="mostrarStage(3)">3. Empleado</button>
+    <button class="stage-tab" id="tabStage4" onclick="mostrarStage(4)">4. Verificar</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -201,6 +202,20 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <div id="tareasResumen"></div>
     <div id="tareasCirculos" class="tareas-circulos"></div>
   </div>
+
+  </div>
+
+  <div id="stage4" style="display:none">
+
+  <div class="section acc-blue">
+    <h2>🔍 Verificar si ya copiaste estos números</h2>
+    <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Pega aquí cualquier texto (de WhatsApp, Facebook, lo que sea) y nomás revisa cuáles números ya están en tu historial y cuáles no — sin que se mezclen con la lista de la pestaña 1.</p>
+    <textarea id="verificarRaw" placeholder="Pega aquí el texto para revisar..."></textarea>
+    <button class="btn-main" onclick="verificarTexto()">🔍 Revisar números</button>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';">🗑️ Borrar texto</button>
+  </div>
+
+  <div id="verificarResultados"></div>
 
   </div>
 
@@ -356,6 +371,12 @@ function obtenerUbicacion(numero){
 }
 
 let catActual = 'otro';
+
+// Contador global de tarjetas y números ya mostrados en pantalla — para que
+// al procesar un lote nuevo, los resultados se acumulen abajo de los
+// anteriores en vez de borrarlos (cada tarjeta necesita un id único).
+let leadCounter = 0;
+const numerosEnPantalla = new Set();
 
 (function(){
   const sel = document.getElementById('catDefault');
@@ -677,8 +698,11 @@ async function procesar(){
     unicos.push(e);
   });
 
-  const nuevos = unicos.filter(u => !histNums.has(u.numero));
-  const repetidos = unicos.filter(u => histNums.has(u.numero));
+  // Si un número ya está mostrado en pantalla (de un lote pegado antes en
+  // esta misma sesión), no se vuelve a mostrar — así los lotes se van
+  // acumulando abajo sin repetir tarjetas.
+  const nuevos = unicos.filter(u => !histNums.has(u.numero) && !numerosEnPantalla.has(u.numero));
+  const repetidos = unicos.filter(u => histNums.has(u.numero) && !numerosEnPantalla.has(u.numero));
 
   // Cuando un mismo comentario/línea trae varios números (ej. tarjetas de
   // diferentes sucursales o números repetidos del mismo anuncio), los
@@ -728,16 +752,29 @@ async function procesar(){
   `;
 
   if (nuevos.length === 0 && repetidos.length === 0){
-    document.getElementById('resultados').innerHTML = '<div class="empty">No se encontraron números 🤷</div>';
-    document.getElementById('buscadorResultados').style.display = 'none';
+    const hayResultadosPrevios = document.getElementById('resultados').querySelector('.lead-card');
+    if (!hayResultadosPrevios){
+      document.getElementById('resultados').innerHTML = '<div class="empty">No se encontraron números 🤷</div>';
+      document.getElementById('buscadorResultados').style.display = 'none';
+    } else if (unicos.length > 0){
+      // Había números, pero todos ya están mostrados arriba de un lote anterior.
+      document.getElementById('resumenBox').innerHTML += '<div class="resumen"><div class="chip gray">👆 Esos números ya están en la lista de arriba</div></div>';
+    }
     return;
   }
 
   const opcionesCategoria = Object.keys(CATEGORIA_LABEL)
     .map(k => `<option value="${k}">${CATEGORIA_LABEL[k]}</option>`).join('');
 
-  let html = '';
-  nuevos.forEach((n, i) => {
+  // Encabezado del lote, solo si ya había tarjetas de un lote anterior en
+  // pantalla — así se ve claro dónde empieza lo que se acaba de pegar.
+  const huboLotePrevio = document.getElementById('resultados').querySelector('.lead-card');
+  let html = huboLotePrevio
+    ? `<div class="empty" style="padding:14px 0 4px;border-top:2px dashed #ccc;margin-top:14px">🆕 Lote nuevo · ${new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})}</div>`
+    : '';
+  nuevos.forEach(n => {
+    const i = leadCounter++;
+    numerosEnPantalla.add(n.numero);
     const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
     const nombreTexto = extraerNombre(n.contexto);
     const nombre = n.nombrePerfil || nombreTexto;
@@ -777,6 +814,7 @@ async function procesar(){
   if (repetidos.length > 0){
     html += `<div class="empty" style="padding:14px 0 4px">🔁 Ya contactados antes (este lote)</div>`;
     repetidos.forEach(n => {
+      numerosEnPantalla.add(n.numero);
       const entry = historial.slice().reverse().find(h => h.numero === n.numero);
       const display = '+' + n.numero.slice(0,2) + ' ' + n.numero.slice(2,5) + ' ' + n.numero.slice(5,8) + ' ' + n.numero.slice(8);
       const catRepetido = (entry && entry.categoria) || n.rolDetectado || rolGrupo || catActual;
@@ -824,7 +862,10 @@ async function procesar(){
     });
   }
 
-  document.getElementById('resultados').innerHTML = html;
+  // Se acumula abajo de lo que ya estaba en pantalla (lotes pegados antes en
+  // esta misma sesión) en vez de borrarlo — así no se pierden tarjetas de
+  // lotes anteriores con solo pegar un texto nuevo.
+  document.getElementById('resultados').insertAdjacentHTML('beforeend', html);
   const buscador = document.getElementById('buscadorResultados');
   buscador.style.display = 'block';
   buscador.value = '';
@@ -1102,9 +1143,11 @@ function mostrarStage(n){
   document.getElementById('stage1').style.display = n === 1 ? 'block' : 'none';
   document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
   document.getElementById('stage3').style.display = n === 3 ? 'block' : 'none';
+  document.getElementById('stage4').style.display = n === 4 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
   document.getElementById('tabStage3').classList.toggle('activo', n === 3);
+  document.getElementById('tabStage4').classList.toggle('activo', n === 4);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -1113,6 +1156,59 @@ function mostrarStage(n){
     syncHistorial();
   }
   if (n === 3) renderEmpleadoOpciones();
+}
+
+// Pestaña 4: solo CHECA si los números de un texto ya están en el historial
+// (ya contactados) o no — no guarda nada ni mezcla resultados con la
+// pestaña 1, es nomás para saber "¿ya copié/mandé este texto o no?" cuando
+// hay muchos comentarios repetidos guardados en WhatsApp.
+async function verificarTexto(){
+  const texto = document.getElementById('verificarRaw').value;
+  const box = document.getElementById('verificarResultados');
+  if (!texto.trim()){
+    box.innerHTML = '<div class="empty">Pega algún texto primero 👆</div>';
+    return;
+  }
+  box.innerHTML = '<div class="empty">🔄 Verificando...</div>';
+  await syncHistorial();
+
+  const encontrados = extraerNumeros(texto);
+  const vistos = new Set();
+  const unicos = encontrados.filter(e => {
+    if (vistos.has(e.numero)) return false;
+    vistos.add(e.numero);
+    return true;
+  });
+
+  if (unicos.length === 0){
+    box.innerHTML = '<div class="empty">No se encontraron números en este texto 🤷</div>';
+    return;
+  }
+
+  const historial = getHistorial();
+  let html = '';
+  unicos.forEach(u => {
+    const display = '+' + u.numero.slice(0,2) + ' ' + u.numero.slice(2,5) + ' ' + u.numero.slice(5,8) + ' ' + u.numero.slice(8);
+    const entry = historial.slice().reverse().find(h => h.numero === u.numero);
+    let estado;
+    if (entry){
+      const fecha = new Date(entry.fecha_contacto).toLocaleDateString('es-MX');
+      const seg = entry.seguimiento || 'pendiente';
+      const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'compró' }[seg] || seg;
+      estado = `<span class="badge-rojo" style="background:#2196F3">✅ Ya en historial · contactado ${fecha} · ${segLabel}</span>`;
+    } else {
+      estado = `<span class="badge-rojo" style="background:#16a34a">🆕 No está en tu historial todavía</span>`;
+    }
+    html += `
+      <div class="lead-card">
+        <div class="lead-num">${display}</div>
+        <div style="font-size:11px;color:#999">${obtenerUbicacion(u.numero).label}</div>
+        <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${u.contexto}</div>
+        ${estado}
+      </div>
+    `;
+  });
+  box.innerHTML = html;
 }
 
 // Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del
