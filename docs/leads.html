@@ -101,6 +101,33 @@ textarea:focus{border-color:var(--acc1)}
 .tablero-table thead th{background:var(--dark);color:var(--acc1);font-weight:800}
 .tablero-table tbody tr:nth-child(even){background:rgba(0,0,0,.03)}
 .tablero-table tfoot td{font-weight:900;border-top:2px solid var(--acc1);border-bottom:none}
+
+/* Tema "Corporativo": además de los colores, cambia las FORMAS a un estilo
+   de empresa formal — esquinas rectas (no pastilla), sin degradados,
+   sombras planas y tipografía sin mayúsculas decorativas. Todo lo demás
+   (botones de WhatsApp, lógica, etc.) sigue funcionando igual. */
+body[data-theme="corporativo"] header{background:var(--acc1);box-shadow:none;border-bottom:3px solid var(--acc2)}
+body[data-theme="corporativo"] header h1{letter-spacing:.2px;font-weight:800}
+body[data-theme="corporativo"] .section{border-radius:4px;border-left-width:3px;box-shadow:none}
+body[data-theme="corporativo"] .lead-card{border-radius:4px;box-shadow:none}
+body[data-theme="corporativo"] .lead-ctx{border-radius:3px}
+body[data-theme="corporativo"] .cat-select,
+body[data-theme="corporativo"] textarea,
+body[data-theme="corporativo"] .nota-box textarea{border-radius:4px}
+body[data-theme="corporativo"] .btn-main{background:var(--acc1);border-radius:4px;font-weight:700;letter-spacing:0}
+body[data-theme="corporativo"] .stage-tab{border-radius:4px}
+body[data-theme="corporativo"] .stage-tab.activo{background:var(--acc1);font-weight:700}
+body[data-theme="corporativo"] .btn-wa,
+body[data-theme="corporativo"] .btn-done,
+body[data-theme="corporativo"] .btn-sinwa,
+body[data-theme="corporativo"] .btn-sms,
+body[data-theme="corporativo"] .btn-nota{border-radius:4px}
+body[data-theme="corporativo"] .estado-chip{border-radius:3px}
+body[data-theme="corporativo"] .resumen .chip{border-radius:4px}
+body[data-theme="corporativo"] .badge-rojo{border-radius:4px}
+body[data-theme="corporativo"] .warn{border-radius:4px}
+body[data-theme="corporativo"] .zoom-bar button{border-radius:4px}
+body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 </style>
 </head>
 <body>
