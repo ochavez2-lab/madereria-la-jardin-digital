@@ -510,6 +510,10 @@ async function syncHistorial(){
         if (e.seguimiento && e.seguimiento !== existing.seguimiento){ existing.seguimiento = e.seguimiento; cambios = true; }
         if (e.categoria && e.categoria !== existing.categoria){ existing.categoria = e.categoria; cambios = true; }
         if (e.nota && e.nota !== existing.nota){ existing.nota = e.nota; cambios = true; }
+        if (e.metodo && e.metodo !== existing.metodo){ existing.metodo = e.metodo; cambios = true; }
+        if (!!e.sms_enviado !== !!existing.sms_enviado){ existing.sms_enviado = !!e.sms_enviado; cambios = true; }
+        if (e.fecha_sms && e.fecha_sms !== existing.fecha_sms){ existing.fecha_sms = e.fecha_sms; cambios = true; }
+        if (e.autor_nombre && e.autor_nombre !== existing.autor_nombre){ existing.autor_nombre = e.autor_nombre; cambios = true; }
       }
     });
     if (cambios){ saveHistorial(local); actualizarContadorHistorial(); }
@@ -2162,7 +2166,7 @@ function descargarBackup(){
     alert('Aún no tienes contactos guardados.');
     return;
   }
-  const headers = ['numero','categoria','fecha_pub','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota','post_url','grupo'];
+  const headers = ['numero','categoria','fecha_pub','contexto','fecha_contacto','metodo','sms_enviado','fecha_sms','seguimiento','nota','post_url','grupo','autor_nombre'];
   let csv = headers.join(',') + '\n';
   hist.forEach(h => {
     const fila = headers.map(k => {
