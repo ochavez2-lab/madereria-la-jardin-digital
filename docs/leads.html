@@ -88,6 +88,11 @@ textarea:focus{border-color:var(--acc1)}
 .theme-dot{width:24px;height:24px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0}
 .theme-dot.activo{border-color:#fff;box-shadow:0 0 0 2px var(--acc1)}
 
+.notif-mensajes{display:none;position:sticky;top:0;z-index:98;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:10px;background:#e0a526;color:#1a1410;font-size:13px;font-weight:700;text-align:center}
+.notif-mensajes button{border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer}
+.notif-mensajes button.ir{background:#1a1410;color:#fff}
+.notif-mensajes button.ignorar{background:#fff;color:#1a1410}
+
 .stage-tabs{display:flex;gap:8px;margin-bottom:14px}
 .stage-tab{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 6px;font-size:12px;font-weight:800;cursor:pointer}
 .stage-tab.activo{background:linear-gradient(135deg,var(--acc1),var(--acc2));color:var(--acc-text);border-color:transparent}
@@ -140,6 +145,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   <button onclick="cambiarZoom(1)">A+</button>
 </div>
 <div class="theme-bar" id="themeBar"></div>
+<div class="notif-mensajes" id="notifMensajesBanner"></div>
 
 <header>
   <h1>🪵 LEADS → WHATSAPP</h1>
@@ -1334,7 +1340,10 @@ function mostrarStage(n){
     syncHistorial();
   }
   if (n === 3) renderEmpleadoOpciones();
-  if (n === 5) renderMensajesEntrada();
+  if (n === 5){
+    renderMensajesEntrada();
+    ocultarNotifMensajes();
+  }
 }
 
 // Pestaña 4: solo CHECA si los números de un texto ya están en el historial
@@ -1568,6 +1577,13 @@ async function cargarMensajes(){
 function renderMensajesLista(mensajes){
   const lista = document.getElementById('mensajesLista');
   window.__mensajesData = mensajes || [];
+  // Entrar a esta pestaña y ver la lista cuenta como "ya lo vi", así que
+  // movemos el marcador del aviso al mensaje más nuevo que se está mostrando.
+  if (mensajes && mensajes.length > 0){
+    const maxId = mensajes.reduce((max, m) => Math.max(max, Number(m.id) || 0), 0);
+    localStorage.setItem('lj_mensajes_ultimo_visto', String(maxId));
+  }
+  ocultarNotifMensajes();
   if (!mensajes || mensajes.length === 0){
     lista.innerHTML = '<div class="empty">Todavía no hay mensajes 🤷</div>';
     return;
@@ -1634,6 +1650,82 @@ async function borrarMensaje(id){
   } catch (e){
     alert('No se pudo borrar, revisa tu conexión.');
   }
+}
+
+// Aviso de mensajes nuevos sin ver en "5. Mensajes", para no tener que estar
+// entrando a cada rato a checar. Se guarda el id del último mensaje ya visto
+// (o ignorado) en localStorage, así el aviso no se repite para algo que ya se
+// atendió, ni siquiera si se ignoró sin entrar a la pestaña.
+let __notifMensajesActual = null;
+
+async function revisarMensajesNuevos(){
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/mensajes');
+    if (!r.ok) return;
+    const mensajes = await r.json();
+    const miDispositivo = obtenerDispositivoId();
+    const ultimoVisto = Number(localStorage.getItem('lj_mensajes_ultimo_visto') || 0);
+    const nuevos = (mensajes || []).filter(m => m.dispositivo_id !== miDispositivo && m.id > ultimoVisto);
+    if (nuevos.length === 0){
+      ocultarNotifMensajes();
+      return;
+    }
+    const masReciente = nuevos[nuevos.length - 1];
+    if (__notifMensajesActual && __notifMensajesActual.id === masReciente.id) return;
+    __notifMensajesActual = masReciente;
+    mostrarNotifMensajes(masReciente, nuevos.length);
+    reproducirSonidoAviso();
+  } catch (e){
+    // si falla la conexión simplemente no avisamos, se reintenta en el próximo ciclo
+  }
+}
+
+function mostrarNotifMensajes(mensaje, cantidad){
+  const banner = document.getElementById('notifMensajesBanner');
+  const tipoTexto = mensaje.tipo === 'libreta' ? '📋 una lista nueva' : '💬 un mensaje nuevo';
+  const quien = escaparHtml(mensaje.autor_nombre || 'Alguien');
+  const extra = cantidad > 1 ? ` (+${cantidad - 1} más sin ver)` : '';
+  banner.innerHTML = `
+    <span>🔔 ${quien} te envió ${tipoTexto} en "5. Mensajes"${extra}</span>
+    <button class="ir" onclick="irANotifMensajes()">➡️ Llévame ahí</button>
+    <button class="ignorar" onclick="ignorarNotifMensajes()">🚫 Ignorar / No volver a mostrar</button>
+  `;
+  banner.style.display = 'flex';
+}
+
+function ocultarNotifMensajes(){
+  const banner = document.getElementById('notifMensajesBanner');
+  if (banner) banner.style.display = 'none';
+  __notifMensajesActual = null;
+}
+
+function marcarNotifMensajesVista(){
+  if (__notifMensajesActual) localStorage.setItem('lj_mensajes_ultimo_visto', String(__notifMensajesActual.id));
+  ocultarNotifMensajes();
+}
+
+function irANotifMensajes(){
+  marcarNotifMensajesVista();
+  mostrarStage(5);
+}
+
+function ignorarNotifMensajes(){
+  marcarNotifMensajesVista();
+}
+
+function reproducirSonidoAviso(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.15;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => { osc.stop(); ctx.close(); }, 220);
+  } catch (e){}
 }
 
 // Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del
@@ -2241,6 +2333,8 @@ autoExpirarPendientes();
 actualizarContadorHistorial();
 syncHistorial();
 setInterval(syncHistorial, 10 * 1000);
+revisarMensajesNuevos();
+setInterval(revisarMensajesNuevos, 20 * 1000);
 </script>
 </body>
 </html>
