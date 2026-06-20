@@ -151,6 +151,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 <header>
   <h1>🪵 LEADS → WHATSAPP</h1>
   <p>Maderería La Jardín · Prospección manual</p>
+  <p id="bienvenidaUsuario" style="font-weight:800"></p>
 </header>
 
 <div class="wrap">
@@ -1534,12 +1535,26 @@ function registrarMensajesIdentidad(){
   localStorage.setItem('lj_chat_nombre', nombre);
   localStorage.setItem('lj_chat_numero', numero);
   renderMensajesEntrada();
+  actualizarBienvenida();
 }
 
 function cambiarMensajesIdentidad(){
   localStorage.removeItem('lj_chat_nombre');
   localStorage.removeItem('lj_chat_numero');
   renderMensajesEntrada();
+  actualizarBienvenida();
+}
+
+// Letrero arriba de todo con el nombre registrado en este celular/navegador,
+// para que de un vistazo sepas con cuál identidad estás (sobre todo si usas
+// varios Chrome/perfiles a la vez y se te puede olvidar cuál es cuál).
+function actualizarBienvenida(){
+  const el = document.getElementById('bienvenidaUsuario');
+  if (!el) return;
+  const nombre = obtenerMensajesIdentidad().nombre;
+  el.innerHTML = nombre
+    ? `👋 Bienvenido, ${escaparHtml(nombre)}`
+    : `👤 Sin registrar — <a href="#" onclick="mostrarStage(5);return false" style="color:inherit;text-decoration:underline">regístrate aquí</a>`;
 }
 
 function renderMensajesEntrada(){
@@ -2374,6 +2389,7 @@ function descargarBackup(){
   URL.revokeObjectURL(url);
 }
 
+actualizarBienvenida();
 reclasificarHistorialAntiguo();
 autoExpirarPendientes();
 actualizarContadorHistorial();
