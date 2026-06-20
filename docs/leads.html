@@ -153,6 +153,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab" id="tabStage2" onclick="mostrarStage(2)">2. Mis tareas</button>
     <button class="stage-tab" id="tabStage3" onclick="mostrarStage(3)">3. Empleado</button>
     <button class="stage-tab" id="tabStage4" onclick="mostrarStage(4)">4. Verificar</button>
+    <button class="stage-tab" id="tabStage5" onclick="mostrarStage(5)">5. Mensajes</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -225,6 +226,42 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   </div>
 
   <div id="verificarResultados"></div>
+
+  </div>
+
+  <div id="stage5" style="display:none">
+
+    <div id="mensajesRegistro" class="section acc-blue" style="display:none">
+      <h2>👤 ¿Quién eres?</h2>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Se guarda una sola vez en este celular — no lo va a volver a pedir aquí. (Si usas otra app de navegador en el mismo celular, ej. Chrome y luego Safari, sí te lo va a pedir otra vez ahí, porque cada una guarda su propia memoria por separado — no hay forma de evitar eso sin que te tengas que loguear con contraseña cada vez.)</p>
+      <input type="text" id="mensajesNombreInput" placeholder="Tu nombre" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+      <input type="tel" id="mensajesNumeroInput" placeholder="Tu número de celular (opcional)" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+      <button class="btn-main" onclick="registrarMensajesIdentidad()">✅ Guardar y entrar</button>
+    </div>
+
+    <div id="mensajesApp" style="display:none">
+
+      <div class="section acc-green">
+        <h2>💬 Mensaje rápido</h2>
+        <textarea id="mensajeRapidoInput" placeholder="Escribe un mensaje para el equipo..." style="min-height:70px"></textarea>
+        <button class="btn-main" onclick="enviarMensaje('mensaje')">📤 Enviar</button>
+      </div>
+
+      <div class="section acc-amber">
+        <h2>📋 Mensaje grande / Libreta</h2>
+        <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Para pegar textos largos (como números de Facebook) sin que se llene toda la pantalla con el texto. Queda guardado colapsado, solo con un botón para copiarlo completo cuando lo necesites.</p>
+        <textarea id="mensajeLibretaInput" placeholder="Pega aquí el texto largo..."></textarea>
+        <button class="btn-main" onclick="enviarMensaje('libreta')">📤 Enviar a la libreta</button>
+      </div>
+
+      <div class="historial-toggle" onclick="cargarMensajes()">🔄 Actualizar mensajes</div>
+      <div style="text-align:right;margin:4px 0 10px">
+        <span style="font-size:11px;color:#999;cursor:pointer;text-decoration:underline" onclick="cambiarMensajesIdentidad()">✏️ Cambiar mi nombre</span>
+      </div>
+
+      <div id="mensajesLista"></div>
+
+    </div>
 
   </div>
 
@@ -1257,10 +1294,12 @@ function mostrarStage(n){
   document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
   document.getElementById('stage3').style.display = n === 3 ? 'block' : 'none';
   document.getElementById('stage4').style.display = n === 4 ? 'block' : 'none';
+  document.getElementById('stage5').style.display = n === 5 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
   document.getElementById('tabStage3').classList.toggle('activo', n === 3);
   document.getElementById('tabStage4').classList.toggle('activo', n === 4);
+  document.getElementById('tabStage5').classList.toggle('activo', n === 5);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -1269,6 +1308,7 @@ function mostrarStage(n){
     syncHistorial();
   }
   if (n === 3) renderEmpleadoOpciones();
+  if (n === 5) renderMensajesEntrada();
 }
 
 // Pestaña 4: solo CHECA si los números de un texto ya están en el historial
@@ -1322,6 +1362,171 @@ async function verificarTexto(){
     `;
   });
   box.innerHTML = html;
+}
+
+// Pestaña 5: mensajes de equipo entre empleados (texto), separados en dos
+// tipos — "mensaje" normal (corto, se ve completo) y "libreta" (textos
+// largos que se guardan colapsados con un botón de copiar, para que no se
+// llene la pantalla). La identidad (nombre/número) y el id del dispositivo
+// se guardan una sola vez en este celular/navegador.
+function obtenerDispositivoId(){
+  let id = localStorage.getItem('lj_dispositivo_id');
+  if (!id){
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    localStorage.setItem('lj_dispositivo_id', id);
+  }
+  return id;
+}
+
+function obtenerMensajesIdentidad(){
+  return {
+    nombre: localStorage.getItem('lj_chat_nombre') || '',
+    numero: localStorage.getItem('lj_chat_numero') || ''
+  };
+}
+
+function registrarMensajesIdentidad(){
+  const nombre = document.getElementById('mensajesNombreInput').value.trim();
+  const numero = document.getElementById('mensajesNumeroInput').value.trim();
+  if (!nombre){ alert('Escribe tu nombre primero 👆'); return; }
+  localStorage.setItem('lj_chat_nombre', nombre);
+  localStorage.setItem('lj_chat_numero', numero);
+  renderMensajesEntrada();
+}
+
+function cambiarMensajesIdentidad(){
+  localStorage.removeItem('lj_chat_nombre');
+  localStorage.removeItem('lj_chat_numero');
+  renderMensajesEntrada();
+}
+
+function renderMensajesEntrada(){
+  const id = obtenerMensajesIdentidad();
+  const registro = document.getElementById('mensajesRegistro');
+  const app = document.getElementById('mensajesApp');
+  if (!id.nombre){
+    registro.style.display = 'block';
+    app.style.display = 'none';
+  } else {
+    registro.style.display = 'none';
+    app.style.display = 'block';
+    cargarMensajes();
+  }
+}
+
+function escaparHtml(s){
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function enviarMensaje(tipo){
+  const id = obtenerMensajesIdentidad();
+  if (!id.nombre){ renderMensajesEntrada(); return; }
+  const inputId = tipo === 'libreta' ? 'mensajeLibretaInput' : 'mensajeRapidoInput';
+  const input = document.getElementById(inputId);
+  const contenido = input.value.trim();
+  if (!contenido) return;
+  const body = {
+    dispositivo_id: obtenerDispositivoId(),
+    autor_nombre: id.nombre,
+    autor_numero: id.numero,
+    tipo: tipo,
+    contenido: contenido,
+    fecha_envio: new Date().toISOString()
+  };
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/mensajes', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error('E' + r.status);
+    input.value = '';
+    cargarMensajes();
+  } catch (e){
+    alert('No se pudo enviar, revisa tu conexión e intenta de nuevo 🙏');
+  }
+}
+
+async function cargarMensajes(){
+  const lista = document.getElementById('mensajesLista');
+  lista.innerHTML = '<div class="empty">🔄 Cargando mensajes...</div>';
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/mensajes');
+    if (!r.ok) throw new Error('E' + r.status);
+    const mensajes = await r.json();
+    renderMensajesLista(mensajes);
+  } catch (e){
+    lista.innerHTML = '<div class="empty">⚠️ No se pudieron cargar los mensajes, revisa tu conexión.</div>';
+  }
+}
+
+function renderMensajesLista(mensajes){
+  const lista = document.getElementById('mensajesLista');
+  window.__mensajesData = mensajes || [];
+  if (!mensajes || mensajes.length === 0){
+    lista.innerHTML = '<div class="empty">Todavía no hay mensajes 🤷</div>';
+    return;
+  }
+  const miDispositivo = obtenerDispositivoId();
+  let html = '';
+  let diaAnterior = null;
+  mensajes.forEach(m => {
+    const fecha = new Date(m.fecha_envio);
+    const diaKey = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    if (diaKey !== diaAnterior){
+      html += `<div class="empty" style="padding:10px 0 4px;border-top:2px dashed #ccc;margin-top:10px">📅 ${diaKey}</div>`;
+      diaAnterior = diaKey;
+    }
+    const hora = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const esMio = m.dispositivo_id === miDispositivo;
+    const quien = `${escaparHtml(m.autor_nombre)}${m.autor_numero ? ' · ' + escaparHtml(m.autor_numero) : ''}`;
+    const btnBorrar = esMio ? `<button class="btn-sinwa" onclick="borrarMensaje(${m.id})">🗑️ Borrar</button>` : '';
+    if (m.tipo === 'libreta'){
+      const contenido = m.contenido || '';
+      const preview = escaparHtml(contenido.slice(0, 70).replace(/\n/g, ' '));
+      html += `
+        <div class="lead-card" style="border-left:4px solid #e0a526">
+          <div style="font-size:12px;font-weight:700">📋 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span></div>
+          <div style="font-size:12px;color:#999;margin:4px 0">${preview}${contenido.length > 70 ? '…' : ''} <span style="font-weight:700">(${contenido.length} caracteres)</span></div>
+          <div class="lead-actions">
+            <button class="btn-done" onclick="copiarMensaje(${m.id}, this)">📋 Copiar mensaje completo</button>
+            ${btnBorrar}
+          </div>
+        </div>`;
+    } else {
+      html += `
+        <div class="lead-card">
+          <div style="font-size:12px;font-weight:700">💬 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span></div>
+          <div style="font-size:13px;margin:4px 0;white-space:pre-wrap">${escaparHtml(m.contenido)}</div>
+          ${btnBorrar ? `<div class="lead-actions">${btnBorrar}</div>` : ''}
+        </div>`;
+    }
+  });
+  lista.innerHTML = html;
+}
+
+async function copiarMensaje(id, btn){
+  const m = (window.__mensajesData || []).find(x => x.id === id);
+  if (!m) return;
+  try {
+    await navigator.clipboard.writeText(m.contenido);
+    const original = btn.textContent;
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (e){
+    alert('No se pudo copiar automático, selecciona y copia el texto manualmente.');
+  }
+}
+
+async function borrarMensaje(id){
+  if (!confirm('¿Borrar este mensaje?')) return;
+  try {
+    await fetch(RAILWAY_URL + '/api/mensajes/eliminar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, dispositivo_id: obtenerDispositivoId() })
+    });
+    cargarMensajes();
+  } catch (e){
+    alert('No se pudo borrar, revisa tu conexión.');
+  }
 }
 
 // Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del

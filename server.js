@@ -36,6 +36,18 @@ pool.query(`
   ALTER TABLE leads_historial ADD COLUMN IF NOT EXISTS grupo TEXT
 `)).catch(console.error);
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS mensajes_equipo (
+    id BIGSERIAL PRIMARY KEY,
+    dispositivo_id TEXT NOT NULL,
+    autor_nombre TEXT,
+    autor_numero TEXT,
+    tipo TEXT DEFAULT 'mensaje',
+    contenido TEXT NOT NULL,
+    fecha_envio TEXT NOT NULL
+  )
+`).catch(console.error);
+
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
 app.get('/api/keys', async (req, res) => {
@@ -152,6 +164,37 @@ app.get('/api/all', async (req, res) => {
       'SELECT numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota,post_url,grupo FROM leads_historial ORDER BY fecha_contacto'
     );
     res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mensajes', async (req, res) => {
+  const { dispositivo_id, autor_nombre, autor_numero, tipo, contenido, fecha_envio } = req.body || {};
+  if (!dispositivo_id || !contenido || !fecha_envio) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    const r = await pool.query(
+      `INSERT INTO mensajes_equipo (dispositivo_id, autor_nombre, autor_numero, tipo, contenido, fecha_envio)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+      [dispositivo_id, autor_nombre || null, autor_numero || null, tipo || 'mensaje', contenido, fecha_envio]
+    );
+    res.json({ ok: true, id: r.rows[0].id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/mensajes', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, dispositivo_id, autor_nombre, autor_numero, tipo, contenido, fecha_envio FROM mensajes_equipo ORDER BY fecha_envio ASC LIMIT 500'
+    );
+    res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mensajes/eliminar', async (req, res) => {
+  const { id, dispositivo_id } = req.body || {};
+  if (!id || !dispositivo_id) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query('DELETE FROM mensajes_equipo WHERE id=$1 AND dispositivo_id=$2', [id, dispositivo_id]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
