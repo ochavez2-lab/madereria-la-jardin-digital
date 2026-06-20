@@ -206,10 +206,17 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 
   <div id="stage2" style="display:none">
 
+  <div id="tareasSinIdentidad" class="section acc-amber" style="display:none">
+    <h2>👤 Falta tu nombre</h2>
+    <p style="font-size:12px;color:#555;margin:-4px 0 10px;line-height:1.4">Para que tus contactos se cuenten por separado, regístrate una vez en la pestaña "5. Mensajes" (es el mismo registro, no hay que hacerlo dos veces).</p>
+    <button class="btn-main" onclick="mostrarStage(5)">👤 Ir a registrarme</button>
+  </div>
+
   <div class="section acc-green">
     <h2>🎯 Contactos de hoy</h2>
-    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Se cuenta solo, automáticamente, a todos los que marques (tú y tus empleados, desde cualquier celular).</p>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Se cuenta solo, automáticamente, a todos los que marques (tú y tus empleados, desde cualquier celular). Cada persona cuenta por separado según su nombre registrado en "5. Mensajes".</p>
     <div id="tareasResumen"></div>
+    <div id="tareasPorPersona"></div>
     <div id="tareasCirculos" class="tareas-circulos"></div>
   </div>
 
@@ -470,7 +477,8 @@ async function syncHistorial(){
           fecha_contacto:e.fecha_contacto, metodo:e.metodo||'whatsapp',
           sms_enviado:!!e.sms_enviado, fecha_sms:e.fecha_sms||null,
           seguimiento:e.seguimiento||'pendiente', nota:e.nota||null,
-          post_url:e.post_url||null, grupo:e.grupo||null};
+          post_url:e.post_url||null, grupo:e.grupo||null,
+          autor_nombre:e.autor_nombre||null};
       });
       var w = await fetch(RAILWAY_URL+'/api/sync', {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rows), signal:ctrl.signal
@@ -1049,7 +1057,8 @@ function marcarContactado(i){
     metodo: 'whatsapp',
     seguimiento: 'pendiente',
     post_url: card.dataset.link || null,
-    grupo: card.dataset.grupo || null
+    grupo: card.dataset.grupo || null,
+    autor_nombre: obtenerMensajesIdentidad().nombre || null
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -1149,7 +1158,8 @@ function marcarSinWhatsapp(i){
     sms_enviado: false,
     seguimiento: 'pendiente',
     post_url: card.dataset.link || null,
-    grupo: card.dataset.grupo || null
+    grupo: card.dataset.grupo || null,
+    autor_nombre: obtenerMensajesIdentidad().nombre || null
   });
   saveHistorial(historial);
   card.classList.add('done');
@@ -1580,18 +1590,41 @@ function fechaLocalISO(fecha){
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-function contactadosHoy(){
+function contactadosHoyLista(){
   const hoy = fechaLocalISO(new Date());
-  return getHistorial().filter(h => h.fecha_contacto && fechaLocalISO(h.fecha_contacto) === hoy).length;
+  return getHistorial().filter(h => h.fecha_contacto && fechaLocalISO(h.fecha_contacto) === hoy);
+}
+
+function contactadosHoy(){
+  return contactadosHoyLista().length;
 }
 
 function renderTareas(){
   const resumen = document.getElementById('tareasResumen');
   const circulos = document.getElementById('tareasCirculos');
+  const porPersona = document.getElementById('tareasPorPersona');
+  const avisoIdentidad = document.getElementById('tareasSinIdentidad');
   if (!resumen || !circulos) return;
 
-  const hechos = contactadosHoy();
+  if (avisoIdentidad) avisoIdentidad.style.display = obtenerMensajesIdentidad().nombre ? 'none' : 'block';
+
+  const lista = contactadosHoyLista();
+  const hechos = lista.length;
   resumen.innerHTML = '<div style="font-size:15px;font-weight:900">' + hechos + ' contactos hoy</div>';
+
+  if (porPersona){
+    const conteo = {};
+    lista.forEach(h => {
+      const nombre = h.autor_nombre || 'Sin registrar';
+      conteo[nombre] = (conteo[nombre] || 0) + 1;
+    });
+    const nombres = Object.keys(conteo).sort((a, b) => conteo[b] - conteo[a]);
+    porPersona.innerHTML = nombres.length === 0 ? '' : (
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px">' +
+      nombres.map(n => '<span style="background:#eafaf0;color:#1c1c1c;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700">👤 ' + escaparHtml(n) + ': ' + conteo[n] + '</span>').join('') +
+      '</div>'
+    );
+  }
 
   let html = '';
   for (let i = 0; i < hechos; i++){
