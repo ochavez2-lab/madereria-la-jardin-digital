@@ -116,6 +116,15 @@ textarea:focus{border-color:var(--gold)}
   <div class="stage-tabs">
     <button class="stage-tab activo" id="tabStage1" onclick="mostrarStage(1)">1. Procesar números</button>
     <button class="stage-tab" id="tabStage2" onclick="mostrarStage(2)">2. Mis tareas</button>
+    <button class="stage-tab" id="tabStage3" onclick="mostrarStage(3)">3. Empleado</button>
+  </div>
+
+  <div id="stage3" style="display:none">
+    <div class="section acc-blue">
+      <h2>¿Qué número usas para contactar?</h2>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Esto solo cambia el número que aparece al final del mensaje de WhatsApp, para que no tengas que editarlo a mano. Se queda guardado en este celular.</p>
+      <div id="empleadoOpciones" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
   </div>
 
   <div id="stage1">
@@ -534,11 +543,41 @@ function extraerDireccion(texto){
 // mensajes de WhatsApp (primer contacto y seguimiento) como CTA corto.
 const MAPS_LINK = 'https://maps.app.goo.gl/1TvsExXLBBznxwCHA?g_st=ic';
 
+// Dos empleados, dos números de contacto. El mensaje de WhatsApp siempre dice
+// "Maderería La Jardín" pero termina con el número del empleado que lo envía,
+// para que cada uno no tenga que editar el mensaje a mano antes de enviarlo.
+const EMPLEADOS = [
+  { id: 'jardin', numero: '664 709 3835' },
+  { id: 'otro', numero: '663 201 8960' }
+];
+
+function obtenerNumeroEmpleado(){
+  const guardado = localStorage.getItem('lj_empleado_numero');
+  return guardado || EMPLEADOS[0].numero;
+}
+
+function elegirEmpleado(numero){
+  localStorage.setItem('lj_empleado_numero', numero);
+  renderEmpleadoOpciones();
+}
+
+function renderEmpleadoOpciones(){
+  const cont = document.getElementById('empleadoOpciones');
+  if (!cont) return;
+  const actual = obtenerNumeroEmpleado();
+  cont.innerHTML = EMPLEADOS.map(e => {
+    const activo = e.numero === actual;
+    return `<button class="stage-tab${activo ? ' activo' : ''}" style="width:100%;text-align:left;padding:14px" onclick="elegirEmpleado('${e.numero}')">
+      ${activo ? '✅' : '☐'} Empleado de Maderería La Jardín · número ${e.numero}
+    </button>`;
+  }).join('');
+}
+
 function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const saludo = nombre || 'maestro';
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
-  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} ${t.cierre} 📲 664 709 3835`;
+  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} ${t.cierre} 📲 ${obtenerNumeroEmpleado()}`;
 }
 
 function extraerLinkPublicacion(texto){
@@ -932,8 +971,10 @@ function actualizarContadorHistorial(){
 function mostrarStage(n){
   document.getElementById('stage1').style.display = n === 1 ? 'block' : 'none';
   document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('stage3').style.display = n === 3 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
+  document.getElementById('tabStage3').classList.toggle('activo', n === 3);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -941,6 +982,7 @@ function mostrarStage(n){
     // de "Contactos de hoy" refleje a todos al entrar a esta pestaña.
     syncHistorial();
   }
+  if (n === 3) renderEmpleadoOpciones();
 }
 
 // Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del
@@ -1358,7 +1400,7 @@ function renderHistorialCard(h){
       : `<span style="color:#999">hace ${dias} día${dias === 1 ? '' : 's'}</span>`;
     const nombreTextoHist = extraerNombre(h.contexto || '');
     const nombreHist = h.nombrePerfil || nombreTextoHist;
-    const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 664 709 3835`);
+    const mensajeFollowUp = encodeURIComponent(`Qué tal ${nombreHist || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`);
     const chipsEstado = Object.keys(ESTADOS_INFO).map(k => {
       const activo = seg === k;
       return `<span class="estado-chip${activo ? ' activo' : ''}" style="${activo ? `background:${ESTADOS_INFO[k].color};border-color:${ESTADOS_INFO[k].color}` : ''}" onclick="actualizarSeguimiento('${numKey}','${fechaKey}','${k}')">${ESTADOS_INFO[k].label}</span>`;
@@ -1389,8 +1431,9 @@ function renderHistorialCard(h){
         ${sinWhatsappBadge}
         <div class="estado-chips">${chipsEstado}</div>
         <div class="nota-box">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px">${NOTAS_RAPIDAS.map(t => `<button type="button" style="font-size:10px;padding:3px 7px;border-radius:10px;border:1px solid var(--border);background:transparent;cursor:pointer" onclick="agregarNotaRapida('${notaIdSafe}','${t.replace(/'/g,"\\'")}')">${t}</button>`).join('')}</div>
           <textarea id="nota-${notaIdSafe}" placeholder="📝 Notas reales (lo que pidió por chat: medidas, cantidades, etc.)">${(h.nota || '').replace(/</g,'&lt;')}</textarea>
-          <button class="btn-nota" onclick="actualizarNota('${numKey}','${fechaKey}', document.getElementById('nota-${notaIdSafe}').value)">💾 Guardar nota</button>
+          <button class="btn-nota" id="btnNota-${notaIdSafe}" onclick="actualizarNota('${numKey}','${fechaKey}', document.getElementById('nota-${notaIdSafe}').value, this)">💾 Guardar nota</button>
         </div>
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           ${accionFinal}
@@ -1410,7 +1453,17 @@ function actualizarSeguimiento(numero, fecha_contacto, valor){
   }).catch(function(){});
 }
 
-function actualizarNota(numero, fecha_contacto, valor){
+// Frases comunes para no quedarse pensando qué escribir en la nota — solo se
+// agregan al texto, siempre se puede editar a mano después.
+const NOTAS_RAPIDAS = ['Pidió cotización', 'Quiere que le marquen', 'Comparando precios', 'Pidió entrega a domicilio', 'Sin presupuesto aún', 'Ya compró en otro lado'];
+
+function agregarNotaRapida(notaIdSafe, texto){
+  const textarea = document.getElementById('nota-' + notaIdSafe);
+  if (!textarea) return;
+  textarea.value = textarea.value ? (textarea.value.trim() + '; ' + texto) : texto;
+}
+
+function actualizarNota(numero, fecha_contacto, valor, btn){
   const historial = getHistorial();
   const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
   if (entry) { entry.nota = valor; saveHistorial(historial); }
@@ -1418,6 +1471,12 @@ function actualizarNota(numero, fecha_contacto, valor){
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ numero, fecha_contacto, nota: valor })
   }).catch(function(){});
+  if (btn){
+    const original = btn.textContent;
+    btn.textContent = '✅ ¡Guardado!';
+    btn.style.background = '#2196F3';
+    setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 1500);
+  }
 }
 
 function actualizarMetodo(numero, fecha_contacto, valor){
