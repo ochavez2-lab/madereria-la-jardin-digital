@@ -240,7 +240,7 @@ const TEMPLATES = {
   electricidad:    { gancho: 'Vi que hace instalaciones eléctricas.', cierre: '¿Ocupa material pa\' su próximo proyecto? Le entrego rápido.' },
   pisos_azulejo:   { gancho: 'Vi que instala pisos y azulejo.', cierre: '¿Ocupa madera o triplay de base pa\' su próxima instalación? Se lo dejo en obra.' },
   pintura:         { gancho: 'Vi que hace trabajos de pintura.', cierre: '¿Ocupa material pa\' preparar la obra antes de pintar? Le surto rápido.' },
-  techos:          { gancho: 'Vi que hace techos e impermeabilización.', cierre: '¿Ocupa material pa\' su próximo techo? Le entrego el mismo día.' },
+  techos:          { gancho: 'Vi que hace techos e impermeabilización.', oferta: 'manejamos antorchable arenado 4.5 (rollo de 10 metros), sticker arenado 4.5 (rollo de 10 metros) y shingle arenado americano (4x8, cubre bien)', cierre: '¿Ocupa material pa\' su próximo techo? Le entrego el mismo día.' },
   demolicion:      { gancho: 'Vi que hace trabajos de demolición.', cierre: '¿Va a reconstruir después? Le tengo el material listo pa\' cuando lo necesite.' },
   herreria:        { gancho: 'Vi que hace trabajos de herrería y soldadura.', cierre: '¿Ocupa madera o material pa\' combinar con su trabajo? Se lo entrego rápido.' },
   carpinteros:     { gancho: 'Vi que hace trabajos de carpintería.', oferta: 'manejamos triplay birch, tabla shelby y barrotes CDX número 1, entrega gratis desde 50 pzs', cierre: '¿Qué material ocupa pa\' su próximo mueble o trabajo? Se lo entrego el mismo día.' },
@@ -266,14 +266,14 @@ const CATEGORIA_LABEL = {
 // electricidad, etc.) — esos solo deben ganar si no hay ningún indicio de
 // construcción/contratista en el texto.
 const ROLE_PATTERNS = [
-  ['contratistas', /contratista/],
   ['constructores', /constructor|construcci[oó]n|casas? de madera|remodelaci[oó]n/],
+  ['contratistas', /contratista/],
+  ['techos', /impermeabiliz|gotera|\btecho/],
   ['cimbrado', /cimbra|colado|colada|castillo/],
   ['bloques_albanil', /alba[ñn]il|\bbloque|tabique|barda/],
   ['carpinteros', /carpinter/],
   ['herreria', /herrer|soldador|soldadura/],
   ['demolicion', /demolic|demoler|escombro/],
-  ['techos', /impermeabiliz|gotera|\btecho/],
   ['yeseros', /\byeso\b|aplanado/],
   ['pintura', /pintor|pintura/],
   ['pisos_azulejo', /azulejo|loseta|\bpisos?\b/],
