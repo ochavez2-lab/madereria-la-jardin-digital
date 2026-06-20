@@ -222,9 +222,12 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Pega aquí cualquier texto (de WhatsApp, Facebook, lo que sea) y nomás revisa cuáles números ya están en tu historial y cuáles no — sin que se mezclen con la lista de la pestaña 1.</p>
     <textarea id="verificarRaw" placeholder="Pega aquí el texto para revisar..."></textarea>
     <button class="btn-main" onclick="verificarTexto()">🔍 Revisar números</button>
-    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';actualizarContadorVerificar();">🗑️ Borrar texto</button>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';document.getElementById('buscadorVerificar').value='';actualizarContadorVerificar();">🗑️ Borrar texto</button>
   </div>
 
+  <input type="text" id="buscadorVerificar" placeholder="🔎 Buscar número, lugar o texto en estos resultados..."
+    oninput="filtrarResultadosVerificar(this.value)"
+    style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;display:none">
   <div id="contadorVerificar" style="display:none;font-size:12px;font-weight:700;color:#666;margin-bottom:8px"></div>
   <div id="filtrosVerificar" style="display:none;margin-bottom:10px">
     <button class="chip-filtro activo" data-filtro="todos" onclick="filtrarPorEstadoVerificar('todos')">Todos</button>
@@ -1295,8 +1298,9 @@ async function verificarTexto(){
   }
 
   const historial = getHistorial();
+  window.__verificarData = unicos;
   let html = '';
-  unicos.forEach(u => {
+  unicos.forEach((u, idx) => {
     const display = '+' + u.numero.slice(0,2) + ' ' + u.numero.slice(2,5) + ' ' + u.numero.slice(5,8) + ' ' + u.numero.slice(8);
     const entry = historial.slice().reverse().find(h => h.numero === u.numero);
     let estado, claseEstado;
@@ -1316,13 +1320,30 @@ async function verificarTexto(){
         <div style="font-size:11px;color:#999">${obtenerUbicacion(u.numero).label}</div>
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${u.contexto}</div>
         ${estado}
+        <div class="lead-actions">
+          <button class="btn-done" onclick="copiarTextoVerificar(${idx}, this)">📋 Copiar texto (para pegar en pestaña 1)</button>
+        </div>
       </div>
     `;
   });
   box.innerHTML = html;
   filtroEstadoVerificarActual = 'todos';
   document.querySelectorAll('#filtrosVerificar .chip-filtro').forEach(b => b.classList.toggle('activo', b.dataset.filtro === 'todos'));
+  document.getElementById('buscadorVerificar').value = '';
   actualizarContadorVerificar();
+}
+
+async function copiarTextoVerificar(idx, btn){
+  const u = (window.__verificarData || [])[idx];
+  if (!u) return;
+  try {
+    await navigator.clipboard.writeText(u.contexto);
+    const original = btn.textContent;
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (e){
+    alert('No se pudo copiar automático, selecciona y copia el texto manualmente.');
+  }
 }
 
 let filtroEstadoVerificarActual = 'todos';
@@ -1332,20 +1353,29 @@ function filtrarPorEstadoVerificar(estado){
   document.querySelectorAll('#filtrosVerificar .chip-filtro').forEach(b => {
     b.classList.toggle('activo', b.dataset.filtro === estado);
   });
+  filtrarResultadosVerificar(document.getElementById('buscadorVerificar').value);
+}
+
+function filtrarResultadosVerificar(valor){
+  const q = (valor || '').toLowerCase().trim();
   document.querySelectorAll('#verificarResultados .lead-card').forEach(card => {
     const esNuevo = card.classList.contains('nuevo');
     const e = esNuevo ? 'nuevo' : 'existente';
-    card.style.display = (estado === 'todos' || estado === e) ? '' : 'none';
+    const pasaEstado = filtroEstadoVerificarActual === 'todos' || filtroEstadoVerificarActual === e;
+    const pasaTexto = !q || card.innerText.toLowerCase().includes(q);
+    card.style.display = (pasaEstado && pasaTexto) ? '' : 'none';
   });
 }
 
 function actualizarContadorVerificar(){
   const cont = document.getElementById('contadorVerificar');
   const filtros = document.getElementById('filtrosVerificar');
+  const buscador = document.getElementById('buscadorVerificar');
   const cards = document.querySelectorAll('#verificarResultados .lead-card');
   if (cards.length === 0){
     cont.style.display = 'none';
     filtros.style.display = 'none';
+    buscador.style.display = 'none';
     return;
   }
   let nuevos = 0, existentes = 0;
@@ -1356,6 +1386,7 @@ function actualizarContadorVerificar(){
   cont.innerHTML = `🆕 <b>${nuevos}</b> nuevos &nbsp;·&nbsp; ✅ <b>${existentes}</b> ya en historial`;
   cont.style.display = 'block';
   filtros.style.display = 'block';
+  buscador.style.display = 'block';
 }
 
 // Pestaña 5: mensajes de equipo entre empleados (texto), separados en dos
