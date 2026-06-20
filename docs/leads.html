@@ -1082,6 +1082,7 @@ function deshacerContactado(i){
   if (!card) return;
   const numero = card.dataset.numero;
   const fecha_contacto = card.dataset.fechaContacto;
+  marcarComoEliminado(numero, fecha_contacto);
   const historial = getHistorial().filter(h => !(h.numero === numero && h.fecha_contacto === fecha_contacto));
   saveHistorial(historial);
   card.classList.remove('done');
@@ -1094,7 +1095,7 @@ function deshacerContactado(i){
   actualizarContadorHistorial();
   actualizarContadorPantalla();
   filtrarResultados(document.getElementById('buscadorResultados').value);
-  syncHistorial();
+  eliminarEnServidor(numero, fecha_contacto);
 }
 
 // Botón rápido para marcar "Respondió" sin tener que ir a buscar el lead en
@@ -1185,6 +1186,7 @@ function deshacerSinWhatsapp(i){
   if (!card) return;
   const numero = card.dataset.numero;
   const fecha_contacto = card.dataset.fechaContacto;
+  marcarComoEliminado(numero, fecha_contacto);
   const historial = getHistorial().filter(h => !(h.numero === numero && h.fecha_contacto === fecha_contacto));
   saveHistorial(historial);
   card.classList.remove('done');
@@ -1198,7 +1200,7 @@ function deshacerSinWhatsapp(i){
   actualizarContadorHistorial();
   actualizarContadorPantalla();
   filtrarResultados(document.getElementById('buscadorResultados').value);
-  syncHistorial();
+  eliminarEnServidor(numero, fecha_contacto);
 }
 
 function marcarSmsEnviadoEn(entry, enviado){
