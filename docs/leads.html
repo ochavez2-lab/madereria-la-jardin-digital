@@ -934,12 +934,27 @@ function mostrarStage(n){
   document.getElementById('stage2').style.display = n === 2 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
-  if (n === 2) renderTareas();
+  if (n === 2){
+    renderTareas();
+    // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
+    // en lugar de esperar al ciclo automático de 10s, para que el conteo
+    // de "Contactos de hoy" refleje a todos al entrar a esta pestaña.
+    syncHistorial();
+  }
+}
+
+// Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del
+// dispositivo (Tijuana), no en UTC. fecha_contacto se guarda como ISO en UTC,
+// y como Tijuana está varias horas detrás, cualquier contacto marcado por la
+// tarde/noche caía en el día UTC siguiente y se "perdía" del conteo de "hoy".
+function fechaLocalISO(fecha){
+  const d = new Date(fecha);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
 function contactadosHoy(){
-  const hoy = new Date().toISOString().slice(0, 10);
-  return getHistorial().filter(h => (h.fecha_contacto || '').slice(0, 10) === hoy).length;
+  const hoy = fechaLocalISO(new Date());
+  return getHistorial().filter(h => h.fecha_contacto && fechaLocalISO(h.fecha_contacto) === hoy).length;
 }
 
 function renderTareas(){
