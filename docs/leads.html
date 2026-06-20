@@ -234,6 +234,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="chip-filtro" data-filtro="nuevo" onclick="filtrarPorEstadoVerificar('nuevo')">🆕 Nuevos</button>
     <button class="chip-filtro" data-filtro="existente" onclick="filtrarPorEstadoVerificar('existente')">✅ Ya en historial</button>
   </div>
+  <button id="btnCopiarNuevosVerificar" class="btn-main" style="display:none;margin-bottom:10px" onclick="copiarTodosNuevosVerificar(this)">📋 Copiar todos los nuevos (para pegar en pestaña 1)</button>
 
   <div id="verificarResultados"></div>
 
@@ -1320,9 +1321,6 @@ async function verificarTexto(){
         <div style="font-size:11px;color:#999">${obtenerUbicacion(u.numero).label}</div>
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${u.contexto}</div>
         ${estado}
-        <div class="lead-actions">
-          <button class="btn-done" onclick="copiarTextoVerificar(${idx}, this)">📋 Copiar texto (para pegar en pestaña 1)</button>
-        </div>
       </div>
     `;
   });
@@ -1333,14 +1331,15 @@ async function verificarTexto(){
   actualizarContadorVerificar();
 }
 
-async function copiarTextoVerificar(idx, btn){
-  const u = (window.__verificarData || [])[idx];
-  if (!u) return;
+async function copiarTodosNuevosVerificar(btn){
+  const nuevos = (window.__verificarData || []).filter(u => !getHistorial().some(h => h.numero === u.numero));
+  if (nuevos.length === 0){ alert('No hay números nuevos para copiar.'); return; }
+  const texto = nuevos.map(u => u.contexto).join('\n\n');
   try {
-    await navigator.clipboard.writeText(u.contexto);
+    await navigator.clipboard.writeText(texto);
     const original = btn.textContent;
-    btn.textContent = '✅ ¡Copiado!';
-    setTimeout(() => { btn.textContent = original; }, 1500);
+    btn.textContent = '✅ ¡Copiados ' + nuevos.length + '!';
+    setTimeout(() => { btn.textContent = original; }, 1800);
   } catch (e){
     alert('No se pudo copiar automático, selecciona y copia el texto manualmente.');
   }
@@ -1371,11 +1370,13 @@ function actualizarContadorVerificar(){
   const cont = document.getElementById('contadorVerificar');
   const filtros = document.getElementById('filtrosVerificar');
   const buscador = document.getElementById('buscadorVerificar');
+  const btnCopiar = document.getElementById('btnCopiarNuevosVerificar');
   const cards = document.querySelectorAll('#verificarResultados .lead-card');
   if (cards.length === 0){
     cont.style.display = 'none';
     filtros.style.display = 'none';
     buscador.style.display = 'none';
+    btnCopiar.style.display = 'none';
     return;
   }
   let nuevos = 0, existentes = 0;
@@ -1387,6 +1388,8 @@ function actualizarContadorVerificar(){
   cont.style.display = 'block';
   filtros.style.display = 'block';
   buscador.style.display = 'block';
+  btnCopiar.style.display = nuevos > 0 ? 'block' : 'none';
+  btnCopiar.textContent = `📋 Copiar todos los nuevos (${nuevos})`;
 }
 
 // Pestaña 5: mensajes de equipo entre empleados (texto), separados en dos
