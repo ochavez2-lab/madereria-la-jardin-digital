@@ -538,15 +538,19 @@ async function syncHistorial(){
 // siguen en pantalla y si alguna ya quedó en el historial (la marcó otra
 // persona/dispositivo mientras tanto), la bloqueamos para no mandarla doble.
 function revisarDuplicadosEnPantalla(){
-  const histNums = new Set(getHistorial().map(h => h.numero));
+  const historial = getHistorial();
+  const porNumero = {};
+  historial.forEach(h => { if (!porNumero[h.numero]) porNumero[h.numero] = h; });
   document.querySelectorAll('#resultados .lead-card').forEach(card => {
     if (card.classList.contains('done') || card.classList.contains('ya-otro')) return;
     const numero = card.dataset.numero;
-    if (!numero || !histNums.has(numero)) return;
+    const entry = numero && porNumero[numero];
+    if (!entry) return;
     card.classList.add('ya-otro');
+    const quien = entry.autor_nombre ? escaparHtml(entry.autor_nombre) : 'otra persona (sin registrar)';
     const actions = card.querySelectorAll('.lead-actions');
     const ultima = actions[actions.length - 1];
-    if (ultima) ultima.innerHTML = '<button class="btn-done" disabled>⚠️ Ya lo contactó otra persona, no lo vuelvas a mandar</button>';
+    if (ultima) ultima.innerHTML = `<button class="btn-done" disabled>⚠️ Ya lo contactó <b>${quien}</b>, no lo vuelvas a mandar</button>`;
   });
 }
 
@@ -1958,7 +1962,7 @@ function toggleHistorial(){
       </div>
       <h2 style="margin-bottom:8px">📊 Tablero de Cotizaciones</h2>
       <div id="histResumen" style="margin-bottom:14px"></div>
-      <input type="text" id="buscadorHistorial" placeholder="🔎 Buscar número o texto..."
+      <input type="text" id="buscadorHistorial" placeholder="🔎 Buscar número, texto o empleado que contactó..."
         oninput="historialFiltro=this.value; renderHistorialList()"
         style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
       <div id="histFiltros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
@@ -2150,7 +2154,8 @@ function renderHistorialList(){
       (h.grupo || '').toLowerCase().includes(filtro) ||
       (CATEGORIA_LABEL[h.categoria] || h.categoria || '').toLowerCase().includes(filtro) ||
       obtenerUbicacion(h.numero).label.toLowerCase().includes(filtro) ||
-      (extraerNombre(h.contexto || '') || '').toLowerCase().includes(filtro)
+      (extraerNombre(h.contexto || '') || '').toLowerCase().includes(filtro) ||
+      (h.autor_nombre || '').toLowerCase().includes(filtro)
     );
   }
 
@@ -2233,6 +2238,7 @@ function renderHistorialCard(h){
         ${h.grupo ? `<div style="font-size:11px;color:#999">👥 ${h.grupo}</div>` : ''}
         ${h.post_url ? `<a href="${h.post_url}" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700;text-decoration:none">🔗 Ver publicación de origen</a>` : ''}
         ${nombreHist ? `<div style="font-size:12px;font-weight:700;color:var(--blue)">👤 ${nombreHist}</div>` : ''}
+        <div style="font-size:11px;color:#999">📲 Contactó: <b>${h.autor_nombre ? escaparHtml(h.autor_nombre) : 'sin registrar'}</b></div>
         <div class="lead-ctx" onclick="this.classList.toggle('expanded')">${resaltarNombre(h.contexto || '-')}</div>
         <div style="font-size:11px;color:#999">📂 ${CATEGORIA_LABEL[h.categoria] || h.categoria} · 📅 pub: ${h.fecha_pub} · ${diasBadge}</div>
         ${sinWhatsappBadge}
