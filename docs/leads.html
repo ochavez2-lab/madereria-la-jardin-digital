@@ -811,12 +811,12 @@ function marcarSinWhatsapp(i){
   syncHistorial();
 }
 
-function marcarSmsEnviadoEn(entry){
-  entry.sms_enviado = true;
-  entry.fecha_sms = new Date().toISOString();
+function marcarSmsEnviadoEn(entry, enviado){
+  entry.sms_enviado = enviado;
+  entry.fecha_sms = enviado ? new Date().toISOString() : null;
   fetch(RAILWAY_URL+'/api/sms', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ numero: entry.numero, fecha_contacto: entry.fecha_contacto })
+    body: JSON.stringify({ numero: entry.numero, fecha_contacto: entry.fecha_contacto, enviado: enviado })
   }).catch(function(){});
 }
 
@@ -824,19 +824,47 @@ function marcarSmsEnviado(numero, btn){
   const historial = getHistorial();
   const entry = historial.slice().reverse().find(h => h.numero === numero && h.metodo === 'sin_whatsapp');
   if (entry){
-    marcarSmsEnviadoEn(entry);
+    marcarSmsEnviadoEn(entry, true);
     saveHistorial(historial);
   }
   const card = btn.closest('.lead-card');
   const actions = card.querySelectorAll('.lead-actions');
-  actions[actions.length - 1].innerHTML = '<span class="badge-rojo">📵📩 Sin WhatsApp · SMS enviado</span>';
+  actions[actions.length - 1].innerHTML = `
+    <span class="badge-rojo">📵📩 Sin WhatsApp · SMS enviado</span>
+    <button class="btn-done" style="font-size:11px;padding:3px 8px" onclick="deshacerSmsEnviado('${numero}', this)">↩️ Deshacer</button>
+  `;
+}
+
+function deshacerSmsEnviado(numero, btn){
+  const historial = getHistorial();
+  const entry = historial.slice().reverse().find(h => h.numero === numero && h.metodo === 'sin_whatsapp');
+  if (entry){
+    marcarSmsEnviadoEn(entry, false);
+    saveHistorial(historial);
+  }
+  const card = btn.closest('.lead-card');
+  const actions = card.querySelectorAll('.lead-actions');
+  actions[actions.length - 1].innerHTML = `
+    <a class="btn-sms" href="sms:+${numero}">📩 Enviar SMS</a>
+    <button class="btn-done" onclick="marcarSmsEnviado('${numero}', this)">✓ SMS enviado</button>
+  `;
 }
 
 function marcarSmsEnviadoHistorial(numero, fecha_contacto){
   const historial = getHistorial();
   const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
   if (entry){
-    marcarSmsEnviadoEn(entry);
+    marcarSmsEnviadoEn(entry, true);
+    saveHistorial(historial);
+  }
+  renderHistorialList();
+}
+
+function deshacerSmsEnviadoHistorial(numero, fecha_contacto){
+  const historial = getHistorial();
+  const entry = historial.find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
+  if (entry){
+    marcarSmsEnviadoEn(entry, false);
     saveHistorial(historial);
   }
   renderHistorialList();
@@ -1281,7 +1309,7 @@ function renderHistorialCard(h){
       : `<div style="margin:4px 0">${cambiarMetodoBtn}</div>`;
     const accionFinal = sinWhatsapp
       ? (h.sms_enviado
-          ? ''
+          ? `<button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="deshacerSmsEnviadoHistorial('${numKey}','${fechaKey}')">↩️ Deshacer SMS enviado</button>`
           : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="sms:+${h.numero}">📩 Enviar SMS</a>
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
       : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="https://wa.me/${h.numero}?text=${mensajeFollowUp}" target="_blank">🔁 Reenviar oferta</a>`;
