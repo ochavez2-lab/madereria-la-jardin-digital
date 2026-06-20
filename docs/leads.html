@@ -18,6 +18,7 @@ body[data-theme="negro"]{--page-bg:#15120d;--card-bg:#231d15;--text:#f0ebe0;--bo
 body[data-theme="azul"]{--page-bg:linear-gradient(160deg,#eaf2ff,#dbe9ff 45%,#cfe0fb);--card-bg:#fff;--text:#1a1a1a;--border:#cdddf5;--acc1:#2f6fed;--acc2:#6fa3ff;--acc-ink:#fff;--acc-ink2:#e3edff;--acc-text:#fff}
 body[data-theme="rojo"]{--page-bg:linear-gradient(160deg,#fff0ee,#ffe1dc 45%,#ffd1ca);--card-bg:#fff;--text:#1a1a1a;--border:#f5d3cd;--acc1:#dc4c3e;--acc2:#ff8a75;--acc-ink:#fff;--acc-ink2:#ffe9e5;--acc-text:#fff}
 body[data-theme="amarillo"]{--page-bg:linear-gradient(160deg,#fffaeb,#fff3c4 45%,#ffe98a);--card-bg:#fff;--text:#1a1a1a;--border:#f0e2a0;--acc1:#f1c40f;--acc2:#ffe98a;--acc-ink:#2b2014;--acc-ink2:#5c4a1f;--acc-text:#111}
+body[data-theme="corporativo"]{--page-bg:#eef1f5;--card-bg:#fff;--text:#1c2733;--border:#d7dde5;--muted:#677488;--ctx-bg:#f4f6f9;--repetido-bg:#fbeeee;--acc1:#1f3a5f;--acc2:#33567f;--acc-ink:#fff;--acc-ink2:#cdd9e8;--acc-text:#fff}
 
 header{background:linear-gradient(135deg,var(--acc1),var(--acc2));padding:22px 16px;text-align:center;box-shadow:0 2px 14px rgba(0,0,0,.18)}
 header h1{color:var(--acc-ink);font-size:19px;font-weight:900;letter-spacing:1px}
@@ -215,7 +216,8 @@ const TEMAS = [
   { id:'negro', label:'⚫', color:'#1a1a1a' },
   { id:'azul', label:'🔵', color:'#3b82f6' },
   { id:'rojo', label:'🔴', color:'#e74c3c' },
-  { id:'amarillo', label:'🟡', color:'#f1c40f' }
+  { id:'amarillo', label:'🟡', color:'#f1c40f' },
+  { id:'corporativo', label:'💼', color:'#1f3a5f' }
 ];
 
 function aplicarTema(){
@@ -1442,7 +1444,7 @@ function renderHistorialCard(h){
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
       : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this)">🔁 Reenviar oferta</a>`;
     return `
-      <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};position:relative">
+      <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};color:#1c1c1c;--text:#1c1c1c;--muted:#777;--ctx-bg:#f4f1ea;--border:#e5e0d3;--card-bg:#fff;position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
         <div class="lead-num">+${h.numero.slice(0,2)} ${h.numero.slice(2,5)} ${h.numero.slice(5,8)} ${h.numero.slice(8)}</div>
         <div style="font-size:11px;color:#999">${obtenerUbicacion(h.numero).label}</div>
