@@ -414,18 +414,19 @@ function normalizarNumero(digits){
   if (d.length === 11 && d[0] === '1') return '52' + d.slice(1);
   if (d.length === 12 && d.startsWith('52')) return d;
   if (d.length === 13 && d.startsWith('521')) return '52' + d.slice(3);
-  if (d.length === 11){
-    // digito extra ambiguo (puede ser al inicio o al final, ej. "664 709 38358")
-    // probamos ambas opciones y preferimos la que tenga una LADA conocida
-    const quitarUltimo = d.slice(0, 10);
-    const quitarPrimero = d.slice(1);
-    const ladaUltimo = quitarUltimo.slice(0, 3);
-    const ladaPrimero = quitarPrimero.slice(0, 3);
-    if (LADA_INFO[ladaUltimo] && !LADA_INFO[ladaPrimero]) return '52' + quitarUltimo;
-    if (LADA_INFO[ladaPrimero] && !LADA_INFO[ladaUltimo]) return '52' + quitarPrimero;
-    return '52' + quitarUltimo;
+  if (d.length > 10 && d.length <= 13){
+    // Dígitos extra ambiguos al inicio o al final (paréntesis del formato
+    // "(661) 114-5632", basura de OCR, etc.). Probamos cada ventana posible
+    // de 10 dígitos consecutivos y preferimos la que tenga una LADA conocida,
+    // en vez de asumir que la basura siempre está al inicio o al final.
+    const candidatos = [];
+    for (let i = 0; i <= d.length - 10; i++){
+      candidatos.push(d.slice(i, i + 10));
+    }
+    const conLadaConocida = candidatos.find(c => LADA_INFO[c.slice(0, 3)]);
+    if (conLadaConocida) return '52' + conLadaConocida;
+    return '52' + candidatos[0]; // sin LADA conocida, asumimos que sobra al final
   }
-  if (d.length > 10) return '52' + d.slice(-10);
   return null; // muy corto, descartar
 }
 
