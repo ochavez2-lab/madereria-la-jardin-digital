@@ -890,7 +890,7 @@ async function procesar(){
           badge = '📵 Sin WhatsApp · sin SMS aún';
           extra = `
             <div class="lead-actions">
-              <a class="btn-sms" href="sms:+${n.numero}" onclick="marcarPiqueado(this)">📩 Enviar SMS</a>
+              <a class="btn-sms" href="#" onclick="return abrirSmsDirecto('${n.numero}','${catRepetido}','${nombreRep}', this)">📩 Enviar SMS</a>
               <button class="btn-done" onclick="marcarSmsEnviado('${n.numero}', this)">✓ SMS enviado</button>
             </div>`;
         }
@@ -1002,6 +1002,18 @@ function abrirWhatsAppDirecto(numero, cat, nombre, el){
     marcarPiqueado(el);
     el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
     el.target = '_blank';
+  }
+  return true;
+}
+
+// El esquema sms: usa "&body=" en iOS y "?body=" en Android para el texto
+// precargado — no hay un separador universal, así que se detecta el sistema.
+function abrirSmsDirecto(numero, cat, nombre, el){
+  const mensaje = construirMensaje(cat, nombre || null);
+  if (el){
+    marcarPiqueado(el);
+    const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    el.href = 'sms:+' + numero + (esIOS ? '&' : '?') + 'body=' + encodeURIComponent(mensaje);
   }
   return true;
 }
@@ -1142,10 +1154,11 @@ function marcarSinWhatsapp(i){
   saveHistorial(historial);
   card.classList.add('done');
   card.dataset.fechaContacto = fecha_contacto;
+  const nombreSinWa = (card.dataset.nombreperfil || extraerNombre(card.dataset.ctx) || '').replace(/'/g, "\\'");
   const actions = card.querySelectorAll('.lead-actions');
   actions[0].innerHTML = `<span class="badge-rojo">📵 Sin WhatsApp</span>`;
   actions[actions.length - 1].innerHTML = `
-    <a class="btn-sms" href="sms:+${numero}">📩 Enviar SMS</a>
+    <a class="btn-sms" href="#" onclick="return abrirSmsDirecto('${numero}','${card.dataset.cat}','${nombreSinWa}', this)">📩 Enviar SMS</a>
     <button class="btn-done" onclick="marcarSmsEnviado('${numero}', this)">✓ SMS enviado</button>
     <button class="btn-done" style="font-size:11px;padding:3px 8px" onclick="deshacerSinWhatsapp(${i})">↩️ Deshacer</button>
   `;
@@ -1211,9 +1224,10 @@ function deshacerSmsEnviado(numero, btn){
     saveHistorial(historial);
   }
   const card = btn.closest('.lead-card');
+  const nombreSinWa = (card.dataset.nombreperfil || extraerNombre(card.dataset.ctx) || '').replace(/'/g, "\\'");
   const actions = card.querySelectorAll('.lead-actions');
   actions[actions.length - 1].innerHTML = `
-    <a class="btn-sms" href="sms:+${numero}">📩 Enviar SMS</a>
+    <a class="btn-sms" href="#" onclick="return abrirSmsDirecto('${numero}','${card.dataset.cat}','${nombreSinWa}', this)">📩 Enviar SMS</a>
     <button class="btn-done" onclick="marcarSmsEnviado('${numero}', this)">✓ SMS enviado</button>
   `;
 }
@@ -1988,7 +2002,7 @@ function renderHistorialCard(h){
     const accionFinal = sinWhatsapp
       ? (h.sms_enviado
           ? `<button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="deshacerSmsEnviadoHistorial('${numKey}','${fechaKey}')">↩️ Deshacer SMS enviado</button>`
-          : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="sms:+${h.numero}">📩 Enviar SMS</a>
+          : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirSmsDirecto('${numKey}','${h.categoria}','${nombreHistEsc}', this)">📩 Enviar SMS</a>
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
       : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this)">🔁 Reenviar oferta</a>`;
     return `
