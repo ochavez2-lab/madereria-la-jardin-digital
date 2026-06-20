@@ -1453,7 +1453,7 @@ function renderMensajesLista(mensajes){
 }
 
 async function copiarMensaje(id, btn){
-  const m = (window.__mensajesData || []).find(x => x.id === id);
+  const m = (window.__mensajesData || []).find(x => String(x.id) === String(id));
   if (!m) return;
   try {
     await navigator.clipboard.writeText(m.contenido);
