@@ -1705,12 +1705,14 @@ function renderMensajesLista(mensajes){
     if (m.tipo === 'libreta'){
       const contenido = m.contenido || '';
       const preview = escaparHtml(contenido.slice(0, 70).replace(/\n/g, ' '));
+      const completada = esMensajeCompletado(m.id);
       html += `
-        <div class="lead-card" style="border-left:4px solid #e0a526">
-          <div style="font-size:12px;font-weight:700">📋 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span></div>
+        <div class="lead-card ${completada ? 'done' : ''}" style="border-left:4px solid ${completada ? '#27ae60' : '#e0a526'}">
+          <div style="font-size:12px;font-weight:700">📋 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span> ${completada ? '<span style="color:#27ae60">· ✅ Completada</span>' : ''}</div>
           <div style="font-size:12px;color:#999;margin:4px 0">${preview}${contenido.length > 70 ? '…' : ''} <span style="font-weight:700">(${contenido.length} caracteres)</span></div>
           <div class="lead-actions">
             <button class="btn-done" onclick="copiarMensaje(${m.id}, this)">📋 Copiar mensaje completo</button>
+            <button class="btn-done" title="${completada ? 'Esta lista ya quedó marcada como completada, todos sus contactos fueron mandados. Pícale para desmarcarla.' : 'Márcala cuando ya hayas mandado el mensaje a toda esta lista de contactos.'}" onclick="toggleMensajeCompletado(${m.id})">${completada ? '↩️ Deshacer' : '✔️ Ya se completó'}</button>
             ${btnBorrar}
           </div>
         </div>`;
@@ -1724,6 +1726,32 @@ function renderMensajesLista(mensajes){
     }
   });
   lista.innerHTML = html;
+}
+
+// Marca/desmarca una lista de mensaje (libreta) como "ya se completó", es
+// decir, ya le mandaste el mensaje a todos los contactos de esa lista.
+// Es solo un recordatorio visual guardado en este celular, no se sincroniza
+// con el servidor ni afecta los contadores de contactos.
+function getMensajesCompletados(){
+  try { return JSON.parse(localStorage.getItem('lj_mensajes_completados') || '[]'); }
+  catch (e){ return []; }
+}
+
+function esMensajeCompletado(id){
+  return getMensajesCompletados().includes(String(id));
+}
+
+function toggleMensajeCompletado(id){
+  const completados = getMensajesCompletados();
+  const idx = completados.indexOf(String(id));
+  if (idx === -1){
+    completados.push(String(id));
+    alert('✅ Marcada como completada: ya le mandaste el mensaje a toda esta lista.');
+  } else {
+    completados.splice(idx, 1);
+  }
+  localStorage.setItem('lj_mensajes_completados', JSON.stringify(completados));
+  renderMensajesLista(window.__mensajesData || []);
 }
 
 async function copiarMensaje(id, btn){
