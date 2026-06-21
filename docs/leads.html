@@ -2220,6 +2220,7 @@ let historialFiltro = '';
 let historialEstadoFiltro = 'todos';
 let historialCatFiltro = 'todos';
 let historialFechaFiltro = 'todos';
+let historialAutorFiltro = 'todos';
 let historialOrden = 'antiguo';
 
 const ESTADOS_INFO = {
@@ -2359,6 +2360,7 @@ function toggleHistorial(){
     historialEstadoFiltro = 'todos';
     historialCatFiltro = 'todos';
     historialFechaFiltro = 'todos';
+    historialAutorFiltro = 'todos';
     historialOrden = 'antiguo';
     autoExpirarPendientes();
     box.innerHTML = `
@@ -2373,6 +2375,7 @@ function toggleHistorial(){
       <div id="histFiltros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <div id="histFiltrosFecha" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <div id="histFiltrosCat" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="histFiltrosAutor" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <select id="histOrdenSel" onchange="historialOrden=this.value; renderHistorialList()"
         style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;">
         <option value="antiguo" selected>⏱️ Más antiguos primero (para dar seguimiento)</option>
@@ -2399,6 +2402,7 @@ function renderHistorialList(){
   const resumenBox = document.getElementById('histResumen');
   const filtrosBox = document.getElementById('histFiltros');
   const filtrosCatBox = document.getElementById('histFiltrosCat');
+  const filtrosAutorBox = document.getElementById('histFiltrosAutor');
   if (!list) return;
 
   const todos = getHistorial();
@@ -2563,6 +2567,27 @@ function renderHistorialList(){
     }).join('');
   }
 
+  // Chips de filtro por quién lo contactó (empleado/identidad registrada en
+  // "5. Mensajes"). Se listan los nombres que sí aparecen en el historial,
+  // más "Sin registrar" si hay contactos sin autor guardado.
+  if (filtrosAutorBox){
+    const conteoAutor = {};
+    let sinRegistrar = 0;
+    todos.forEach(h => {
+      if (h.autor_nombre) conteoAutor[h.autor_nombre] = (conteoAutor[h.autor_nombre] || 0) + 1;
+      else sinRegistrar++;
+    });
+    const autorChips = [{ v: 'todos', label: '👤 Quién contactó' }].concat(
+      Object.keys(conteoAutor).sort().map(n => ({ v: n, label: `${n} ${conteoAutor[n]}` })),
+      sinRegistrar > 0 ? [{ v: '__sin_registrar__', label: `Sin registrar ${sinRegistrar}` }] : []
+    );
+    filtrosAutorBox.innerHTML = autorChips.map(c => {
+      const activo = historialAutorFiltro === c.v;
+      return `<span onclick="historialAutorFiltro='${c.v.replace(/'/g, "\\'")}'; renderHistorialList()"
+        style="cursor:pointer;font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid ${activo ? '#8e44ad' : '#ddd'};background:${activo ? '#8e44ad' : '#fff'};color:${activo ? '#fff' : '#555'}">${c.label}</span>`;
+    }).join('');
+  }
+
   let hist = todos.slice();
 
   const filtro = historialFiltro.trim().toLowerCase();
@@ -2592,6 +2617,10 @@ function renderHistorialList(){
 
   if (historialCatFiltro !== 'todos'){
     hist = hist.filter(h => h.categoria === historialCatFiltro);
+  }
+
+  if (historialAutorFiltro !== 'todos'){
+    hist = hist.filter(h => historialAutorFiltro === '__sin_registrar__' ? !h.autor_nombre : h.autor_nombre === historialAutorFiltro);
   }
 
   if (historialFechaFiltro !== 'todos'){
