@@ -462,21 +462,25 @@ const CATEGORIA_LABEL = {
 // ubicación después por chat — pensado para usarse en casos especiales tras
 // una restricción de WhatsApp, cuando se quiere evitar que el mensaje se vea
 // "de spam" (sin enlaces ni texto que parezca automatizado).
+// Aquí solo se define el "gancho" (qué oficio se le detectó); la oferta de
+// materiales se toma de TEMPLATES (la lista real de lo que se vende), para
+// no inventar productos que no se manejan (ej. block o varilla, que NO se
+// venden aquí — eso es para tiendas de materiales, no para una maderería).
 const SEGURO_TEMPLATES = {
-  cimbrado:        { trabajo: 'anda en obra de cimbrado',          oferta: 'Cimbraplay, triplay CDX y barrote pa\' cimbra' },
-  bloques_albanil: { trabajo: 'hace trabajos de albañilería',      oferta: 'block, varilla y material pa\' obra' },
-  yeseros:         { trabajo: 'hace acabados y aplanados',         oferta: 'madera y material pa\' terminar acabados' },
-  constructores:   { trabajo: 'maneja proyectos de construcción',  oferta: 'material de obra por volumen' },
-  contratistas:    { trabajo: 'anda contratando obra',             oferta: 'material a tiempo pa\' que no se le pare la obra' },
-  plomeria:        { trabajo: 'hace trabajos de plomería',         oferta: 'madera y material pa\' sus trabajos' },
-  electricidad:    { trabajo: 'hace instalaciones eléctricas',     oferta: 'material pa\' sus proyectos' },
-  pisos_azulejo:   { trabajo: 'instala pisos y azulejo',           oferta: 'madera y triplay de base pa\' instalación' },
-  pintura:         { trabajo: 'hace trabajos de pintura',          oferta: 'material pa\' preparar la obra antes de pintar' },
-  techos:          { trabajo: 'hace techos e impermeabilización',  oferta: 'antorchable arenado 4.5, sticker arenado 4.5 y shingle arenado americano' },
-  demolicion:      { trabajo: 'hace trabajos de demolición',       oferta: 'material listo pa\' cuando reconstruya' },
-  herreria:        { trabajo: 'hace trabajos de herrería y soldadura', oferta: 'madera y material pa\' combinar con su trabajo' },
-  carpinteros:     { trabajo: 'hace trabajos de carpintería',      oferta: 'triplay birch, tabla shelby y barrotes CDX número 1' },
-  otro:            { trabajo: 'anda en obra',                      oferta: 'material de construcción' }
+  cimbrado:        { trabajo: 'anda en obra de cimbrado' },
+  bloques_albanil: { trabajo: 'hace trabajos de albañilería' },
+  yeseros:         { trabajo: 'hace acabados y aplanados' },
+  constructores:   { trabajo: 'maneja proyectos de construcción' },
+  contratistas:    { trabajo: 'anda contratando obra' },
+  plomeria:        { trabajo: 'hace trabajos de plomería' },
+  electricidad:    { trabajo: 'hace instalaciones eléctricas' },
+  pisos_azulejo:   { trabajo: 'instala pisos y azulejo' },
+  pintura:         { trabajo: 'hace trabajos de pintura' },
+  techos:          { trabajo: 'hace techos e impermeabilización' },
+  demolicion:      { trabajo: 'hace trabajos de demolición' },
+  herreria:        { trabajo: 'hace trabajos de herrería y soldadura' },
+  carpinteros:     { trabajo: 'hace trabajos de carpintería' },
+  otro:            { trabajo: 'anda en obra' }
 };
 
 function modoSeguroActivo(){
@@ -488,8 +492,10 @@ function toggleModoSeguro(){
 }
 function construirMensajeSeguro(cat, nombre){
   const t = SEGURO_TEMPLATES[cat] || SEGURO_TEMPLATES.otro;
+  const tNormal = TEMPLATES[cat] || TEMPLATES.otro;
+  const oferta = tNormal.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
   const saludo = nombre || 'maestro';
-  return `Buen día, ${saludo}. Vi que ${t.trabajo} y le escribo para ponerme a sus órdenes. Le saludo de Maderería La Jardín, estamos ubicados aquí en Tijuana, en la Col. Ciudad Jardín. Manejamos ${t.oferta}, con entrega el mismo día pa' su obra. Si gusta, agréguenme a sus contactos para que estemos en comunicación y le pueda mandar fotos del material, catálogo o ubicación. ¿Ocupa que le cotice algún material pa' su próximo trabajo?`;
+  return `Buen día, ${saludo}. Vi que ${t.trabajo} y le escribo para ponerme a sus órdenes. Le saludo de Maderería La Jardín, estamos ubicados aquí en Tijuana, en la Col. Ciudad Jardín. ${oferta[0].toUpperCase() + oferta.slice(1)}, con entrega el mismo día pa' su obra. Si gusta, agréguenme a sus contactos para que estemos en comunicación y le pueda mandar fotos del material, catálogo o ubicación. ¿Ocupa que le cotice algún material pa' su próximo trabajo?`;
 }
 
 // Detecta el oficio real a partir del texto del propio comentario,
