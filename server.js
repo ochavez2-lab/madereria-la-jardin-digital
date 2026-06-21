@@ -170,6 +170,26 @@ app.post('/api/sms', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Cuando alguien cambia su nombre registrado en "5. Mensajes" (ej. se le
+// puso mal, o quiere usar otro), esto re-etiqueta TODO lo que ya había
+// contactado con el nombre anterior, para que no se pierda su historial ni
+// quede repartido entre "dos personas" distintas en el ranking.
+app.post('/api/renombrar-autor', async (req, res) => {
+  const { nombreAnterior, nombreNuevo } = req.body || {};
+  if (!nombreAnterior || !nombreNuevo) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    const r1 = await pool.query(
+      'UPDATE leads_historial SET autor_nombre=$1 WHERE autor_nombre=$2',
+      [nombreNuevo, nombreAnterior]
+    );
+    const r2 = await pool.query(
+      'UPDATE mensajes_equipo SET autor_nombre=$1 WHERE autor_nombre=$2',
+      [nombreNuevo, nombreAnterior]
+    );
+    res.json({ ok: true, historial: r1.rowCount, mensajes: r2.rowCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/eliminar', async (req, res) => {
   const { numero, fecha_contacto } = req.body || {};
   if (!numero || !fecha_contacto) return res.status(400).json({ error: 'faltan datos' });
