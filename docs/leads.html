@@ -2269,12 +2269,16 @@ function renderHistorialList(){
     }).join('');
   }
 
-  // Chips de filtro por oficio detectado
+  // Chips de filtro por oficio detectado. Se muestran TODOS los oficios que
+  // existen (aunque todavía no tengan ningún contacto en el historial, con
+  // "0"), para poder buscar por cualquier tipo aunque hoy no haya resultados.
   if (filtrosCatBox){
     const conteoCat = {};
     todos.forEach(h => { conteoCat[h.categoria] = (conteoCat[h.categoria] || 0) + 1; });
+    const catsExtra = Object.keys(conteoCat).filter(k => k && !CATEGORIA_LABEL[k]);
     const catChips = [{ v: 'todos', label: '🔧 Todos los oficios' }].concat(
-      Object.keys(conteoCat).map(k => ({ v: k, label: `${CATEGORIA_LABEL[k] || k} ${conteoCat[k]}` }))
+      Object.keys(CATEGORIA_LABEL).map(k => ({ v: k, label: `${CATEGORIA_LABEL[k]} ${conteoCat[k] || 0}` })),
+      catsExtra.map(k => ({ v: k, label: `${k} ${conteoCat[k]}` }))
     );
     filtrosCatBox.innerHTML = catChips.map(c => {
       const activo = historialCatFiltro === c.v;
