@@ -48,7 +48,9 @@ pool.query(`
     contenido TEXT NOT NULL,
     fecha_envio TEXT NOT NULL
   )
-`).catch(console.error);
+`).then(() => pool.query(`
+  ALTER TABLE mensajes_equipo ADD COLUMN IF NOT EXISTS completado BOOLEAN DEFAULT FALSE
+`)).catch(console.error);
 
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
@@ -185,7 +187,7 @@ app.post('/api/mensajes', async (req, res) => {
 app.get('/api/mensajes', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, dispositivo_id, autor_nombre, autor_numero, tipo, contenido, fecha_envio FROM mensajes_equipo ORDER BY fecha_envio ASC LIMIT 500'
+      'SELECT id, dispositivo_id, autor_nombre, autor_numero, tipo, contenido, fecha_envio, completado FROM mensajes_equipo ORDER BY fecha_envio ASC LIMIT 500'
     );
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -196,6 +198,19 @@ app.post('/api/mensajes/eliminar', async (req, res) => {
   if (!id || !dispositivo_id) return res.status(400).json({ error: 'faltan datos' });
   try {
     await pool.query('DELETE FROM mensajes_equipo WHERE id=$1 AND dispositivo_id=$2', [id, dispositivo_id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Cualquiera del equipo puede marcar/desmarcar una lista como completada
+// (no solo quien la subió), porque es un recordatorio de trabajo compartido:
+// si Brayan ya le mandó el mensaje a toda la lista, el resto del equipo debe
+// verlo reflejado de inmediato sin importar en qué celular/navegador esté.
+app.post('/api/mensajes/completar', async (req, res) => {
+  const { id, completado } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query('UPDATE mensajes_equipo SET completado=$1 WHERE id=$2', [!!completado, id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
