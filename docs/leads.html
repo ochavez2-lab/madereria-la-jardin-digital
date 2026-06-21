@@ -144,6 +144,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   <button onclick="cambiarZoom(-1)">A−</button>
   <span>🔍 Tamaño de texto</span>
   <button onclick="cambiarZoom(1)">A+</button>
+  <span id="resumenSticky" style="font-weight:800"></span>
 </div>
 <div class="theme-bar" id="themeBar"></div>
 <div class="notif-mensajes" id="notifMensajesBanner"></div>
@@ -1386,6 +1387,18 @@ function toggleUbicacionTabla(){
 function actualizarContadorHistorial(){
   document.getElementById('histCount').textContent = getHistorial().length;
   renderTareas();
+  actualizarResumenSticky();
+}
+
+// Letrero fijo arriba de todo (junto al control de tamaño de texto), para
+// ver quién eres y cuántos llevas contactados hoy sin tener que cambiar de
+// pestaña ni recordarlo de memoria — siempre visible aunque hagas scroll.
+function actualizarResumenSticky(){
+  const el = document.getElementById('resumenSticky');
+  if (!el) return;
+  const nombre = obtenerMensajesIdentidad().nombre;
+  const hoy = contactadosHoy();
+  el.textContent = (nombre ? `· 👤 ${nombre} ` : '') + `· ✅ ${hoy} hoy`;
 }
 
 function mostrarStage(n){
@@ -1450,7 +1463,7 @@ async function verificarTexto(){
     if (entry){
       const fecha = new Date(entry.fecha_contacto).toLocaleDateString('es-MX');
       const seg = entry.seguimiento || 'pendiente';
-      const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'nos compró', no_interesa: 'no le interesó', compro_otro: 'compró en otro lado' }[seg] || seg;
+      const segLabel = { pendiente: 'pendiente', respondio: 'respondió', no_respondio: 'no respondió', compro: 'nos compró', no_interesa: 'no le interesó', compro_otro: 'compró en otro lado', no_llega: 'no le llegan mensajes' }[seg] || seg;
       estado = `<span class="badge-rojo" style="background:#2196F3">✅ Ya en historial · contactado ${fecha} · ${segLabel}</span>`;
       claseEstado = 'existente';
     } else {
@@ -1576,6 +1589,7 @@ function registrarMensajesIdentidad(){
   localStorage.setItem('lj_chat_numero', numero);
   renderMensajesEntrada();
   actualizarBienvenida();
+  actualizarResumenSticky();
 }
 
 function cambiarMensajesIdentidad(){
@@ -1583,6 +1597,7 @@ function cambiarMensajesIdentidad(){
   localStorage.removeItem('lj_chat_numero');
   renderMensajesEntrada();
   actualizarBienvenida();
+  actualizarResumenSticky();
 }
 
 // Letrero arriba de todo con el nombre registrado en este celular/navegador,
@@ -1891,7 +1906,8 @@ const ESTADOS_INFO = {
   no_respondio: { label: '❌ No respondió',       color: '#e74c3c', bg: '#fdeceb' },
   compro:       { label: '💰 Nos compró',         color: '#27ae60', bg: '#eafaf0' },
   no_interesa:  { label: '🚫 No le interesó',     color: '#888',    bg: '#f1f1f1' },
-  compro_otro:  { label: '🔀 Compró en otro lado', color: '#9b59b6', bg: '#f5edfa' }
+  compro_otro:  { label: '🔀 Compró en otro lado', color: '#9b59b6', bg: '#f5edfa' },
+  no_llega:     { label: '📵 No le llegan mensajes', color: '#d68910', bg: '#fdf3e3' }
 };
 
 function diasDesde(fechaISO){
@@ -2056,7 +2072,7 @@ function renderHistorialList(){
   const todos = getHistorial();
 
   // Resumen de contadores (sobre el total, no sobre lo filtrado)
-  const conteos = { pendiente: 0, respondio: 0, no_respondio: 0, compro: 0, no_interesa: 0, compro_otro: 0 };
+  const conteos = { pendiente: 0, respondio: 0, no_respondio: 0, compro: 0, no_interesa: 0, compro_otro: 0, no_llega: 0 };
   todos.forEach(h => {
     const s = h.seguimiento || 'pendiente';
     if (conteos[s] !== undefined) conteos[s]++;
@@ -2171,7 +2187,8 @@ function renderHistorialList(){
       { v: 'no_respondio', label: '❌ No respondió' },
       { v: 'compro', label: '💰 Nos compró' },
       { v: 'no_interesa', label: '🚫 No le interesó' },
-      { v: 'compro_otro', label: '🔀 Compró en otro lado' }
+      { v: 'compro_otro', label: '🔀 Compró en otro lado' },
+      { v: 'no_llega', label: '📵 No le llegan mensajes' }
     ];
     filtrosBox.innerHTML = chips.map(c => {
       const activo = historialEstadoFiltro === c.v;
