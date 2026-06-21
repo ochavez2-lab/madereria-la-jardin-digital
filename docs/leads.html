@@ -1199,6 +1199,16 @@ function actualizarContadorPantalla(){
   filtros.style.display = 'block';
 }
 
+// Para saber quién contactó a cada cliente (y que el ranking/historial no
+// se quede con leads "Sin registrar"), no se deja abrir WhatsApp/SMS si
+// todavía no te registraste con tu nombre en "5. Mensajes".
+function exigeRegistroParaEnviar(){
+  if (obtenerMensajesIdentidad().nombre) return true;
+  alert('⚠️ Antes de enviar mensajes, regístrate con tu nombre en la pestaña "5. Mensajes" (es rápido, solo una vez). Así sabemos quién contactó a cada cliente.');
+  mostrarStage(5);
+  return false;
+}
+
 function marcarPiqueado(el){
   const card = el.closest('.lead-card');
   if (card) card.classList.add('piqueado');
@@ -1259,6 +1269,7 @@ function iniciarCronometroEnvio(){
 }
 
 function abrirWhatsAppDesdeCard(el){
+  if (!exigeRegistroParaEnviar()) return false;
   const card = el.closest('.lead-card');
   if (!card) return false;
   const nombre = card.dataset.nombreperfil || extraerNombre(card.dataset.ctx);
@@ -1270,6 +1281,7 @@ function abrirWhatsAppDesdeCard(el){
 }
 
 function abrirWhatsAppDirecto(numero, cat, nombre, el){
+  if (!exigeRegistroParaEnviar()) return false;
   const mensaje = construirMensaje(cat, nombre || null);
   if (el){
     marcarPiqueado(el);
@@ -1282,6 +1294,7 @@ function abrirWhatsAppDirecto(numero, cat, nombre, el){
 // El esquema sms: usa "&body=" en iOS y "?body=" en Android para el texto
 // precargado — no hay un separador universal, así que se detecta el sistema.
 function abrirSmsDirecto(numero, cat, nombre, el){
+  if (!exigeRegistroParaEnviar()) return false;
   const mensaje = construirMensaje(cat, nombre || null);
   if (el){
     marcarPiqueado(el);
@@ -1296,6 +1309,7 @@ function abrirSmsDirecto(numero, cat, nombre, el){
 // → triplay/tabla/barrote, etc.) en vez de la oferta genérica de cimbra —
 // si no detectamos su oficio (cat vacía u "otro"), ahí sí cae al genérico.
 function abrirWhatsAppFollowUp(numero, nombre, el, cat){
+  if (!exigeRegistroParaEnviar()) return false;
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
   const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana, ${oferta}. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
