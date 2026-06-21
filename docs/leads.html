@@ -173,6 +173,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab" id="tabStage3" onclick="mostrarStage(3)">3. Empleado</button>
     <button class="stage-tab" id="tabStage4" onclick="mostrarStage(4)">4. Verificar</button>
     <button class="stage-tab" id="tabStage5" onclick="mostrarStage(5)">5. Mensajes</button>
+    <button class="stage-tab" id="tabStage6" onclick="mostrarStage(6)">6. Notificaciones y reglas</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -299,6 +300,47 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 
       <div id="mensajesLista"></div>
 
+    </div>
+
+  </div>
+
+  <div id="stage6" style="display:none">
+
+    <div class="section acc-blue">
+      <h2>🔔 Notificaciones</h2>
+      <p style="font-size:13px;line-height:1.5;margin:0 0 10px">
+        Cuando alguien del equipo sube un mensaje o una lista nueva en la pestaña "5. Mensajes", el sistema avisa de dos formas, dependiendo de cómo tengas la app abierta en ese momento:
+      </p>
+      <ul style="font-size:13px;line-height:1.6;margin:0 0 12px;padding-left:20px">
+        <li><b>Con la app abierta:</b> aparece un letrero naranja arriba con un sonido, sin necesidad de configurar nada.</li>
+        <li><b>Con el celular bloqueado o la app cerrada:</b> solo llega como notificación normal del sistema (como WhatsApp) si activas el botón de abajo. Es opcional, pero se recomienda para no perder mensajes importantes mientras no tienes la app abierta.</li>
+      </ul>
+      <button class="btn-main" id="btnActivarPush" onclick="activarNotificacionesPush()">🔔 Activar notificaciones en este celular</button>
+      <p id="estadoPush" style="font-size:12px;color:#999;margin-top:10px;text-align:center"></p>
+    </div>
+
+    <div class="section acc-amber">
+      <h2>📌 Reglas del grupo de trabajo</h2>
+      <ol style="font-size:13px;line-height:1.7;margin:0;padding-left:20px">
+        <li>Regístrate una sola vez en "5. Mensajes" con tu nombre real, para que el equipo sepa quién mandó cada cosa.</li>
+        <li>Usa "Mensaje rápido" para avisos cortos (ej. "ya salí a repartir") y "Mensaje grande / Libreta" para listas largas de números o publicaciones de Facebook, así no se llena la pantalla de texto.</li>
+        <li>Cuando termines de mandarle el mensaje a toda una lista de la libreta, márcala como "Completada" — así el resto del equipo sabe que esa lista ya está atendida y no la repite.</li>
+        <li>Antes de contactar a un número, revisa la pestaña "4. Verificar" o el historial, para no mandarle el mismo mensaje dos veces a la misma persona.</li>
+        <li>Borra solo los mensajes que tú mismo subiste; si algo de otro compañero ya no aplica, pídele que lo borre él o avísale directamente.</li>
+        <li>Si activaste las notificaciones, revisa que no estén bloqueadas en los ajustes del navegador/celular, porque sin eso no llegará nada aunque la app esté cerrada.</li>
+      </ol>
+    </div>
+
+    <div class="section acc-green">
+      <h2>⚙️ Cómo funciona la app (resumen)</h2>
+      <ol style="font-size:13px;line-height:1.7;margin:0;padding-left:20px">
+        <li><b>1. Procesar números:</b> pega los números/comentarios encontrados en Facebook, y la app los limpia y organiza automáticamente.</li>
+        <li><b>2. Mis tareas:</b> muestra los contactos que tienes pendientes por marcar como atendidos.</li>
+        <li><b>3. Empleado:</b> opciones según quién está usando la app en ese celular.</li>
+        <li><b>4. Verificar:</b> revisa rápido si un número o texto ya fue contactado antes, para no duplicar.</li>
+        <li><b>5. Mensajes:</b> tablero compartido del equipo para avisos y listas, sincronizado en tiempo real en todos los celulares.</li>
+        <li><b>6. Notificaciones y reglas:</b> esta pantalla — activa las notificaciones y consulta las reglas del grupo cuando lo necesites.</li>
+      </ol>
     </div>
 
   </div>
@@ -1423,11 +1465,13 @@ function mostrarStage(n){
   document.getElementById('stage3').style.display = n === 3 ? 'block' : 'none';
   document.getElementById('stage4').style.display = n === 4 ? 'block' : 'none';
   document.getElementById('stage5').style.display = n === 5 ? 'block' : 'none';
+  document.getElementById('stage6').style.display = n === 6 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
   document.getElementById('tabStage3').classList.toggle('activo', n === 3);
   document.getElementById('tabStage4').classList.toggle('activo', n === 4);
   document.getElementById('tabStage5').classList.toggle('activo', n === 5);
+  document.getElementById('tabStage6').classList.toggle('activo', n === 6);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -1440,6 +1484,7 @@ function mostrarStage(n){
     renderMensajesEntrada();
     ocultarNotifMensajes();
   }
+  if (n === 6) actualizarEstadoPush();
 }
 
 // Pestaña 4: solo CHECA si los números de un texto ya están en el historial
@@ -1733,7 +1778,10 @@ function renderMensajesLista(mensajes){
         <div class="lead-card">
           <div style="font-size:12px;font-weight:700">💬 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span></div>
           <div style="font-size:13px;margin:4px 0;white-space:pre-wrap">${escaparHtml(m.contenido)}</div>
-          ${btnBorrar ? `<div class="lead-actions">${btnBorrar}</div>` : ''}
+          <div class="lead-actions">
+            <button class="btn-done" onclick="copiarMensaje(${m.id}, this)">📋 Copiar mensaje completo</button>
+            ${btnBorrar}
+          </div>
         </div>`;
     }
   });
@@ -1892,6 +1940,69 @@ function reproducirSonidoAviso(){
       tocar();
     }
   } catch (e){}
+}
+
+// Notificaciones push: a diferencia del sonido/letrero de arriba (que solo
+// funcionan con la app abierta en la pantalla), esto manda una notificación
+// real del sistema operativo aunque el celular esté bloqueado o la pestaña
+// cerrada. Es opcional: el usuario lo activa desde "6. Notificaciones y
+// reglas" y el navegador pide su permiso explícito antes de activarlo.
+function convertirClaveVapid(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function activarNotificacionesPush(){
+  const estado = document.getElementById('estadoPush');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)){
+    estado.textContent = '😕 Este navegador no soporta notificaciones push.';
+    return;
+  }
+  try {
+    estado.textContent = '⏳ Pidiendo permiso...';
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted'){
+      estado.textContent = '🚫 No diste permiso, así que no se activaron. Puedes intentarlo de nuevo cuando quieras.';
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    await navigator.serviceWorker.ready;
+    const r = await fetch(RAILWAY_URL + '/api/push/vapid-public-key');
+    const { publicKey } = await r.json();
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertirClaveVapid(publicKey)
+      });
+    }
+    await fetch(RAILWAY_URL + '/api/push/subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dispositivo_id: obtenerDispositivoId(), subscription: sub.toJSON() })
+    });
+    localStorage.setItem('lj_push_activado', '1');
+    estado.textContent = '✅ Notificaciones activadas en este celular/navegador.';
+  } catch (e){
+    estado.textContent = '😕 No se pudo activar, revisa tu conexión e intenta de nuevo.';
+  }
+}
+
+function actualizarEstadoPush(){
+  const estado = document.getElementById('estadoPush');
+  if (!estado) return;
+  if (!('Notification' in window)){
+    estado.textContent = '😕 Este navegador no soporta notificaciones.';
+  } else if (Notification.permission === 'denied'){
+    estado.textContent = '🚫 Las notificaciones están bloqueadas para esta página en los ajustes del navegador.';
+  } else if (Notification.permission === 'granted' && localStorage.getItem('lj_push_activado') === '1'){
+    estado.textContent = '✅ Ya están activadas en este celular/navegador.';
+  } else {
+    estado.textContent = '';
+  }
 }
 
 // Convierte una fecha (ISO o Date) a su día calendario en hora LOCAL del

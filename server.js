@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const webpush = require('web-push');
 
 const app = express();
 const pool = new Pool({
@@ -10,6 +11,14 @@ const pool = new Pool({
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '2mb' }));
+
+// Claves VAPID: identifican a este servidor ante los servicios de push
+// (Google, Apple, etc). Se pueden sobreescribir con variables de entorno en
+// Railway, pero llevan un valor por defecto para que el push funcione sin
+// configuración extra.
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BKqQ-4KK8ypsSDULGpsGuZdjlqncIL1n1gL_1VVQrYALZp_6mmOimFXcBR3rcKDvwhyQWwE4UlTbe6-sbk4d8vs';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'HfgLZ5gTA_CQWn5OOgNZkTTBMeHMtbgVi_qSTK5ew4w';
+webpush.setVapidDetails('mailto:contacto@madereriajardin.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS leads_historial (
@@ -51,6 +60,17 @@ pool.query(`
 `).then(() => pool.query(`
   ALTER TABLE mensajes_equipo ADD COLUMN IF NOT EXISTS completado BOOLEAN DEFAULT FALSE
 `)).catch(console.error);
+
+pool.query(`
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    dispositivo_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+  )
+`).catch(console.error);
 
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
@@ -181,6 +201,58 @@ app.post('/api/mensajes', async (req, res) => {
       [dispositivo_id, autor_nombre || null, autor_numero || null, tipo || 'mensaje', contenido, fecha_envio]
     );
     res.json({ ok: true, id: r.rows[0].id });
+    notificarMensajeNuevo(dispositivo_id, autor_nombre, tipo || 'mensaje', contenido);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Manda una notificación push al resto del equipo (no a quien la escribió),
+// para que les llegue aunque tengan la pestaña cerrada o el celular bloqueado.
+async function notificarMensajeNuevo(dispositivoQueEnvio, autorNombre, tipo, contenido){
+  try {
+    const r = await pool.query('SELECT * FROM push_subscriptions WHERE dispositivo_id <> $1', [dispositivoQueEnvio]);
+    if (r.rows.length === 0) return;
+    const titulo = tipo === 'libreta' ? '📋 Nueva lista en Mensajes' : '💬 Nuevo mensaje en Mensajes';
+    const cuerpo = `${autorNombre || 'Alguien'}: ${(contenido || '').slice(0, 120)}`;
+    const payload = JSON.stringify({ title: titulo, body: cuerpo });
+    await Promise.all(r.rows.map(async (sub) => {
+      const subscription = { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } };
+      try {
+        await webpush.sendNotification(subscription, payload);
+      } catch (e) {
+        if (e.statusCode === 404 || e.statusCode === 410) {
+          await pool.query('DELETE FROM push_subscriptions WHERE id=$1', [sub.id]);
+        }
+      }
+    }));
+  } catch (e) { console.error('push error', e.message); }
+}
+
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+app.post('/api/push/subscribe', async (req, res) => {
+  const { dispositivo_id, subscription } = req.body || {};
+  if (!dispositivo_id || !subscription || !subscription.endpoint || !subscription.keys) {
+    return res.status(400).json({ error: 'faltan datos' });
+  }
+  try {
+    await pool.query(
+      `INSERT INTO push_subscriptions (dispositivo_id, endpoint, p256dh, auth, creado_en)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (endpoint) DO UPDATE SET dispositivo_id=$1, p256dh=$3, auth=$4`,
+      [dispositivo_id, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth, new Date().toISOString()]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/push/unsubscribe', async (req, res) => {
+  const { endpoint } = req.body || {};
+  if (!endpoint) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query('DELETE FROM push_subscriptions WHERE endpoint=$1', [endpoint]);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
