@@ -199,6 +199,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <h2>1. Pega los comentarios de Facebook</h2>
     <p style="font-size:12px;font-weight:700;color:var(--blue);margin:-4px 0 10px">🤖 El sistema detecta el oficio de cada comentario solo, leyendo el texto</p>
     <textarea id="raw" placeholder="Pega aquí todo el texto de los comentarios (nombres, números, lo que sea)..."></textarea>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="pegarTexto('raw')">📋 Pegar texto</button>
     <button class="btn-main" onclick="procesar()">⚡ PROCESAR NÚMEROS</button>
     <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="borrarTexto()">🗑️ Borrar texto</button>
   </div>
@@ -253,6 +254,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <h2>🔍 Verificar si ya copiaste estos números</h2>
     <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Pega aquí cualquier texto (de WhatsApp, Facebook, lo que sea) y nomás revisa cuáles números ya están en tu historial y cuáles no — sin que se mezclen con la lista de la pestaña 1.</p>
     <textarea id="verificarRaw" placeholder="Pega aquí el texto para revisar..."></textarea>
+    <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="pegarTexto('verificarRaw')">📋 Pegar texto</button>
     <button class="btn-main" onclick="verificarTexto()">🔍 Revisar números</button>
     <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="copiarTextoVerificar(this)">📋 Copiar texto</button>
     <button class="btn-main" style="margin-top:8px;background:#888;background-image:none" onclick="document.getElementById('verificarRaw').value='';document.getElementById('verificarResultados').innerHTML='';document.getElementById('buscadorVerificar').value='';actualizarContadorVerificar();">🗑️ Borrar texto</button>
@@ -850,6 +852,20 @@ function dividirEnBloques(texto){
 function borrarTexto(){
   document.getElementById('raw').value = '';
   document.getElementById('raw').focus();
+}
+
+// Algunos celulares/emuladores (ej. BlueStacks) traen problemas con el
+// Ctrl+V o el menú "Pegar" normal del teclado, así que este botón usa el
+// portapapeles directo del navegador como alternativa.
+async function pegarTexto(id){
+  const el = document.getElementById(id);
+  try {
+    const texto = await navigator.clipboard.readText();
+    el.value = texto;
+    el.focus();
+  } catch (e){
+    alert('No se pudo pegar automático (el navegador no dio permiso). Mantén presionado el cuadro de texto y elige "Pegar" manualmente.');
+  }
 }
 
 async function procesar(){
