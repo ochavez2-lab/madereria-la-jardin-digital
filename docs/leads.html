@@ -189,7 +189,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
   <div id="stage3" style="display:none">
     <div class="section acc-blue">
       <h2>¿Qué número usas para contactar?</h2>
-      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Esto solo cambia el número que aparece al final del mensaje de WhatsApp, para que no tengas que editarlo a mano. Se queda guardado en este celular.</p>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Esto solo cambia el número que aparece al final del mensaje de WhatsApp, para que no tengas que editarlo a mano. Se queda guardado en este celular. También puedes activar el modo seguro si necesitas mandar mensajes con menos riesgo de baneo.</p>
       <div id="empleadoOpciones" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
   </div>
@@ -449,6 +449,42 @@ const CATEGORIA_LABEL = {
   techos: '🏠 Techos/Imperm.', demolicion: '🔨 Demolición', herreria: '🔩 Herrería/Soldadura',
   carpinteros: '🪚 Carpintería', otro: '📦 Otro'
 };
+
+// Plantillas del "Modo seguro" (sin links, sin web, sin Maps): solo se
+// presenta el negocio, lo que se vende según el oficio detectado, y se le
+// pide al prospecto que guarde el contacto para mandarle fotos/catálogo/
+// ubicación después por chat — pensado para usarse en casos especiales tras
+// una restricción de WhatsApp, cuando se quiere evitar que el mensaje se vea
+// "de spam" (sin enlaces ni texto que parezca automatizado).
+const SEGURO_TEMPLATES = {
+  cimbrado:        { trabajo: 'anda en obra de cimbrado',          oferta: 'Cimbraplay, triplay CDX y barrote pa\' cimbra' },
+  bloques_albanil: { trabajo: 'hace trabajos de albañilería',      oferta: 'block, varilla y material pa\' obra' },
+  yeseros:         { trabajo: 'hace acabados y aplanados',         oferta: 'madera y material pa\' terminar acabados' },
+  constructores:   { trabajo: 'maneja proyectos de construcción',  oferta: 'material de obra por volumen' },
+  contratistas:    { trabajo: 'anda contratando obra',             oferta: 'material a tiempo pa\' que no se le pare la obra' },
+  plomeria:        { trabajo: 'hace trabajos de plomería',         oferta: 'madera y material pa\' sus trabajos' },
+  electricidad:    { trabajo: 'hace instalaciones eléctricas',     oferta: 'material pa\' sus proyectos' },
+  pisos_azulejo:   { trabajo: 'instala pisos y azulejo',           oferta: 'madera y triplay de base pa\' instalación' },
+  pintura:         { trabajo: 'hace trabajos de pintura',          oferta: 'material pa\' preparar la obra antes de pintar' },
+  techos:          { trabajo: 'hace techos e impermeabilización',  oferta: 'antorchable arenado 4.5, sticker arenado 4.5 y shingle arenado americano' },
+  demolicion:      { trabajo: 'hace trabajos de demolición',       oferta: 'material listo pa\' cuando reconstruya' },
+  herreria:        { trabajo: 'hace trabajos de herrería y soldadura', oferta: 'madera y material pa\' combinar con su trabajo' },
+  carpinteros:     { trabajo: 'hace trabajos de carpintería',      oferta: 'triplay birch, tabla shelby y barrotes CDX número 1' },
+  otro:            { trabajo: 'anda en obra',                      oferta: 'material de construcción' }
+};
+
+function modoSeguroActivo(){
+  return localStorage.getItem('lj_modo_seguro') === '1';
+}
+function toggleModoSeguro(){
+  localStorage.setItem('lj_modo_seguro', modoSeguroActivo() ? '0' : '1');
+  renderEmpleadoOpciones();
+}
+function construirMensajeSeguro(cat, nombre){
+  const t = SEGURO_TEMPLATES[cat] || SEGURO_TEMPLATES.otro;
+  const saludo = nombre || 'maestro';
+  return `Buen día, ${saludo}. Vi que ${t.trabajo} y le escribo para ponerme a sus órdenes. Le saludo de Maderería La Jardín, estamos ubicados aquí en Tijuana, en la Col. Ciudad Jardín. Manejamos ${t.oferta}, con entrega el mismo día pa' su obra. Si gusta, agréguenme a sus contactos para que estemos en comunicación y le pueda mandar fotos del material, catálogo o ubicación. ¿Ocupa que le cotice algún material pa' su próximo trabajo?`;
+}
 
 // Detecta el oficio real a partir del texto del propio comentario,
 // porque un lote de Facebook casi siempre viene revuelto (varios oficios mezclados).
@@ -787,15 +823,21 @@ function renderEmpleadoOpciones(){
   const cont = document.getElementById('empleadoOpciones');
   if (!cont) return;
   const actual = obtenerNumeroEmpleado();
+  const seguro = modoSeguroActivo();
   cont.innerHTML = EMPLEADOS.map(e => {
     const activo = e.numero === actual;
     return `<button class="stage-tab${activo ? ' activo' : ''}" style="width:100%;text-align:left;padding:14px" onclick="elegirEmpleado('${e.numero}')">
       ${activo ? '✅' : '☐'} Empleado de Maderería La Jardín · número ${e.numero}
     </button>`;
-  }).join('');
+  }).join('') + `
+    <button class="stage-tab${seguro ? ' activo' : ''}" style="width:100%;text-align:left;padding:14px" onclick="toggleModoSeguro()">
+      ${seguro ? '✅' : '☐'} 🛡️ Seguro 90% no spam · Seguridad ante todo (No baneos)
+      <div style="font-size:11px;font-weight:400;color:${seguro ? 'inherit' : '#999'};margin-top:4px;line-height:1.4">Para casos especiales: el mensaje no lleva links ni la tienda en línea, solo se presenta, dice qué vende y le pide al cliente que lo agregue a sus contactos para mandarle fotos o ubicación después.</div>
+    </button>`;
 }
 
 function construirMensaje(cat, nombre){
+  if (modoSeguroActivo()) return construirMensajeSeguro(cat, nombre);
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const saludo = nombre || 'maestro';
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
