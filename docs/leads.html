@@ -1104,8 +1104,14 @@ function abrirSmsDirecto(numero, cat, nombre, el){
   return true;
 }
 
-function abrirWhatsAppFollowUp(numero, nombre, el){
-  const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana en Cimbraplay, triplay CDX y barrote, entrega gratis desde 50 pzs. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
+// Reenviar oferta: igual que el primer mensaje, debe ofrecer el material
+// según el oficio del lead (techos → antorchable/arenado/shingle, carpintería
+// → triplay/tabla/barrote, etc.) en vez de la oferta genérica de cimbra —
+// si no detectamos su oficio (cat vacía u "otro"), ahí sí cae al genérico.
+function abrirWhatsAppFollowUp(numero, nombre, el, cat){
+  const t = TEMPLATES[cat] || TEMPLATES.otro;
+  const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
+  const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana, ${oferta}. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
   if (el){
     el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
     el.target = '_blank';
@@ -2347,6 +2353,12 @@ function renderHistorialCard(h){
     const nombreTextoHist = extraerNombre(h.contexto || '');
     const nombreHist = h.nombrePerfil || nombreTextoHist;
     const nombreHistEsc = (nombreHist || '').replace(/'/g, "\\'");
+    // Si no quedó guardada la categoría (o quedó genérica), se intenta detectar
+    // el oficio leyendo el texto del propio comentario, para que "Reenviar
+    // oferta" y "Enviar SMS" ofrezcan el material que sí le interesa al lead
+    // (antorchable/arenado a un techero, triplay/barrote a un carpintero, etc.)
+    // en vez de la oferta genérica de cimbra.
+    const catHist = h.categoria || detectarRol(h.contexto || '') || 'otro';
     const chipsEstado = Object.keys(ESTADOS_INFO).map(k => {
       const activo = seg === k;
       return `<span class="estado-chip${activo ? ' activo' : ''}" style="${activo ? `background:${ESTADOS_INFO[k].color};border-color:${ESTADOS_INFO[k].color}` : ''}" onclick="actualizarSeguimiento('${numKey}','${fechaKey}','${k}')">${ESTADOS_INFO[k].label}</span>`;
@@ -2361,9 +2373,9 @@ function renderHistorialCard(h){
     const accionFinal = sinWhatsapp
       ? (h.sms_enviado
           ? `<button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="deshacerSmsEnviadoHistorial('${numKey}','${fechaKey}')">↩️ Deshacer SMS enviado</button>`
-          : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirSmsDirecto('${numKey}','${h.categoria}','${nombreHistEsc}', this)">📩 Enviar SMS</a>
+          : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirSmsDirecto('${numKey}','${catHist}','${nombreHistEsc}', this)">📩 Enviar SMS</a>
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
-      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this)">🔁 Reenviar oferta</a>`;
+      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this, '${catHist}')">🔁 Reenviar oferta</a>`;
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};color:#1c1c1c;--text:#1c1c1c;--muted:#777;--ctx-bg:#f4f1ea;--border:#e5e0d3;--card-bg:#fff;position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
