@@ -107,6 +107,10 @@ textarea:focus{border-color:var(--acc1)}
 .notif-mensajes button.ir{background:#1a1410;color:#fff}
 .notif-mensajes button.ignorar{background:#fff;color:#1a1410}
 
+.cronometro-envio{display:none;position:sticky;top:0;z-index:97;align-items:center;justify-content:center;gap:10px;padding:10px;background:#3b82f6;color:#fff;font-size:13px;font-weight:700;text-align:center}
+.cronometro-envio.listo{background:#16a34a}
+.cronometro-envio .num{font-size:18px;font-weight:900;min-width:28px;display:inline-block}
+
 .stage-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .stage-tab{background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:9px 4px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.25}
 .stage-tab.activo{background:linear-gradient(135deg,var(--acc1),var(--acc2));color:var(--acc-text);border-color:transparent}
@@ -163,6 +167,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 </div>
 <div class="theme-bar" id="themeBar"></div>
 <div class="notif-mensajes" id="notifMensajesBanner"></div>
+<div class="cronometro-envio" id="cronometroEnvio"></div>
 
 <header>
   <h1>🪵 LEADS → WHATSAPP</h1>
@@ -193,6 +198,12 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 
   <div class="warn">
     ⚠️ Los enlaces abren WhatsApp con el mensaje listo. <b>Envía uno por uno, espaciado</b> (15-30 seg entre cada uno) para no arriesgar tu número. Usa WhatsApp Business si puedes.
+    <div style="margin-top:8px;font-size:12px;font-weight:400">
+      ⏱️ Cronómetro de espera entre mensajes:
+      <button class="chip-filtro" data-segundos="15" onclick="cambiarDuracionCronometro(15, this)" style="margin-left:4px">15s</button>
+      <button class="chip-filtro activo" data-segundos="30" onclick="cambiarDuracionCronometro(30, this)">30s</button>
+      <button class="chip-filtro" data-segundos="0" onclick="cambiarDuracionCronometro(0, this)">Apagado</button>
+    </div>
   </div>
 
   <div class="section acc-blue">
@@ -386,6 +397,7 @@ function cambiarZoom(dir){
   aplicarZoom();
 }
 aplicarZoom();
+inicializarChipCronometro();
 
 const TEMAS = [
   { id:'blanco', label:'⚪', color:'#fff' },
@@ -1138,6 +1150,60 @@ function actualizarContadorPantalla(){
 function marcarPiqueado(el){
   const card = el.closest('.lead-card');
   if (card) card.classList.add('piqueado');
+  iniciarCronometroEnvio();
+}
+
+// Cronómetro visual entre envíos: NO bloquea nada ni evita que mandes el
+// siguiente mensaje, es solo una guía para espaciarlos (15-30 seg) y bajar
+// el riesgo de que WhatsApp marque la cuenta por mandar muchos mensajes
+// muy rápido seguidos. El usuario elige la duración o lo apaga.
+let __cronometroEnvioInterval = null;
+function duracionCronometroEnvio(){
+  return Number(localStorage.getItem('lj_cronometro_segundos') ?? 30);
+}
+function inicializarChipCronometro(){
+  const segundos = duracionCronometroEnvio();
+  document.querySelectorAll('.warn [data-segundos]').forEach(b => {
+    b.classList.toggle('activo', Number(b.dataset.segundos) === segundos);
+  });
+}
+function cambiarDuracionCronometro(segundos, btn){
+  localStorage.setItem('lj_cronometro_segundos', String(segundos));
+  if (btn){
+    btn.parentElement.querySelectorAll('.chip-filtro').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+  }
+  if (segundos === 0) ocultarCronometroEnvio();
+}
+function ocultarCronometroEnvio(){
+  if (__cronometroEnvioInterval) clearInterval(__cronometroEnvioInterval);
+  __cronometroEnvioInterval = null;
+  const box = document.getElementById('cronometroEnvio');
+  if (box) box.style.display = 'none';
+}
+function iniciarCronometroEnvio(){
+  const segundos = duracionCronometroEnvio();
+  if (!segundos) return;
+  const box = document.getElementById('cronometroEnvio');
+  if (!box) return;
+  if (__cronometroEnvioInterval) clearInterval(__cronometroEnvioInterval);
+  let restante = segundos;
+  box.classList.remove('listo');
+  box.style.display = 'flex';
+  box.innerHTML = `⏳ Espera <span class="num">${restante}</span>s antes de mandarle al siguiente cliente`;
+  __cronometroEnvioInterval = setInterval(() => {
+    restante--;
+    if (restante <= 0){
+      clearInterval(__cronometroEnvioInterval);
+      __cronometroEnvioInterval = null;
+      box.classList.add('listo');
+      box.innerHTML = '🔔 ¡Ya puedes enviarle al siguiente cliente!';
+      reproducirSonidoAviso();
+      setTimeout(() => { if (!__cronometroEnvioInterval) box.style.display = 'none'; }, 4000);
+    } else {
+      box.querySelector('.num').textContent = restante;
+    }
+  }, 1000);
 }
 
 function abrirWhatsAppDesdeCard(el){
