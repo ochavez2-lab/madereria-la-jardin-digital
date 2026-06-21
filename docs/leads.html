@@ -253,8 +253,14 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <h2>🎯 Contactos de hoy</h2>
     <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Se cuenta solo, automáticamente, a todos los que marques (tú y tus empleados, desde cualquier celular). Cada persona cuenta por separado según su nombre registrado en "5. Mensajes".</p>
     <div id="tareasResumen"></div>
-    <div id="tareasPorPersona"></div>
     <div id="tareasCirculos" class="tareas-circulos"></div>
+  </div>
+
+  <div class="section acc-amber">
+    <h2>🏆 Ranking de empleados</h2>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Quién ha contactado más leads, según el periodo elegido. Se cuenta por nombre registrado en "5. Mensajes".</p>
+    <div id="tareasRankingFiltros" style="display:flex;gap:6px;margin-bottom:10px"></div>
+    <div id="tareasRanking"></div>
   </div>
 
   </div>
@@ -1110,6 +1116,9 @@ async function procesar(){
         extra = `
           <div class="lead-actions">
             <a class="btn-wa" href="#" onclick="return abrirWhatsAppDirecto('${n.numero}','${catRepetido}','${nombreRep}', this)">💬 Reenviar WhatsApp</a>
+          </div>
+          <div class="lead-actions">
+            <a class="btn-wa" style="background:#888;background-image:none" href="#" onclick="return abrirWhatsAppFollowUp('${n.numero}','${nombreRep}', this, '${catRepetido}')">👁️ Vio pero no contestó, reenviar oferta</a>
           </div>`;
       }
       extra += btnRespondioRep ? `<div class="lead-actions">${btnRespondioRep}</div>` : '';
@@ -2185,7 +2194,6 @@ function contactadosHoyPropio(){
 function renderTareas(){
   const resumen = document.getElementById('tareasResumen');
   const circulos = document.getElementById('tareasCirculos');
-  const porPersona = document.getElementById('tareasPorPersona');
   const avisoIdentidad = document.getElementById('tareasSinIdentidad');
   if (!resumen || !circulos) return;
 
@@ -2195,25 +2203,73 @@ function renderTareas(){
   const hechos = lista.length;
   resumen.innerHTML = '<div style="font-size:15px;font-weight:900">' + hechos + ' contactos hoy</div>';
 
-  if (porPersona){
-    const conteo = {};
-    lista.forEach(h => {
-      const nombre = h.autor_nombre || 'Sin registrar';
-      conteo[nombre] = (conteo[nombre] || 0) + 1;
-    });
-    const nombres = Object.keys(conteo).sort((a, b) => conteo[b] - conteo[a]);
-    porPersona.innerHTML = nombres.length === 0 ? '' : (
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px">' +
-      nombres.map(n => '<span style="background:#eafaf0;color:#1c1c1c;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700">👤 ' + escaparHtml(n) + ': ' + conteo[n] + '</span>').join('') +
-      '</div>'
-    );
-  }
-
   let html = '';
   for (let i = 0; i < hechos; i++){
     html += '<div class="circulo-tarea hecho">✓</div>';
   }
   circulos.innerHTML = html;
+
+  renderRankingEmpleados();
+}
+
+let rankingPeriodo = 'hoy';
+
+// Lista de contactos del periodo elegido, para armar el ranking de quién
+// contactó más leads. "Hoy" usa el día calendario local (mismo criterio que
+// contactadosHoyLista); semana/mes usan los mismos umbrales que los chips
+// de fecha del historial (pestaña 4), para que los números coincidan.
+function contactosPorPeriodo(periodo){
+  if (periodo === 'hoy') return contactadosHoyLista();
+  const dias = periodo === 'semana' ? 7 : 30;
+  return getHistorial().filter(h => h.fecha_contacto && diasDesde(h.fecha_contacto) <= dias);
+}
+
+function cambiarRankingPeriodo(periodo){
+  rankingPeriodo = periodo;
+  renderRankingEmpleados();
+}
+
+const MEDALLAS = ['🥇', '🥈', '🥉'];
+
+function renderRankingEmpleados(){
+  const filtrosBox = document.getElementById('tareasRankingFiltros');
+  const box = document.getElementById('tareasRanking');
+  if (!box) return;
+
+  if (filtrosBox){
+    const chips = [
+      { v: 'hoy', label: '🟢 Hoy' },
+      { v: 'semana', label: '🟡 Esta semana' },
+      { v: 'mes', label: '🟠 Este mes' }
+    ];
+    filtrosBox.innerHTML = chips.map(c => {
+      const activo = rankingPeriodo === c.v;
+      return `<span onclick="cambiarRankingPeriodo('${c.v}')"
+        style="cursor:pointer;font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid ${activo ? '#d68910' : '#ddd'};background:${activo ? '#d68910' : '#fff'};color:${activo ? '#fff' : '#555'}">${c.label}</span>`;
+    }).join('');
+  }
+
+  const conteo = {};
+  contactosPorPeriodo(rankingPeriodo).forEach(h => {
+    const nombre = h.autor_nombre || 'Sin registrar';
+    conteo[nombre] = (conteo[nombre] || 0) + 1;
+  });
+  const ranking = Object.keys(conteo)
+    .map(nombre => ({ nombre, total: conteo[nombre] }))
+    .sort((a, b) => b.total - a.total);
+
+  if (ranking.length === 0){
+    box.innerHTML = '<div class="empty">Todavía no hay contactos en este periodo</div>';
+    return;
+  }
+
+  box.innerHTML = ranking.map((r, i) => {
+    const puesto = MEDALLAS[i] || `${i + 1}°`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #eee;font-size:13px">
+      <span><b style="display:inline-block;width:28px">${puesto}</b> 👤 ${escaparHtml(r.nombre)}</span>
+      <b>${r.total}</b>
+    </div>`;
+  }).join('');
 }
 
 let historialFiltro = '';
