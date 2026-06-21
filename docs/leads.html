@@ -1994,7 +1994,11 @@ const PALABRAS_FILLER = new Set([
   'calidad','pudo','nuevo','nueva','nuevos','nuevas','usa','traido','traída','closets','gabinetes',
   'detalles','privado','fotos','interesa','interesan','interesados','aproximada','aproximado',
   'tarjetas','tarjeta','visa','mastercard','aceptamos','atiende',
-  'venta','ventas','renta','rentas','rentade'
+  'venta','ventas','renta','rentas','rentade',
+  'albañileria','albanileria','albañilería','colocacion','colocación','lozeta','lozetas',
+  'azulejo','azulejos','plafon','plafón','falso','impermeabilizacion','impermeabilización',
+  'cancel','cancele','cancelería','canceleria','vidrio','vidrios','aluminio','soldadura',
+  'lote','lot'
 ]);
 
 function extraerNombre(texto){
@@ -2003,16 +2007,22 @@ function extraerNombre(texto){
   // Quita comillas/puntuación pegada a los bordes de cada palabra (típico al
   // copiar texto de OCR de Facebook: comillas, comas, puntos finales, etc.).
   const limpiar = w => w.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+|[^A-Za-zÁÉÍÓÚÑáéíóúñ]+$/g, '');
-  const palabras = t.split(/\s+/).map(limpiar).filter(Boolean);
+  // Direcciones tipo "c. Almeja MZ.107, Lot.2" suelen colarse como nombre falso
+  // porque sus palabras llevan mayúscula inicial igual que un nombre real. Si la
+  // palabra cruda (antes de limpiar puntuación) tenía números pegados (manzana,
+  // lote, código postal, etc.) no puede ser parte de un nombre de persona.
+  const pares = t.split(/\s+/).map(cruda => ({ limpia: limpiar(cruda), tieneDigito: /\d/.test(cruda) })).filter(p => p.limpia);
+  const palabras = pares.map(p => p.limpia);
+  const tieneDigito = i => pares[i] && pares[i].tieneDigito;
   // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte),
   // descartando muletillas y palabras de oficio/material ("Electricidad Ladrillo" no es nombre).
   for (let i = 0; i < palabras.length - 1; i++){
     const w = palabras[i];
     if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w)) continue;
-    if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
+    if (PALABRAS_FILLER.has(w.toLowerCase()) || tieneDigito(i)) continue;
     const w2 = palabras[i + 1];
     if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w2)) continue;
-    if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
+    if (PALABRAS_FILLER.has(w2.toLowerCase()) || tieneDigito(i + 1)) continue;
     return w + ' ' + w2;
   }
   // 2. Nombre de compañía/negocio: palabra con mayúscula inicial + otra palabra,
@@ -2020,10 +2030,10 @@ function extraerNombre(texto){
   for (let i = 0; i < palabras.length - 1; i++){
     const w = palabras[i];
     if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}$/.test(w)) continue;
-    if (PALABRAS_FILLER.has(w.toLowerCase())) continue;
+    if (PALABRAS_FILLER.has(w.toLowerCase()) || tieneDigito(i)) continue;
     const w2 = palabras[i + 1];
     if (!/^[a-zA-ZÁÉÍÓÚÑáéíóúñ]{2,}$/.test(w2)) continue;
-    if (PALABRAS_FILLER.has(w2.toLowerCase())) continue;
+    if (PALABRAS_FILLER.has(w2.toLowerCase()) || tieneDigito(i + 1)) continue;
     return w + ' ' + w2;
   }
   // 3. Nombre dentro de texto TODO EN MAYÚSCULAS (típico del OCR que hace Facebook
