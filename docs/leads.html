@@ -2290,6 +2290,11 @@ function renderHistorialList(){
 
   const filtro = historialFiltro.trim().toLowerCase();
   const filtroDigitos = filtro.replace(/\D/g, '');
+  // Palabras clave especiales: el buscador de texto también entiende frases
+  // sueltas como "sin whatsapp" o el nombre de cualquier estado de
+  // seguimiento ("no respondió", "no le llegan mensajes", "nos compró"...),
+  // para no obligar a usar los chips de filtro si ya sabes qué buscas.
+  const SIN_WHATSAPP_KEYWORDS = ['sin whatsapp', 'sin wasap', 'sinwhatsapp', 'no tiene whatsapp', 'no whatsapp'];
   if (filtro){
     hist = hist.filter(h =>
       (filtroDigitos && h.numero.includes(filtroDigitos)) ||
@@ -2298,7 +2303,9 @@ function renderHistorialList(){
       (CATEGORIA_LABEL[h.categoria] || h.categoria || '').toLowerCase().includes(filtro) ||
       obtenerUbicacion(h.numero).label.toLowerCase().includes(filtro) ||
       (extraerNombre(h.contexto || '') || '').toLowerCase().includes(filtro) ||
-      (h.autor_nombre || '').toLowerCase().includes(filtro)
+      (h.autor_nombre || '').toLowerCase().includes(filtro) ||
+      (h.metodo === 'sin_whatsapp' && SIN_WHATSAPP_KEYWORDS.some(k => k.includes(filtro) || filtro.includes(k))) ||
+      (ESTADOS_INFO[h.seguimiento || 'pendiente'].label.toLowerCase().includes(filtro))
     );
   }
 
