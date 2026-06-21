@@ -1091,12 +1091,13 @@ async function procesar(){
       const btnRespondioRep = entry && !yaRespondio
         ? `<button class="btn-done btn-respondio" onclick="marcarRespondioDirecto('${numKeyRep}','${fechaKeyRep}', this)">✅ Respondió</button>`
         : (yaRespondio ? `<span class="badge-rojo" style="background:#2196F3">✅ Ya respondió</span>` : '');
+      const quienRep = entry && entry.autor_nombre ? escaparHtml(entry.autor_nombre) : 'sin registrar';
       let badge, extra = '';
       if (entry && entry.metodo === 'sin_whatsapp'){
         if (entry.sms_enviado){
-          badge = `📵📩 Sin WhatsApp · SMS enviado ${new Date(entry.fecha_sms).toLocaleDateString('es-MX')}`;
+          badge = `📵📩 Sin WhatsApp · SMS enviado ${new Date(entry.fecha_sms).toLocaleDateString('es-MX')} · 📲 ${quienRep}`;
         } else {
-          badge = '📵 Sin WhatsApp · sin SMS aún';
+          badge = `📵 Sin WhatsApp · sin SMS aún · 📲 ${quienRep}`;
           extra = `
             <div class="lead-actions">
               <a class="btn-sms" href="#" onclick="return abrirSmsDirecto('${n.numero}','${catRepetido}','${nombreRep}', this)">📩 Enviar SMS</a>
@@ -1105,7 +1106,7 @@ async function procesar(){
         }
       } else {
         const fecha = entry ? new Date(entry.fecha_contacto).toLocaleDateString('es-MX') : '-';
-        badge = `🔁 Ya contactado por WhatsApp el ${fecha}`;
+        badge = `🔁 Ya contactado por WhatsApp el ${fecha} · 📲 ${quienRep}`;
         extra = `
           <div class="lead-actions">
             <a class="btn-wa" href="#" onclick="return abrirWhatsAppDirecto('${n.numero}','${catRepetido}','${nombreRep}', this)">💬 Reenviar WhatsApp</a>
