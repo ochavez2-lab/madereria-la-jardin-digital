@@ -1865,17 +1865,32 @@ function reproducirSonidoAviso(){
   try {
     inicializarAudioAviso();
     const ctx = __audioCtxAviso;
-    if (!ctx || ctx.state === 'suspended') return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.value = 0.15;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    setTimeout(() => { osc.stop(); }, 220);
-    setTimeout(() => { osc.frequency.value = 660; }, 130);
+    if (!ctx) return;
+    const tocar = () => {
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.value = 0.15;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); }, 220);
+        setTimeout(() => { osc.frequency.value = 660; }, 130);
+      } catch (e){}
+    };
+    // ctx.resume() es asíncrono: si justo llegó el aviso antes de que el
+    // resume() de inicializarAudioAviso() terminara, el estado todavía
+    // reporta "suspended" en este instante aunque sí vaya a despertar —
+    // por eso antes se perdía el sonido (el banner naranja sí aparecía,
+    // pero nunca sonaba). Aquí esperamos a que el resume() de verdad
+    // termine antes de decidir si se toca o no.
+    if (ctx.state === 'suspended'){
+      ctx.resume().then(tocar).catch(() => {});
+    } else {
+      tocar();
+    }
   } catch (e){}
 }
 
