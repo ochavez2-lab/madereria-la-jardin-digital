@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Leads → WhatsApp · La Jardín</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1632/1632662.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
 <style>
 :root{--gold:#d7f000;--gold2:#f5ff5c;--dark:#0f0f0f;--bg:#f7f4ef;--border:#e8e0d0;--text:#1a1a1a;--muted:#888;--blue:#3b82f6;--purple:#8b5cf6;--green:#16a34a;--page-bg:linear-gradient(160deg,#fdf9f0,#f4ecdb 45%,#ede2c9);--card-bg:#fff;--ctx-bg:#f7f4ef;--repetido-bg:#fff6f6;--acc1:var(--gold);--acc2:var(--gold2);--acc-ink:#2b2014;--acc-ink2:#5c4a1f;--acc-text:#111}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -102,8 +107,8 @@ textarea:focus{border-color:var(--acc1)}
 .notif-mensajes button.ir{background:#1a1410;color:#fff}
 .notif-mensajes button.ignorar{background:#fff;color:#1a1410}
 
-.stage-tabs{display:flex;gap:8px;margin-bottom:14px}
-.stage-tab{flex:1;background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 6px;font-size:12px;font-weight:800;cursor:pointer}
+.stage-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stage-tab{background:var(--card-bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:9px 4px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.25}
 .stage-tab.activo{background:linear-gradient(135deg,var(--acc1),var(--acc2));color:var(--acc-text);border-color:transparent}
 
 .tareas-circulos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -173,7 +178,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab" id="tabStage3" onclick="mostrarStage(3)">3. Empleado</button>
     <button class="stage-tab" id="tabStage4" onclick="mostrarStage(4)">4. Verificar</button>
     <button class="stage-tab" id="tabStage5" onclick="mostrarStage(5)">5. Mensajes</button>
-    <button class="stage-tab" id="tabStage6" onclick="mostrarStage(6)">6. Notificaciones y reglas</button>
+    <button class="stage-tab" id="tabStage6" onclick="mostrarStage(6)">6. Avisos y reglas</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -1956,8 +1961,27 @@ function convertirClaveVapid(base64String){
   return outputArray;
 }
 
+// En iPhone/iPad, Safari SOLO permite notificaciones push si la página está
+// instalada como app desde la pantalla de inicio (iOS 16.4+) — abierta
+// dentro de una pestaña normal de Safari, ni el permiso ni el push existen,
+// por eso ahí siempre va a fallar aunque el celular sea reciente.
+function esIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+function esAppInstalada(){
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+
 async function activarNotificacionesPush(){
   const estado = document.getElementById('estadoPush');
+  if (esIOS() && !esAppInstalada()){
+    estado.innerHTML = '📱 En iPhone/iPad, Apple solo permite las notificaciones si agregas esta página a tu pantalla de inicio (no funciona dentro de Safari normal):<br><br>' +
+      '1️⃣ Toca el botón de compartir <b>⬆️</b> (abajo o arriba de Safari)<br>' +
+      '2️⃣ Elige <b>"Agregar a pantalla de inicio"</b><br>' +
+      '3️⃣ Abre la app desde el ícono nuevo en tu pantalla (no desde Safari)<br>' +
+      '4️⃣ Ahí entra a esta misma pestaña y pícale otra vez a este botón';
+    return;
+  }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)){
     estado.textContent = '😕 Este navegador no soporta notificaciones push.';
     return;
@@ -1994,7 +2018,9 @@ async function activarNotificacionesPush(){
 function actualizarEstadoPush(){
   const estado = document.getElementById('estadoPush');
   if (!estado) return;
-  if (!('Notification' in window)){
+  if (esIOS() && !esAppInstalada()){
+    estado.innerHTML = '📱 En este iPhone/iPad falta agregar la página a la pantalla de inicio antes de poder activarlas — pícale al botón de arriba para ver cómo.';
+  } else if (!('Notification' in window)){
     estado.textContent = '😕 Este navegador no soporta notificaciones.';
   } else if (Notification.permission === 'denied'){
     estado.textContent = '🚫 Las notificaciones están bloqueadas para esta página en los ajustes del navegador.';
