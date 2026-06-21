@@ -1812,12 +1812,37 @@ function registrarMensajesIdentidad(){
   actualizarResumenSticky();
 }
 
-function cambiarMensajesIdentidad(){
-  localStorage.removeItem('lj_chat_nombre');
-  localStorage.removeItem('lj_chat_numero');
+// Cambiar el nombre registrado NO debe borrar lo que ya contactaste con el
+// nombre anterior — antes lo borraba todo (quitaba lj_chat_nombre) y dejaba
+// el nombre viejo "huérfano" pegado en el historial/ranking como si fuera
+// otra persona, mientras el nombre nuevo arrancaba en 0. Por eso esto ahora
+// es un renombrado: se actualiza el autor en todo lo que ya quedó guardado
+// (local y en el servidor), tanto del historial de leads como de mensajes.
+async function cambiarMensajesIdentidad(){
+  const actual = obtenerMensajesIdentidad();
+  const nombreNuevo = (prompt('Tu nuevo nombre:', actual.nombre || '') || '').trim();
+  if (!nombreNuevo) return;
+  const numeroNuevo = (prompt('Tu número de celular (opcional):', actual.numero || '') || '').trim();
+
+  if (actual.nombre && nombreNuevo !== actual.nombre){
+    const historial = getHistorial();
+    let cambios = false;
+    historial.forEach(h => { if (h.autor_nombre === actual.nombre){ h.autor_nombre = nombreNuevo; cambios = true; } });
+    if (cambios) saveHistorial(historial);
+    try {
+      await fetch(RAILWAY_URL + '/api/renombrar-autor', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombreAnterior: actual.nombre, nombreNuevo: nombreNuevo })
+      });
+    } catch (e) {}
+  }
+
+  localStorage.setItem('lj_chat_nombre', nombreNuevo);
+  localStorage.setItem('lj_chat_numero', numeroNuevo);
   renderMensajesEntrada();
   actualizarBienvenida();
   actualizarResumenSticky();
+  syncHistorial();
 }
 
 // Letrero arriba de todo con el nombre registrado en este celular/navegador,
