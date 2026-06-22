@@ -601,6 +601,27 @@ async function syncHistorial(){
     var ctrl = new AbortController();
     var timer = setTimeout(function(){ ctrl.abort(); }, 20000);
 
+    // Paso 0: bajar qué se eliminó en OTROS dispositivos. Sin esto, un
+    // celular que ya tenía un contacto guardado ANTES de que se borrara en
+    // otro lado nunca se entera del borrado, y como su localStorage sigue
+    // teniendo esa entrada, el Paso 2 la vuelve a subir como si fuera nueva
+    // cada vez que sincroniza (cada 10s) — el contacto "revive" solo.
+    var rd = await fetch(RAILWAY_URL+'/api/eliminados', {signal:ctrl.signal});
+    if (rd.ok){
+      var eliminadosRemotos = await rd.json();
+      eliminadosRemotos.forEach(function(d){
+        if (d && d.numero && d.fecha_contacto) marcarComoEliminado(d.numero, d.fecha_contacto);
+      });
+      var antesDePurgar = local.length;
+      local = local.filter(function(h){ return !fueEliminado(h.numero, h.fecha_contacto); });
+      if (local.length !== antesDePurgar){
+        saveHistorial(local);
+        actualizarContadorHistorial();
+        var histBox = document.getElementById('historialBox');
+        if (histBox && histBox.style.display !== 'none') renderHistorialList();
+      }
+    }
+
     // Paso 1: Obtener claves de Railway
     var rk = await fetch(RAILWAY_URL+'/api/keys', {signal:ctrl.signal});
     if (!rk.ok){ clearTimeout(timer); return 'E'+rk.status; }
@@ -608,7 +629,7 @@ async function syncHistorial(){
     var sbSet = new Set(sbKeys.map(function(h){ return h.numero+'|'+h.fecha_contacto; }));
 
     // Paso 2: Subir entradas nuevas
-    var toPost = local.filter(function(e){ return e&&e.numero&&e.fecha_contacto&&!sbSet.has(e.numero+'|'+e.fecha_contacto); });
+    var toPost = local.filter(function(e){ return e&&e.numero&&e.fecha_contacto&&!sbSet.has(e.numero+'|'+e.fecha_contacto)&&!fueEliminado(e.numero, e.fecha_contacto); });
     if (toPost.length > 0){
       var rows = toPost.map(function(e){
         return {numero:e.numero, categoria:e.categoria||null, fecha_pub:e.fecha_pub||null,
