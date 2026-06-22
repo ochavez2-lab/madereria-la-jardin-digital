@@ -87,6 +87,21 @@ pool.query(`
   )
 `).catch(console.error);
 
+// Publicaciones de Facebook (u otros grupos) de donde salen los leads,
+// guardadas para todo el equipo a lo largo del día, para no tener que
+// volver a buscar el post original cuando alguien quiere revisarlo.
+pool.query(`
+  CREATE TABLE IF NOT EXISTS publicaciones (
+    id BIGSERIAL PRIMARY KEY,
+    dispositivo_id TEXT NOT NULL,
+    autor_nombre TEXT,
+    url TEXT NOT NULL,
+    categoria TEXT,
+    nota TEXT,
+    fecha TEXT NOT NULL
+  )
+`).catch(console.error);
+
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
 app.get('/api/keys', async (req, res) => {
@@ -337,6 +352,37 @@ app.post('/api/mensajes/completar', async (req, res) => {
   if (!id) return res.status(400).json({ error: 'faltan datos' });
   try {
     await pool.query('UPDATE mensajes_equipo SET completado=$1 WHERE id=$2', [!!completado, id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/publicaciones', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, dispositivo_id, autor_nombre, url, categoria, nota, fecha FROM publicaciones ORDER BY fecha DESC LIMIT 300'
+    );
+    res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/publicaciones', async (req, res) => {
+  const { dispositivo_id, autor_nombre, url, categoria, nota, fecha } = req.body || {};
+  if (!dispositivo_id || !url || !fecha) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    const r = await pool.query(
+      `INSERT INTO publicaciones (dispositivo_id, autor_nombre, url, categoria, nota, fecha)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+      [dispositivo_id, autor_nombre || null, url, categoria || null, nota || null, fecha]
+    );
+    res.json({ ok: true, id: r.rows[0].id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/publicaciones/eliminar', async (req, res) => {
+  const { id, dispositivo_id } = req.body || {};
+  if (!id || !dispositivo_id) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query('DELETE FROM publicaciones WHERE id=$1 AND dispositivo_id=$2', [id, dispositivo_id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

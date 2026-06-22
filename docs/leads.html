@@ -184,6 +184,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab" id="tabStage4" onclick="mostrarStage(4)">4. Verificar</button>
     <button class="stage-tab" id="tabStage5" onclick="mostrarStage(5)">5. Mensajes</button>
     <button class="stage-tab" id="tabStage6" onclick="mostrarStage(6)">6. Avisos y reglas</button>
+    <button class="stage-tab" id="tabStage7" onclick="mostrarStage(7)">7. Publicaciones</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -367,8 +368,26 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
         <li><b>4. Verificar:</b> revisa rápido si un número o texto ya fue contactado antes, para no duplicar.</li>
         <li><b>5. Mensajes:</b> tablero compartido del equipo para avisos y listas, sincronizado en tiempo real en todos los celulares.</li>
         <li><b>6. Notificaciones y reglas:</b> esta pantalla — activa las notificaciones y consulta las reglas del grupo cuando lo necesites.</li>
+        <li><b>7. Publicaciones:</b> guarda el link de la publicación de Facebook de donde sacaste los números, para tenerla a la mano todo el día sin tener que buscarla otra vez.</li>
       </ol>
     </div>
+
+  </div>
+
+  <div id="stage7" style="display:none">
+
+    <div class="section acc-blue">
+      <h2>📌 Guardar publicación</h2>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Pega aquí el link de la publicación de Facebook (u otro grupo) de donde sacaste los números, para tenerla a la mano todo el día y poder regresar a verla sin tener que buscarla otra vez. Se guarda para todo el equipo, en cualquier celular.</p>
+      <input type="url" id="publicacionLinkInput" placeholder="Pega el link de la publicación (https://...)" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+      <select id="publicacionCategoriaInput" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box"></select>
+      <input type="text" id="publicacionNotaInput" placeholder="Nota (opcional, ej. 'grupo de albañiles')" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+      <button class="btn-main" onclick="guardarPublicacion()">📌 Guardar publicación</button>
+    </div>
+
+    <div class="historial-toggle" onclick="cargarPublicaciones()">🔄 Actualizar publicaciones</div>
+    <div id="publicacionesFiltro" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+    <div id="publicacionesLista"></div>
 
   </div>
 
@@ -1718,12 +1737,14 @@ function mostrarStage(n){
   document.getElementById('stage4').style.display = n === 4 ? 'block' : 'none';
   document.getElementById('stage5').style.display = n === 5 ? 'block' : 'none';
   document.getElementById('stage6').style.display = n === 6 ? 'block' : 'none';
+  document.getElementById('stage7').style.display = n === 7 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
   document.getElementById('tabStage3').classList.toggle('activo', n === 3);
   document.getElementById('tabStage4').classList.toggle('activo', n === 4);
   document.getElementById('tabStage5').classList.toggle('activo', n === 5);
   document.getElementById('tabStage6').classList.toggle('activo', n === 6);
+  document.getElementById('tabStage7').classList.toggle('activo', n === 7);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -1737,6 +1758,7 @@ function mostrarStage(n){
     ocultarNotifMensajes();
   }
   if (n === 6) actualizarEstadoPush();
+  if (n === 7) cargarPublicaciones();
 }
 
 // Pestaña 4: solo CHECA si los números de un texto ya están en el historial
@@ -2227,6 +2249,158 @@ async function borrarMensaje(id){
       body: JSON.stringify({ id: id, dispositivo_id: obtenerDispositivoId() })
     });
     cargarMensajes();
+  } catch (e){
+    alert('No se pudo borrar, revisa tu conexión.');
+  }
+}
+
+function escaparAtributo(s){
+  return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Solo se vuelve link clicable si de verdad empieza con http(s) — evita que
+// alguien pegue algo tipo "javascript:..." y quede convertido en un link
+// clicable peligroso para el resto del equipo que lo vea en su celular.
+function esLinkSeguro(url){
+  return /^https?:\/\//i.test(url || '');
+}
+
+function renderSelectorCategoriaPublicacion(){
+  const sel = document.getElementById('publicacionCategoriaInput');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">📦 Sin categoría</option>' +
+    Object.keys(CATEGORIA_LABEL).map(c => `<option value="${c}">${CATEGORIA_LABEL[c]}</option>`).join('');
+}
+
+async function guardarPublicacion(){
+  const input = document.getElementById('publicacionLinkInput');
+  const url = input.value.trim();
+  if (!url){ alert('Pega el link de la publicación primero 👆'); return; }
+  if (!esLinkSeguro(url)){ alert('El link debe empezar con http:// o https://'); return; }
+  const categoria = document.getElementById('publicacionCategoriaInput').value;
+  const nota = document.getElementById('publicacionNotaInput').value.trim();
+  const id = obtenerMensajesIdentidad();
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/publicaciones', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dispositivo_id: obtenerDispositivoId(),
+        autor_nombre: id.nombre || null,
+        url: url, categoria: categoria || null, nota: nota || null,
+        fecha: new Date().toISOString()
+      })
+    });
+    if (!r.ok) throw new Error('E' + r.status);
+    input.value = '';
+    document.getElementById('publicacionNotaInput').value = '';
+    document.getElementById('publicacionCategoriaInput').value = '';
+    cargarPublicaciones();
+  } catch (e){
+    alert('No se pudo guardar, revisa tu conexión e intenta de nuevo 🙏');
+  }
+}
+
+let publicacionesFiltroActivo = 'todas';
+
+async function cargarPublicaciones(){
+  const lista = document.getElementById('publicacionesLista');
+  lista.innerHTML = '<div class="empty">🔄 Cargando publicaciones...</div>';
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/publicaciones');
+    if (!r.ok) throw new Error('E' + r.status);
+    const publicaciones = await r.json();
+    window.__publicacionesData = publicaciones || [];
+    renderFiltroPublicaciones();
+    aplicarFiltroPublicaciones();
+  } catch (e){
+    lista.innerHTML = '<div class="empty">⚠️ No se pudieron cargar las publicaciones, revisa tu conexión.</div>';
+  }
+}
+
+function renderFiltroPublicaciones(){
+  const box = document.getElementById('publicacionesFiltro');
+  if (!box) return;
+  const pubs = window.__publicacionesData || [];
+  const categoriasPresentes = [...new Set(pubs.map(p => p.categoria).filter(Boolean))];
+  const chip = (valor, label) => {
+    const activo = publicacionesFiltroActivo === valor;
+    return `<button onclick="filtrarPublicaciones('${valor}')" style="font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid #ccc;cursor:pointer;background:${activo ? '#1a1410' : '#fff'};color:${activo ? '#fff' : '#333'}">${label}</button>`;
+  };
+  box.innerHTML = chip('todas', '📋 Todas') +
+    categoriasPresentes.map(c => chip(c, CATEGORIA_LABEL[c] || c)).join('');
+}
+
+function filtrarPublicaciones(cat){
+  publicacionesFiltroActivo = cat;
+  renderFiltroPublicaciones();
+  aplicarFiltroPublicaciones();
+}
+
+function aplicarFiltroPublicaciones(){
+  const pubs = window.__publicacionesData || [];
+  const filtradas = publicacionesFiltroActivo === 'todas'
+    ? pubs
+    : pubs.filter(p => p.categoria === publicacionesFiltroActivo);
+  renderListaPublicaciones(filtradas);
+}
+
+function renderListaPublicaciones(pubs){
+  const lista = document.getElementById('publicacionesLista');
+  if (!pubs || pubs.length === 0){
+    lista.innerHTML = '<div class="empty">Todavía no hay publicaciones guardadas 🤷</div>';
+    return;
+  }
+  const miDispositivo = obtenerDispositivoId();
+  let html = '';
+  let diaAnterior = null;
+  pubs.forEach(p => {
+    const fecha = new Date(p.fecha);
+    const diaKey = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    if (diaKey !== diaAnterior){
+      html += `<div class="empty" style="padding:10px 0 4px;border-top:2px dashed #ccc;margin-top:10px">📅 ${diaKey}</div>`;
+      diaAnterior = diaKey;
+    }
+    const hora = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const quien = p.autor_nombre ? escaparHtml(p.autor_nombre) + ' · ' : '';
+    const catBadge = p.categoria ? `<span class="badge-completada">${CATEGORIA_LABEL[p.categoria] || escaparHtml(p.categoria)}</span>` : '';
+    const linkHtml = esLinkSeguro(p.url)
+      ? `<a href="${escaparAtributo(p.url)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all">${escaparHtml(p.url)}</a>`
+      : `<span style="word-break:break-all;color:#999">${escaparHtml(p.url)}</span>`;
+    const esMia = p.dispositivo_id === miDispositivo;
+    const btnBorrar = esMia ? `<button class="btn-sinwa" onclick="eliminarPublicacion(${p.id})">🗑️ Borrar</button>` : '';
+    html += `
+      <div class="lead-card">
+        <div style="font-size:12px;font-weight:700">📌 ${quien}<span style="font-weight:400;color:#999">${hora}</span> ${catBadge}</div>
+        <div style="font-size:13px;margin:4px 0">${linkHtml}</div>
+        ${p.nota ? `<div style="font-size:12px;color:#666;margin:2px 0">📝 ${escaparHtml(p.nota)}</div>` : ''}
+        <div class="lead-actions">
+          <button class="btn-done" onclick="copiarLinkPublicacion('${escaparAtributo(p.url)}', this)">📋 Copiar link</button>
+          ${btnBorrar}
+        </div>
+      </div>`;
+  });
+  lista.innerHTML = html;
+}
+
+async function copiarLinkPublicacion(url, btn){
+  try {
+    await navigator.clipboard.writeText(url);
+    const original = btn.textContent;
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (e){
+    alert('No se pudo copiar automático, selecciona y copia el link manualmente.');
+  }
+}
+
+async function eliminarPublicacion(id){
+  if (!confirm('¿Borrar esta publicación?')) return;
+  try {
+    await fetch(RAILWAY_URL + '/api/publicaciones/eliminar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, dispositivo_id: obtenerDispositivoId() })
+    });
+    cargarPublicaciones();
   } catch (e){
     alert('No se pudo borrar, revisa tu conexión.');
   }
@@ -3192,6 +3366,7 @@ function descargarBackup(){
 }
 
 actualizarBienvenida();
+renderSelectorCategoriaPublicacion();
 reclasificarHistorialAntiguo();
 autoExpirarPendientes();
 actualizarContadorHistorial();
