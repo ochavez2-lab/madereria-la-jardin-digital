@@ -2037,13 +2037,25 @@ function renderCuentaRapidaMenu(){
   box.innerHTML = '<div style="font-weight:900;margin-bottom:10px;font-size:15px">🔄 Cambiar de cuenta</div>';
 
   perfiles.forEach(function(p, i){
+    const fila = document.createElement('div');
+    fila.style.cssText = 'display:flex;gap:6px;margin-bottom:6px';
+
     const btn = document.createElement('button');
     const activo = p.nombre === actual.nombre;
     const tipoTxt = p.tipo ? (' · 📱 ' + p.tipo) : '';
     btn.textContent = (activo ? '✅ ' : '👤 ') + p.nombre + tipoTxt;
-    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid #ccc;background:' + (activo ? '#e8f5e9' : '#fff') + ';font-size:14px;cursor:pointer';
+    btn.style.cssText = 'flex:1;text-align:left;padding:10px;border-radius:8px;border:1px solid #ccc;background:' + (activo ? '#e8f5e9' : '#fff') + ';font-size:14px;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis';
     btn.onclick = function(){ cambiarCuentaActiva(String(i)); modal.remove(); };
-    box.appendChild(btn);
+    fila.appendChild(btn);
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Editar nombre/número de esta cuenta';
+    editBtn.style.cssText = 'padding:10px 12px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:14px;cursor:pointer';
+    editBtn.onclick = function(){ editarPerfil(i); };
+    fila.appendChild(editBtn);
+
+    box.appendChild(fila);
   });
 
   const addBtn = document.createElement('button');
@@ -2059,9 +2071,24 @@ function renderCuentaRapidaMenu(){
 // Cambiar el nombre registrado NO debe borrar lo que ya contactaste con el
 // nombre anterior — antes lo borraba todo (quitaba lj_chat_nombre) y dejaba
 // el nombre viejo "huérfano" pegado en el historial/ranking como si fuera
-// otra persona, mientras el nombre nuevo arrancaba en 0. Por eso esto ahora
-// es un renombrado: se actualiza el autor en todo lo que ya quedó guardado
-// (local y en el servidor), tanto del historial de leads como de mensajes.
+// otra persona, mientras el nombre nuevo arrancaba en 0. Por eso esto migra
+// el autor en todo lo que ya quedó guardado (local y en el servidor), tanto
+// del historial de leads como de mensajes. La usan tanto "✏️ Cambiar mi
+// nombre" (la cuenta activa) como "✏️ Editar" de cualquier cuenta guardada.
+async function migrarAutorEnHistorial(nombreAnterior, nombreNuevo){
+  if (!nombreAnterior || nombreAnterior === nombreNuevo) return;
+  const historial = getHistorial();
+  let cambios = false;
+  historial.forEach(h => { if (h.autor_nombre === nombreAnterior){ h.autor_nombre = nombreNuevo; cambios = true; } });
+  if (cambios) saveHistorial(historial);
+  try {
+    await fetch(RAILWAY_URL + '/api/renombrar-autor', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombreAnterior: nombreAnterior, nombreNuevo: nombreNuevo })
+    });
+  } catch (e) {}
+}
+
 async function cambiarMensajesIdentidad(){
   const actual = obtenerMensajesIdentidad();
   const nombreNuevo = (prompt('Tu nuevo nombre:', actual.nombre || '') || '').trim();
@@ -2070,16 +2097,7 @@ async function cambiarMensajesIdentidad(){
 
   let tipoActual = '';
   if (actual.nombre && nombreNuevo !== actual.nombre){
-    const historial = getHistorial();
-    let cambios = false;
-    historial.forEach(h => { if (h.autor_nombre === actual.nombre){ h.autor_nombre = nombreNuevo; cambios = true; } });
-    if (cambios) saveHistorial(historial);
-    try {
-      await fetch(RAILWAY_URL + '/api/renombrar-autor', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombreAnterior: actual.nombre, nombreNuevo: nombreNuevo })
-      });
-    } catch (e) {}
+    await migrarAutorEnHistorial(actual.nombre, nombreNuevo);
     const perfilAnterior = obtenerPerfilesGuardados().find(p => p.nombre === actual.nombre);
     tipoActual = (perfilAnterior && perfilAnterior.tipo) || '';
     const perfiles = obtenerPerfilesGuardados().filter(p => p.nombre !== actual.nombre);
@@ -2093,6 +2111,41 @@ async function cambiarMensajesIdentidad(){
   actualizarBienvenida();
   actualizarResumenSticky();
   syncHistorial();
+}
+
+// Edita CUALQUIER cuenta guardada (no solo la que está activa en este
+// momento) — por ejemplo cuando se perdió el chip y cambió el número, pero
+// el nombre se queda igual. Se abre con el lápiz ✏️ junto a cada cuenta en
+// el menú "🔄 Cambiar de cuenta".
+async function editarPerfil(i){
+  const perfiles = obtenerPerfilesGuardados();
+  const perfil = perfiles[i];
+  if (!perfil) return;
+  const nombreNuevo = (prompt('Nombre de la cuenta:', perfil.nombre) || '').trim();
+  if (!nombreNuevo) return;
+  const numeroNuevo = (prompt('Número de celular (opcional):', perfil.numero || '') || '').trim();
+  const tipoNuevo = preguntarTipoWhatsapp(perfil.tipo);
+
+  const eraActiva = perfil.nombre === obtenerMensajesIdentidad().nombre;
+  if (nombreNuevo !== perfil.nombre){
+    await migrarAutorEnHistorial(perfil.nombre, nombreNuevo);
+    const restantes = obtenerPerfilesGuardados().filter(p => p.nombre !== perfil.nombre);
+    localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(restantes));
+  }
+  guardarPerfilEnLista(nombreNuevo, numeroNuevo, tipoNuevo);
+
+  if (eraActiva){
+    localStorage.setItem('lj_chat_nombre', nombreNuevo);
+    localStorage.setItem('lj_chat_numero', numeroNuevo);
+    renderMensajesEntrada();
+    actualizarBienvenida();
+    actualizarResumenSticky();
+    if (nombreNuevo !== perfil.nombre) syncHistorial();
+  }
+
+  const modal = document.getElementById('cuentaRapidaModal');
+  if (modal){ modal.remove(); renderCuentaRapidaMenu(); }
+  renderSelectorCuentas();
 }
 
 // Letrero arriba de todo con el nombre registrado en este celular/navegador,
