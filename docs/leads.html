@@ -163,7 +163,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <span>🔍 Tamaño de texto</span>
     <button onclick="cambiarZoom(1)">A+</button>
   </div>
-  <span id="resumenSticky" style="font-weight:800"></span>
+  <span id="resumenSticky" onclick="toggleCuentaRapidaMenu()" style="font-weight:800;cursor:pointer;text-decoration:underline"></span>
 </div>
 <div class="theme-bar" id="themeBar"></div>
 <div class="notif-mensajes" id="notifMensajesBanner"></div>
@@ -1708,7 +1708,7 @@ function actualizarResumenSticky(){
   if (!el) return;
   const nombre = obtenerMensajesIdentidad().nombre;
   const hoy = contactadosHoyPropio();
-  el.textContent = (nombre ? `👤 ${nombre} · ` : '') + `✅ ${hoy} hoy`;
+  el.textContent = (nombre ? `👤 ${nombre} 🔄 · ` : '') + `✅ ${hoy} hoy`;
 }
 
 function mostrarStage(n){
@@ -1905,13 +1905,26 @@ const LS_PERFILES_KEY = 'lj_chat_perfiles';
 function obtenerPerfilesGuardados(){
   try { return JSON.parse(localStorage.getItem(LS_PERFILES_KEY)) || []; } catch(e){ return []; }
 }
-function guardarPerfilEnLista(nombre, numero){
+function guardarPerfilEnLista(nombre, numero, tipo){
   if (!nombre) return;
   const perfiles = obtenerPerfilesGuardados();
   const existente = perfiles.find(p => p.nombre === nombre);
-  if (existente) existente.numero = numero || existente.numero;
-  else perfiles.push({ nombre, numero: numero || '' });
+  if (existente){
+    existente.numero = numero || existente.numero;
+    if (tipo) existente.tipo = tipo;
+  }
+  else perfiles.push({ nombre, numero: numero || '', tipo: tipo || '' });
   localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
+}
+
+// Pregunta cuál WhatsApp corresponde a esta cuenta (Normal/Business/otro).
+// OJO: esto es solo un RECORDATORIO visual — un sitio web no puede forzar
+// que el celular abra un WhatsApp específico en vez de otro (eso lo decide
+// el sistema operativo), así que esto no cambia cuál app abre el botón
+// "Abrir WhatsApp", solo le avisa a la persona cuál debería usar a mano.
+function preguntarTipoWhatsapp(valorPrevio){
+  const tipo = (prompt('¿Qué WhatsApp es esta cuenta? Escribe: normal, business, u otro', valorPrevio || 'normal') || '').trim();
+  return tipo;
 }
 
 function renderSelectorCuentas(){
@@ -1920,7 +1933,7 @@ function renderSelectorCuentas(){
   const actual = obtenerMensajesIdentidad();
   const perfiles = obtenerPerfilesGuardados();
   sel.innerHTML = perfiles.map((p, i) =>
-    `<option value="${i}"${p.nombre === actual.nombre ? ' selected' : ''}>👤 ${escaparHtml(p.nombre)}</option>`
+    `<option value="${i}"${p.nombre === actual.nombre ? ' selected' : ''}>👤 ${escaparHtml(p.nombre)}${p.tipo ? ' · 📱 ' + escaparHtml(p.tipo) : ''}</option>`
   ).join('') + `<option value="nueva">➕ Agregar otra cuenta</option>`;
 }
 
@@ -1944,7 +1957,8 @@ function agregarNuevaCuenta(){
   const nombre = (prompt('Nombre de la nueva cuenta:') || '').trim();
   if (!nombre){ renderSelectorCuentas(); return; }
   const numero = (prompt('Número de celular (opcional):') || '').trim();
-  guardarPerfilEnLista(nombre, numero);
+  const tipo = preguntarTipoWhatsapp();
+  guardarPerfilEnLista(nombre, numero, tipo);
   localStorage.setItem('lj_chat_nombre', nombre);
   localStorage.setItem('lj_chat_numero', numero);
   renderMensajesEntrada();
@@ -1956,12 +1970,54 @@ function registrarMensajesIdentidad(){
   const nombre = document.getElementById('mensajesNombreInput').value.trim();
   const numero = document.getElementById('mensajesNumeroInput').value.trim();
   if (!nombre){ alert('Escribe tu nombre primero 👆'); return; }
-  guardarPerfilEnLista(nombre, numero);
+  const tipo = preguntarTipoWhatsapp();
+  guardarPerfilEnLista(nombre, numero, tipo);
   localStorage.setItem('lj_chat_nombre', nombre);
   localStorage.setItem('lj_chat_numero', numero);
   renderMensajesEntrada();
   actualizarBienvenida();
   actualizarResumenSticky();
+}
+
+// Menú rápido para cambiar de cuenta desde CUALQUIER pestaña (1 a 6), no
+// solo desde "5. Mensajes" — se abre tocando el letrero "👤 Nombre · ✅ N
+// hoy" que siempre está fijo arriba.
+function toggleCuentaRapidaMenu(){
+  const existente = document.getElementById('cuentaRapidaModal');
+  if (existente){ existente.remove(); return; }
+  renderCuentaRapidaMenu();
+}
+
+function renderCuentaRapidaMenu(){
+  const actual = obtenerMensajesIdentidad();
+  const perfiles = obtenerPerfilesGuardados();
+  const modal = document.createElement('div');
+  modal.id = 'cuentaRapidaModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = function(e){ if (e.target === modal) modal.remove(); };
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;padding:16px;max-width:320px;width:100%;max-height:80vh;overflow:auto';
+  box.innerHTML = '<div style="font-weight:900;margin-bottom:10px;font-size:15px">🔄 Cambiar de cuenta</div>';
+
+  perfiles.forEach(function(p, i){
+    const btn = document.createElement('button');
+    const activo = p.nombre === actual.nombre;
+    const tipoTxt = p.tipo ? (' · 📱 ' + p.tipo) : '';
+    btn.textContent = (activo ? '✅ ' : '👤 ') + p.nombre + tipoTxt;
+    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;margin-bottom:6px;border-radius:8px;border:1px solid #ccc;background:' + (activo ? '#e8f5e9' : '#fff') + ';font-size:14px;cursor:pointer';
+    btn.onclick = function(){ cambiarCuentaActiva(String(i)); modal.remove(); };
+    box.appendChild(btn);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.textContent = '➕ Agregar otra cuenta';
+  addBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:1px dashed #999;background:#fafafa;font-size:14px;cursor:pointer';
+  addBtn.onclick = function(){ modal.remove(); agregarNuevaCuenta(); };
+  box.appendChild(addBtn);
+
+  modal.appendChild(box);
+  document.body.appendChild(modal);
 }
 
 // Cambiar el nombre registrado NO debe borrar lo que ya contactaste con el
@@ -1976,6 +2032,7 @@ async function cambiarMensajesIdentidad(){
   if (!nombreNuevo) return;
   const numeroNuevo = (prompt('Tu número de celular (opcional):', actual.numero || '') || '').trim();
 
+  let tipoActual = '';
   if (actual.nombre && nombreNuevo !== actual.nombre){
     const historial = getHistorial();
     let cambios = false;
@@ -1987,11 +2044,13 @@ async function cambiarMensajesIdentidad(){
         body: JSON.stringify({ nombreAnterior: actual.nombre, nombreNuevo: nombreNuevo })
       });
     } catch (e) {}
+    const perfilAnterior = obtenerPerfilesGuardados().find(p => p.nombre === actual.nombre);
+    tipoActual = (perfilAnterior && perfilAnterior.tipo) || '';
     const perfiles = obtenerPerfilesGuardados().filter(p => p.nombre !== actual.nombre);
     localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
   }
 
-  guardarPerfilEnLista(nombreNuevo, numeroNuevo);
+  guardarPerfilEnLista(nombreNuevo, numeroNuevo, tipoActual);
   localStorage.setItem('lj_chat_nombre', nombreNuevo);
   localStorage.setItem('lj_chat_numero', numeroNuevo);
   renderMensajesEntrada();
