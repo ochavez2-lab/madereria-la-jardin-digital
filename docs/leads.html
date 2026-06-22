@@ -391,9 +391,31 @@ function fueEliminado(numero, fecha_contacto){
   return getDeletedKeys().includes(numero+'|'+fecha_contacto);
 }
 
+// El cronómetro y el aviso de "mensaje nuevo" son sticky (top:0) igual que
+// la barra de zoom, así que al hacer scroll los tres se quedan pegados
+// exactamente en el mismo lugar — uno tapando al otro, y como la barra de
+// zoom va primero en el HTML (z-index más alto), el cronómetro quedaba
+// escondido detrás de ella en cuanto bajabas en la página. Aquí se calcula
+// cuánto mide lo que va ARRIBA de cada barra y se usa como su "top", para
+// que se acomoden una abajo de otra en vez de encimarse.
+function ajustarOffsetsSticky(){
+  const zoomBar = document.querySelector('.zoom-bar');
+  const notifBanner = document.getElementById('notifMensajesBanner');
+  const cronometro = document.getElementById('cronometroEnvio');
+  if (!zoomBar) return;
+  const alturaZoom = zoomBar.offsetHeight;
+  if (notifBanner) notifBanner.style.top = alturaZoom + 'px';
+  if (cronometro){
+    const notifVisible = notifBanner && notifBanner.style.display !== 'none' && notifBanner.offsetHeight > 0;
+    cronometro.style.top = (alturaZoom + (notifVisible ? notifBanner.offsetHeight : 0)) + 'px';
+  }
+}
+window.addEventListener('resize', ajustarOffsetsSticky);
+
 function aplicarZoom(){
   const s = parseFloat(localStorage.getItem('lj_zoom') || '1');
   document.body.style.zoom = s;
+  ajustarOffsetsSticky();
 }
 function cambiarZoom(dir){
   let s = parseFloat(localStorage.getItem('lj_zoom') || '1');
@@ -1316,6 +1338,7 @@ function iniciarCronometroEnvio(){
   let restante = segundos;
   box.classList.remove('listo');
   box.style.display = 'flex';
+  ajustarOffsetsSticky();
   box.innerHTML = `⏳ Espera <span class="num">${restante}</span>s antes de mandarle al siguiente cliente`;
   __cronometroEnvioInterval = setInterval(() => {
     restante--;
@@ -2123,12 +2146,14 @@ function mostrarNotifMensajes(mensaje, cantidad){
     <button class="ignorar" onclick="ignorarNotifMensajes()">🚫 Ignorar / No volver a mostrar</button>
   `;
   banner.style.display = 'flex';
+  ajustarOffsetsSticky();
 }
 
 function ocultarNotifMensajes(){
   const banner = document.getElementById('notifMensajesBanner');
   if (banner) banner.style.display = 'none';
   __notifMensajesActual = null;
+  ajustarOffsetsSticky();
 }
 
 function marcarNotifMensajesVista(){
