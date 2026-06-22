@@ -1927,6 +1927,18 @@ const LS_PERFILES_KEY = 'lj_chat_perfiles';
 function obtenerPerfilesGuardados(){
   try { return JSON.parse(localStorage.getItem(LS_PERFILES_KEY)) || []; } catch(e){ return []; }
 }
+
+// Quien ya se había registrado ANTES de que existiera esta lista de
+// perfiles (ej. con la versión vieja de la app) tiene su nombre guardado en
+// lj_chat_nombre pero nunca quedó agregado a lj_chat_perfiles — por eso el
+// menú "🔄 Cambiar de cuenta" le aparecía vacío, sin su propia cuenta. Esto
+// la agrega automáticamente la primera vez que se necesite la lista.
+function asegurarPerfilActualEnLista(){
+  const actual = obtenerMensajesIdentidad();
+  if (!actual.nombre) return;
+  const perfiles = obtenerPerfilesGuardados();
+  if (!perfiles.some(p => p.nombre === actual.nombre)) guardarPerfilEnLista(actual.nombre, actual.numero);
+}
 function guardarPerfilEnLista(nombre, numero, tipo){
   if (!nombre) return;
   const perfiles = obtenerPerfilesGuardados();
@@ -1952,6 +1964,7 @@ function preguntarTipoWhatsapp(valorPrevio){
 function renderSelectorCuentas(){
   const sel = document.getElementById('selectorCuentas');
   if (!sel) return;
+  asegurarPerfilActualEnLista();
   const actual = obtenerMensajesIdentidad();
   const perfiles = obtenerPerfilesGuardados();
   sel.innerHTML = perfiles.map((p, i) =>
@@ -2011,6 +2024,7 @@ function toggleCuentaRapidaMenu(){
 }
 
 function renderCuentaRapidaMenu(){
+  asegurarPerfilActualEnLista();
   const actual = obtenerMensajesIdentidad();
   const perfiles = obtenerPerfilesGuardados();
   const modal = document.createElement('div');
