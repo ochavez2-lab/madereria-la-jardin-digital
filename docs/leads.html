@@ -264,6 +264,12 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <div id="tareasRanking"></div>
   </div>
 
+  <div class="section" style="--accent:#e74c3c">
+    <h2>🗑️ Cuentas registradas</h2>
+    <p style="font-size:11px;color:#999;margin:-4px 0 10px;line-height:1.4">Todos los nombres que han contactado leads o enviado mensajes alguna vez (de cualquier celular). Bórrala aquí si es un nombre viejo, duplicado o que ya no se usa — sus contactos pasados no se borran, solo quedan "sin registrar".</p>
+    <div id="cuentasRegistradasLista"></div>
+  </div>
+
   </div>
 
   <div id="stage4" style="display:none">
@@ -2810,6 +2816,57 @@ function renderTareas(){
   circulos.innerHTML = html;
 
   renderRankingEmpleados();
+  renderCuentasRegistradas();
+}
+
+// Lista TODOS los nombres que han contactado leads alguna vez, sin importar
+// periodo (a diferencia del ranking, que solo cuenta hoy/semana/mes), para
+// poder ver y borrar nombres viejos/duplicados que ya no se deberían seguir
+// contando — ej. cuando un celular se reinstaló con otro nombre genérico.
+function renderCuentasRegistradas(){
+  const box = document.getElementById('cuentasRegistradasLista');
+  if (!box) return;
+  const nombres = new Set();
+  getHistorial().forEach(h => { if (h.autor_nombre) nombres.add(h.autor_nombre); });
+  const lista = [...nombres].sort();
+  if (lista.length === 0){
+    box.innerHTML = '<div class="empty">Todavía no hay ninguna cuenta registrada con contactos</div>';
+    return;
+  }
+  box.innerHTML = lista.map(nombre => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #eee;font-size:13px">
+      <span>👤 ${escaparHtml(nombre)}</span>
+      <button onclick="eliminarCuentaRegistrada('${escaparAtributo(nombre)}')" style="padding:6px 10px;border-radius:8px;border:1px solid #e74c3c;background:#fff;color:#e74c3c;font-size:12px;cursor:pointer">🗑️ Borrar</button>
+    </div>
+  `).join('');
+}
+
+// Borra una cuenta de raíz: sus contactos pasados NO se borran, solo
+// quedan "sin registrar" (igual que el historial viejo de antes de que el
+// registro fuera obligatorio). Se usa para limpiar nombres viejos/duplicados
+// del ranking y del directorio de "Ver cuentas de otros Chrome".
+async function eliminarCuentaRegistrada(nombre){
+  if (!confirm(`¿Borrar la cuenta "${nombre}" de raíz?\n\nSus contactos pasados se quedan, pero sin nombre (como "sin registrar"). Esto no se puede deshacer.`)) return;
+
+  const historial = getHistorial();
+  let cambios = false;
+  historial.forEach(h => { if (h.autor_nombre === nombre){ h.autor_nombre = null; cambios = true; } });
+  if (cambios) saveHistorial(historial);
+
+  const perfiles = obtenerPerfilesGuardados().filter(p => p.nombre !== nombre);
+  localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
+
+  try {
+    await fetch(RAILWAY_URL + '/api/eliminar-autor', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre })
+    });
+  } catch (e) {}
+
+  renderTareas();
+  renderSelectorCuentas();
+  const modal = document.getElementById('cuentaRapidaModal');
+  if (modal){ modal.remove(); renderCuentaRapidaMenu(); }
 }
 
 let rankingPeriodo = 'hoy';
