@@ -2395,7 +2395,13 @@ function extraerNombre(texto){
   // porque sus palabras llevan mayúscula inicial igual que un nombre real. Si la
   // palabra cruda (antes de limpiar puntuación) tenía números pegados (manzana,
   // lote, código postal, etc.) no puede ser parte de un nombre de persona.
-  const pares = t.split(/\s+/).map(cruda => ({ limpia: limpiar(cruda), tieneDigito: /\d/.test(cruda) })).filter(p => p.limpia);
+  const pares = [];
+  let inicioOracion = true;
+  t.split(/\s+/).forEach(cruda => {
+    const limpia = limpiar(cruda);
+    if (limpia) pares.push({ limpia, tieneDigito: /\d/.test(cruda), inicioOracion });
+    inicioOracion = /[.!?]$/.test(cruda);
+  });
   const palabras = pares.map(p => p.limpia);
   const tieneDigito = i => pares[i] && pares[i].tieneDigito;
   // 1. Nombre de persona: dos palabras consecutivas con mayúscula inicial (caso fuerte),
@@ -2411,8 +2417,13 @@ function extraerNombre(texto){
   }
   // 2. Nombre de compañía/negocio: palabra con mayúscula inicial + otra palabra,
   // descartando muletillas típicas de los comentarios ("Ala orden", "Buenos días", etc.)
+  // y descartando también la primera palabra de cualquier oración: ahí la mayúscula
+  // es solo gramática (inicio de oración), no una señal de nombre propio — por eso
+  // un comentario como "Lozas, trabes, columnas..." no debe leerse como que el
+  // negocio se llama "Lozas trabes".
   for (let i = 0; i < palabras.length - 1; i++){
     const w = palabras[i];
+    if (pares[i].inicioOracion) continue;
     if (!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}$/.test(w)) continue;
     if (PALABRAS_FILLER.has(w.toLowerCase()) || tieneDigito(i)) continue;
     const w2 = palabras[i + 1];
