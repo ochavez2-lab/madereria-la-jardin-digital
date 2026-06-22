@@ -585,6 +585,16 @@ function getHistorial(){
 }
 function saveHistorial(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
 
+// Busca el nombre del lead (perfil de Facebook o nombre/empresa mencionado en
+// su comentario) a partir de su entrada en el historial, para personalizar
+// el mensaje de "Enviar catálogo/ubicación" sin tener que repasar todos los
+// datos de la tarjeta otra vez.
+function nombreDeContacto(numero, fecha_contacto){
+  const entry = getHistorial().find(h => h.numero === numero && h.fecha_contacto === fecha_contacto);
+  if (!entry) return null;
+  return entry.nombrePerfil || extraerNombre(entry.contexto || '') || null;
+}
+
 async function syncHistorial(){
   try {
     var local = getHistorial();
@@ -812,6 +822,8 @@ function extraerDireccion(texto){
 // Ubicación real de Maderería La Jardín en Google Maps. Se incluye en todos los
 // mensajes de WhatsApp (primer contacto y seguimiento) como CTA corto.
 const MAPS_LINK = 'https://maps.app.goo.gl/1TvsExXLBBznxwCHA?g_st=ic';
+const TIENDA_URL = 'madererialajardinshop.yimi.biz';
+const DIRECCION_TIENDA = 'Av. Nogal 3516, Col. Ciudad Jardín, Tijuana';
 
 // Dos empleados, dos números de contacto. El mensaje de WhatsApp siempre dice
 // "Maderería La Jardín" pero termina con el número del empleado que lo envía,
@@ -853,7 +865,29 @@ function construirMensaje(cat, nombre){
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const saludo = nombre || 'maestro';
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
-  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} ${t.cierre} 📲 ${obtenerNumeroEmpleado()}`;
+  return `Qué tal ${saludo} 👋 ${t.gancho} Le hablo de Maderería La Jardín, ${oferta}. Arma tu pedido y mira tu precio al instante 👉 ${TIENDA_URL} — Estamos en ${DIRECCION_TIENDA}. 📍 Ubícanos en Google Maps: ${MAPS_LINK} ${t.cierre} 📲 ${obtenerNumeroEmpleado()}`;
+}
+
+// Cuando el lead ya picó (lo más común tras el primer mensaje es que pida
+// "su catálogo de precios y ubicación"), antes había que escribir esa
+// respuesta a mano cada vez. Este botón manda de un click el link de la
+// tienda en línea (catálogo con precios reales), la dirección física, el
+// link de Google Maps y el número del empleado — los mismos datos que ya
+// van en el primer mensaje, pero a la mano para reenviar cuando los piden
+// directamente por chat.
+function construirMensajeCatalogoUbicacion(nombre){
+  const saludo = nombre || 'maestro';
+  return `Con gusto ${saludo} 👍 Aquí le paso todo: catálogo de precios 👉 ${TIENDA_URL} — Estamos en ${DIRECCION_TIENDA}. 📍 Ubícanos en Google Maps: ${MAPS_LINK} Cualquier duda me dice por aquí, 📲 ${obtenerNumeroEmpleado()}`;
+}
+
+function abrirWhatsAppCatalogoUbicacion(numero, nombre, el){
+  if (!exigeRegistroParaEnviar()) return false;
+  const mensaje = construirMensajeCatalogoUbicacion(nombre || null);
+  if (el){
+    el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+    el.target = '_blank';
+  }
+  return true;
 }
 
 function extraerLinkPublicacion(texto){
@@ -1125,6 +1159,9 @@ async function procesar(){
           </div>
           <div class="lead-actions">
             <a class="btn-wa" style="background:#888;background-image:none" href="#" onclick="return abrirWhatsAppFollowUp('${n.numero}','${nombreRep}', this, '${catRepetido}')">👁️ Vio pero no contestó, reenviar oferta</a>
+          </div>
+          <div class="lead-actions">
+            <a class="btn-wa" style="background:#3a8;background-image:none" href="#" onclick="return abrirWhatsAppCatalogoUbicacion('${n.numero}','${nombreRep}', this)">📍 Enviar catálogo/ubicación</a>
           </div>`;
       }
       extra += btnRespondioRep ? `<div class="lead-actions">${btnRespondioRep}</div>` : '';
@@ -1318,7 +1355,7 @@ function abrirWhatsAppFollowUp(numero, nombre, el, cat){
   if (!exigeRegistroParaEnviar()) return false;
   const t = TEMPLATES[cat] || TEMPLATES.otro;
   const oferta = t.oferta || 'manejamos Cimbraplay, triplay CDX y barrote pa\' cimbra, entrega gratis desde 50 pzs';
-  const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana, ${oferta}. 👉 madererialajardinshop.yimi.biz — Estamos en Av. Nogal 3516, Col. Ciudad Jardín, Tijuana. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
+  const mensaje = `Qué tal ${nombre || 'maestro'} 👋 le escribo otra vez de Maderería La Jardín, ¿cómo va su proyecto? Tenemos ofertas esta semana, ${oferta}. 👉 ${TIENDA_URL} — Estamos en ${DIRECCION_TIENDA}. 📍 Ubícanos en Google Maps: ${MAPS_LINK} 📲 ${obtenerNumeroEmpleado()}`;
   if (el){
     el.href = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
     el.target = '_blank';
@@ -1433,6 +1470,15 @@ function mostrarOpcionesResultado(cont, numero, fecha_contacto){
   span.style.background = '#2196F3';
   span.textContent = '✅ Respondió, ¿en qué quedó?';
   cont.appendChild(span);
+  const nombreCat = nombreDeContacto(numero, fecha_contacto);
+  const btnCatalogo = document.createElement('a');
+  btnCatalogo.className = 'btn-wa';
+  btnCatalogo.style.fontSize = '11px';
+  btnCatalogo.style.padding = '3px 8px';
+  btnCatalogo.href = '#';
+  btnCatalogo.textContent = '📍 Enviar catálogo/ubicación';
+  btnCatalogo.onclick = function(){ return abrirWhatsAppCatalogoUbicacion(numero, nombreCat, btnCatalogo); };
+  cont.appendChild(btnCatalogo);
   [
     { val: 'compro', label: ESTADOS_INFO.compro.label, color: ESTADOS_INFO.compro.color },
     { val: 'no_interesa', label: ESTADOS_INFO.no_interesa.label, color: ESTADOS_INFO.no_interesa.color },
@@ -2828,7 +2874,8 @@ function renderHistorialCard(h){
           ? `<button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="deshacerSmsEnviadoHistorial('${numKey}','${fechaKey}')">↩️ Deshacer SMS enviado</button>`
           : `<a class="btn-sms" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirSmsDirecto('${numKey}','${catHist}','${nombreHistEsc}', this)">📩 Enviar SMS</a>
              <button class="btn-done" style="font-size:12px;padding:4px 8px" onclick="marcarSmsEnviadoHistorial('${numKey}','${fechaKey}')">✓ SMS enviado</button>`)
-      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this, '${catHist}')">🔁 Reenviar oferta</a>`;
+      : `<a class="btn-wa" style="font-size:12px;padding:4px 8px" href="#" onclick="return abrirWhatsAppFollowUp('${numKey}','${nombreHistEsc}', this, '${catHist}')">🔁 Reenviar oferta</a>
+         <a class="btn-wa" style="font-size:12px;padding:4px 8px;background:#3a8;background-image:none" href="#" onclick="return abrirWhatsAppCatalogoUbicacion('${numKey}','${nombreHistEsc}', this)">📍 Enviar catálogo/ubicación</a>`;
     return `
       <div class="lead-card" style="border-left:4px solid ${info.color};background:${info.bg};color:#1c1c1c;--text:#1c1c1c;--muted:#777;--ctx-bg:#f4f1ea;--border:#e5e0d3;--card-bg:#fff;position:relative">
         <button class="btn-eliminar" title="Eliminar contacto" onclick="confirmarEliminarLead('${numKey}','${fechaKey}')">✕</button>
