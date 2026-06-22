@@ -1949,6 +1949,97 @@ function guardarPerfilEnLista(nombre, numero, tipo){
   }
   else perfiles.push({ nombre, numero: numero || '', tipo: tipo || '' });
   localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
+  sincronizarCuentaConocida(nombre, numero, tipo || (existente && existente.tipo) || '');
+}
+
+// Sube esta cuenta a un directorio compartido en el servidor, para que
+// alguien que registró sus cuentas en OTRO Chrome/celular pueda verlas e
+// importarlas desde "📋 Ver cuentas de otros Chrome" sin tener que volver a
+// escribir nombre/número/tipo a mano. No afecta el localStorage de nadie.
+async function sincronizarCuentaConocida(nombre, numero, tipo){
+  try {
+    await fetch(RAILWAY_URL + '/api/cuentas', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, numero, tipo })
+    });
+  } catch (e) {}
+}
+
+// "Solo por esta vez": ver TODAS las cuentas que se han registrado en
+// cualquier Chrome/celular (no solo en este) y elegir hasta 3 para
+// importarlas a este navegador, sin tener que volver a escribirlas a mano.
+async function abrirImportarCuentas(){
+  const modal = document.getElementById('cuentaRapidaModal');
+  if (modal) modal.remove();
+
+  let cuentas = [];
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/cuentas');
+    cuentas = await r.json();
+  } catch (e) {
+    alert('No se pudo conectar para traer las cuentas. Revisa tu internet e intenta de nuevo.');
+    renderCuentaRapidaMenu();
+    return;
+  }
+
+  const yaGuardados = obtenerPerfilesGuardados().map(p => p.nombre);
+  cuentas = cuentas.filter(c => !yaGuardados.includes(c.nombre));
+
+  const importar = document.createElement('div');
+  importar.id = 'importarCuentasModal';
+  importar.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  importar.onclick = function(e){ if (e.target === importar) importar.remove(); };
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;padding:16px;max-width:340px;width:100%;max-height:80vh;overflow:auto';
+  box.innerHTML = '<div style="font-weight:900;margin-bottom:6px;font-size:15px">📋 Cuentas de otros Chrome</div>'
+    + '<div style="font-size:12px;color:#666;margin-bottom:10px">Elige hasta 3 para agregarlas a este navegador.</div>';
+
+  if (cuentas.length === 0){
+    box.innerHTML += '<div style="font-size:13px;color:#999">No hay otras cuentas distintas a las que ya tienes aquí.</div>';
+  }
+
+  const checks = [];
+  cuentas.forEach(function(c){
+    const fila = document.createElement('label');
+    fila.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #ddd;border-radius:8px;margin-bottom:6px;font-size:14px;cursor:pointer';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.onchange = function(){
+      const marcados = checks.filter(x => x.checked);
+      if (marcados.length > 3){ chk.checked = false; alert('Máximo 3 cuentas por Chrome.'); }
+    };
+    checks.push(chk);
+    const tipoTxt = c.tipo ? (' · 📱 ' + c.tipo) : '';
+    const texto = document.createElement('span');
+    texto.textContent = '👤 ' + c.nombre + tipoTxt;
+    fila.appendChild(chk);
+    fila.appendChild(texto);
+    box.appendChild(fila);
+  });
+
+  if (cuentas.length > 0){
+    const importarBtn = document.createElement('button');
+    importarBtn.textContent = '✅ Importar seleccionadas';
+    importarBtn.style.cssText = 'display:block;width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#2e7d32;color:#fff;font-weight:700;font-size:14px;cursor:pointer';
+    importarBtn.onclick = function(){
+      const elegidas = cuentas.filter((c, i) => checks[i].checked);
+      if (elegidas.length === 0){ alert('Elige al menos una cuenta.'); return; }
+      elegidas.forEach(c => guardarPerfilEnLista(c.nombre, c.numero || '', c.tipo || ''));
+      importar.remove();
+      renderCuentaRapidaMenu();
+    };
+    box.appendChild(importarBtn);
+  }
+
+  const cerrarBtn = document.createElement('button');
+  cerrarBtn.textContent = 'Cerrar';
+  cerrarBtn.style.cssText = 'display:block;width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:13px;cursor:pointer';
+  cerrarBtn.onclick = function(){ importar.remove(); renderCuentaRapidaMenu(); };
+  box.appendChild(cerrarBtn);
+
+  importar.appendChild(box);
+  document.body.appendChild(importar);
 }
 
 // Pregunta cuál WhatsApp corresponde a esta cuenta (Normal/Business/otro).
@@ -2060,9 +2151,15 @@ function renderCuentaRapidaMenu(){
 
   const addBtn = document.createElement('button');
   addBtn.textContent = '➕ Agregar otra cuenta';
-  addBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:1px dashed #999;background:#fafafa;font-size:14px;cursor:pointer';
+  addBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:1px dashed #999;background:#fafafa;font-size:14px;cursor:pointer;margin-bottom:6px';
   addBtn.onclick = function(){ modal.remove(); agregarNuevaCuenta(); };
   box.appendChild(addBtn);
+
+  const importBtn = document.createElement('button');
+  importBtn.textContent = '📋 Ver cuentas de otros Chrome';
+  importBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px;border-radius:8px;border:1px dashed #999;background:#fafafa;font-size:14px;cursor:pointer';
+  importBtn.onclick = function(){ abrirImportarCuentas(); };
+  box.appendChild(importBtn);
 
   modal.appendChild(box);
   document.body.appendChild(modal);

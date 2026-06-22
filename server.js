@@ -102,6 +102,22 @@ pool.query(`
   )
 `).catch(console.error);
 
+// Las cuentas (nombre/número/tipo de WhatsApp) viven solo en el localStorage
+// de cada navegador, así que si alguien registra una cuenta en un Chrome no
+// aparece en el menú "🔄 Cambiar de cuenta" de otro Chrome/celular distinto.
+// Esta tabla guarda un directorio compartido de TODAS las cuentas que se han
+// registrado en cualquier dispositivo, solo para poder listarlas y que cada
+// persona elija cuáles importar a su propio navegador — no reemplaza el
+// localStorage de nadie, solo permite "copiar" cuentas ya existentes.
+pool.query(`
+  CREATE TABLE IF NOT EXISTS cuentas_conocidas (
+    nombre TEXT PRIMARY KEY,
+    numero TEXT,
+    tipo TEXT,
+    actualizado_en TEXT NOT NULL
+  )
+`).catch(console.error);
+
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
 app.get('/api/keys', async (req, res) => {
@@ -383,6 +399,27 @@ app.post('/api/publicaciones/eliminar', async (req, res) => {
   if (!id || !dispositivo_id) return res.status(400).json({ error: 'faltan datos' });
   try {
     await pool.query('DELETE FROM publicaciones WHERE id=$1 AND dispositivo_id=$2', [id, dispositivo_id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/cuentas', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT nombre, numero, tipo FROM cuentas_conocidas ORDER BY nombre');
+    res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cuentas', async (req, res) => {
+  const { nombre, numero, tipo } = req.body || {};
+  if (!nombre) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query(
+      `INSERT INTO cuentas_conocidas (nombre, numero, tipo, actualizado_en)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT (nombre) DO UPDATE SET numero=$2, tipo=$3, actualizado_en=$4`,
+      [nombre, numero || null, tipo || null, new Date().toISOString()]
+    );
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
