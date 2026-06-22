@@ -2294,21 +2294,34 @@ function renderRankingEmpleados(){
     }).join('');
   }
 
+  // El ranking SOLO debe contar a quien esté registrado (con nombre guardado
+  // en "5. Mensajes") — desde que se hizo obligatorio registrarse pa' poder
+  // mandar mensajes, "Sin registrar" ya no debería seguir creciendo, pero el
+  // historial viejo (de antes de esa regla) trae varios contactos sin autor
+  // guardado. Esos NO entran a competir en el ranking ni se cuentan en el
+  // total de nadie — se muestran aparte, como lo que son: registros de un
+  // sistema anterior, no parte de la ecuación de quién contactó más.
+  const periodo = contactosPorPeriodo(rankingPeriodo);
   const conteo = {};
-  contactosPorPeriodo(rankingPeriodo).forEach(h => {
-    const nombre = h.autor_nombre || 'Sin registrar';
-    conteo[nombre] = (conteo[nombre] || 0) + 1;
+  let sinRegistrar = 0;
+  periodo.forEach(h => {
+    if (!h.autor_nombre){ sinRegistrar++; return; }
+    conteo[h.autor_nombre] = (conteo[h.autor_nombre] || 0) + 1;
   });
   const ranking = Object.keys(conteo)
     .map(nombre => ({ nombre, total: conteo[nombre] }))
     .sort((a, b) => b.total - a.total);
 
+  const avisoSinRegistrar = sinRegistrar > 0
+    ? `<div style="background:#fff8e1;border:1px solid #e6d28a;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12px;color:#8a6d1a">📦 <b>${sinRegistrar} sin registrar</b> en este periodo (de antes de que el registro fuera obligatorio) — no entran al ranking.</div>`
+    : '';
+
   if (ranking.length === 0){
-    box.innerHTML = '<div class="empty">Todavía no hay contactos en este periodo</div>';
+    box.innerHTML = avisoSinRegistrar + '<div class="empty">Todavía no hay contactos registrados en este periodo</div>';
     return;
   }
 
-  box.innerHTML = ranking.map((r, i) => {
+  box.innerHTML = avisoSinRegistrar + ranking.map((r, i) => {
     const puesto = MEDALLAS[i] || `${i + 1}°`;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #eee;font-size:13px">
       <span><b style="display:inline-block;width:28px">${puesto}</b> 👤 ${escaparHtml(r.nombre)}</span>
