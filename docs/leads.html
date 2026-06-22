@@ -828,31 +828,54 @@ const CONECTORES_NOMBRE = new Set(['de','del','la','las','los','y']);
 // el patrón de fecha, así que no hay riesgo de confundir "Martin Dias" con
 // "hace 3 días".
 const NOMBRE_PERFIL_PERMITIDAS = new Set(['dia','día','dias','días']);
+// Línea de "hace cuánto" abreviada, como Facebook la muestra de verdad
+// ("3 h", "39 min", "1 min"), a diferencia de NOMBRE_PERFIL_FECHA que solo
+// cubre la palabra completa ("3 horas"). Sirve para detectar que ya cruzamos
+// al pie del comentario ANTERIOR y dejar de buscar hacia atrás.
+const NOMBRE_PERFIL_TIEMPO_CORTO = /^\d+\s*(h|hrs?|min|d|sem|mes(?:es)?|a[ñn]o)s?$/i;
 
 function pareceNombrePerfil(linea){
   const l = (linea || '').trim();
   if (!l) return false;
   if (NOMBRE_PERFIL_SKIP.test(l)) return false;
   if (NOMBRE_PERFIL_FECHA.test(l)) return false;
+  if (NOMBRE_PERFIL_TIEMPO_CORTO.test(l)) return false;
   if (/^·+$/.test(l)) return false;
-  if (/\d/.test(l)) return false;
   const principal = l.split('·')[0].trim();
-  const palabras = principal.split(/\s+/).filter(Boolean);
+  let palabras = principal.split(/\s+/).filter(Boolean);
   if (palabras.length < 1 || palabras.length > 6) return false;
-  const valido = palabras.every(w => CONECTORES_NOMBRE.has(w.toLowerCase()) || /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ'’.-]*$/.test(w));
+  // Facebook le pone un número al final de los apodos que genera para
+  // comentarios anónimos/ocultos (ej. "Participante anónimo 921",
+  // "EnthusiasticStrawberry908"). Permitimos que la ÚLTIMA palabra sea solo
+  // números (se quita y se valida el resto), o que alguna palabra termine en
+  // pocos dígitos pegados (apodo tipo CamelCase+número, sin espacio), pero
+  // no dígitos en medio de varias palabras sueltas — eso sigue siendo basura.
+  const ultima = palabras[palabras.length - 1];
+  if (palabras.length > 1 && /^\d+$/.test(ultima)) palabras = palabras.slice(0, -1);
+  const valido = palabras.every(w => CONECTORES_NOMBRE.has(w.toLowerCase()) || /^[A-ZÁÉÍÓÚÑ][a-zA-ZÁÉÍÓÚÑáéíóúñ'’.-]*\d{0,4}$/.test(w));
   if (!valido) return false;
-  if (palabras.some(w => PALABRAS_FILLER.has(w.toLowerCase()) && !NOMBRE_PERFIL_PERMITIDAS.has(w.toLowerCase()))) return false;
+  if (palabras.some(w => PALABRAS_FILLER.has(w.replace(/\d+$/,'').toLowerCase()) && !NOMBRE_PERFIL_PERMITIDAS.has(w.toLowerCase()))) return false;
   return true;
 }
 
 function extraerNombrePerfil(lineas, idx){
-  for (let i = idx - 1; i >= 0; i--){
+  // El nombre del autor no siempre está en la línea justo arriba del
+  // teléfono: cuando el comentario tiene varias líneas (ej. "Por todo su
+  // proyecto...\nLosa 180m2\n170 trabe\n400 m2 de multiplas\n661 116 92 18"),
+  // el nombre real queda varias líneas más arriba. Seguimos subiendo por el
+  // cuerpo del comentario hasta encontrarlo, pero nos detenemos en cuanto
+  // topamos con el pie ("Responder"/"Compartir"/"3 h"/"39 min") del
+  // comentario ANTERIOR, para no agarrar el nombre que no es.
+  let pasos = 0;
+  for (let i = idx - 1; i >= 0 && pasos < 12; i--){
     const l = (lineas[i] || '').trim();
     if (!l) continue;
+    pasos++;
+    if (NOMBRE_PERFIL_SKIP.test(l) || NOMBRE_PERFIL_TIEMPO_CORTO.test(l)) return null;
     // Conservamos la línea completa (ej. "Lemus Adolfo · Muebles Xander") porque
     // cuando el perfil es una página de negocio, Facebook muestra nombre personal
     // y nombre de empresa juntos separados por "·", y ambos son útiles.
-    return pareceNombrePerfil(l) ? l.replace(/\s*·\s*/g, ' · ').trim() : null;
+    if (pareceNombrePerfil(l)) return l.replace(/\s*·\s*/g, ' · ').trim();
   }
   return null;
 }
