@@ -61,6 +61,21 @@ pool.query(`
   ALTER TABLE mensajes_equipo ADD COLUMN IF NOT EXISTS completado BOOLEAN DEFAULT FALSE
 `)).catch(console.error);
 
+// "Tumbas" de contactos eliminados: sin esto, un dispositivo que ya
+// sincronizó un contacto ANTES de que se borrara en otro celular se lo queda
+// guardado en su localStorage, y cada vez que sincroniza (cada 10s) lo
+// vuelve a subir como si fuera nuevo — el contacto "revive" para todo el
+// equipo. Guardar aquí qué se borró deja que /api/sync rechace para siempre
+// cualquier intento de volver a insertar esa misma clave (numero+fecha).
+pool.query(`
+  CREATE TABLE IF NOT EXISTS leads_eliminados (
+    numero TEXT NOT NULL,
+    fecha_contacto TEXT NOT NULL,
+    eliminado_en TEXT NOT NULL,
+    PRIMARY KEY (numero, fecha_contacto)
+  )
+`).catch(console.error);
+
 pool.query(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
     id BIGSERIAL PRIMARY KEY,
@@ -88,6 +103,11 @@ app.post('/api/sync', async (req, res) => {
     let inserted = 0;
     for (const e of entries) {
       if (!e.numero || !e.fecha_contacto) continue;
+      const tumba = await pool.query(
+        'SELECT 1 FROM leads_eliminados WHERE numero=$1 AND fecha_contacto=$2',
+        [e.numero, e.fecha_contacto]
+      );
+      if (tumba.rowCount > 0) continue;
       const r = await pool.query(
         `INSERT INTO leads_historial
           (numero,categoria,fecha_pub,dia_horario,contexto,fecha_contacto,metodo,sms_enviado,fecha_sms,seguimiento,nota,post_url,grupo,autor_nombre)
@@ -198,7 +218,21 @@ app.post('/api/eliminar', async (req, res) => {
       'DELETE FROM leads_historial WHERE numero=$1 AND fecha_contacto=$2',
       [numero, fecha_contacto]
     );
+    await pool.query(
+      `INSERT INTO leads_eliminados (numero, fecha_contacto, eliminado_en) VALUES ($1,$2,$3)
+       ON CONFLICT (numero, fecha_contacto) DO NOTHING`,
+      [numero, fecha_contacto, new Date().toISOString()]
+    );
     res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// El resto de dispositivos consultan esto al sincronizar para purgar de su
+// propio localStorage cualquier contacto que ya se borró en otro lado.
+app.get('/api/eliminados', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT numero, fecha_contacto FROM leads_eliminados');
+    res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
