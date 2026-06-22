@@ -296,7 +296,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
 
     <div id="mensajesRegistro" class="section acc-blue" style="display:none">
       <h2>👤 ¿Quién eres?</h2>
-      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Se guarda una sola vez en este celular — no lo va a volver a pedir aquí. (Si usas otra app de navegador en el mismo celular, ej. Chrome y luego Safari, sí te lo va a pedir otra vez ahí, porque cada una guarda su propia memoria por separado — no hay forma de evitar eso sin que te tengas que loguear con contraseña cada vez.)</p>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Se guarda una sola vez en este celular — no lo va a volver a pedir aquí. Si varias personas comparten el mismo navegador (ej. el mismo Chrome), no hace falta cambiarse a Safari u otro navegador para cada una: una vez que cada quien se registre aquí, en "5. Mensajes" aparece "🔄 Cambiar de cuenta" para saltar entre todas las cuentas guardadas con un solo toque.</p>
       <input type="text" id="mensajesNombreInput" placeholder="Tu nombre" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
       <input type="tel" id="mensajesNumeroInput" placeholder="Tu número de celular (opcional)" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
       <button class="btn-main" onclick="registrarMensajesIdentidad()">✅ Guardar y entrar</button>
@@ -318,7 +318,10 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
       </div>
 
       <div class="historial-toggle" onclick="cargarMensajes()">🔄 Actualizar mensajes</div>
-      <div style="text-align:right;margin:4px 0 10px">
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 10px">
+        <select id="selectorCuentas" onchange="cambiarCuentaActiva(this.value)" style="font-size:11px;padding:5px 6px;border-radius:6px;border:1px solid #ccc;max-width:55%">
+          <option value="">🔄 Cambiar de cuenta...</option>
+        </select>
         <span style="font-size:11px;color:#999;cursor:pointer;text-decoration:underline" onclick="cambiarMensajesIdentidad()">✏️ Cambiar mi nombre</span>
       </div>
 
@@ -1891,10 +1894,69 @@ function obtenerMensajesIdentidad(){
   };
 }
 
+const LS_PERFILES_KEY = 'lj_chat_perfiles';
+
+// Lista de cuentas que ya se registraron alguna vez EN ESTE navegador.
+// Antes, si varias personas usaban el mismo Chrome, cada una tenía que
+// usar otro navegador (Safari, etc.) para no perder su propio registro.
+// Guardando aquí cada cuenta que se registra, ya no hace falta: cualquiera
+// puede saltar a la suya con el selector "🔄 Cambiar de cuenta" sin volver
+// a escribir nada.
+function obtenerPerfilesGuardados(){
+  try { return JSON.parse(localStorage.getItem(LS_PERFILES_KEY)) || []; } catch(e){ return []; }
+}
+function guardarPerfilEnLista(nombre, numero){
+  if (!nombre) return;
+  const perfiles = obtenerPerfilesGuardados();
+  const existente = perfiles.find(p => p.nombre === nombre);
+  if (existente) existente.numero = numero || existente.numero;
+  else perfiles.push({ nombre, numero: numero || '' });
+  localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
+}
+
+function renderSelectorCuentas(){
+  const sel = document.getElementById('selectorCuentas');
+  if (!sel) return;
+  const actual = obtenerMensajesIdentidad();
+  const perfiles = obtenerPerfilesGuardados();
+  sel.innerHTML = perfiles.map((p, i) =>
+    `<option value="${i}"${p.nombre === actual.nombre ? ' selected' : ''}>👤 ${escaparHtml(p.nombre)}</option>`
+  ).join('') + `<option value="nueva">➕ Agregar otra cuenta</option>`;
+}
+
+// Cambia la identidad activa al instante (sin prompts, sin tocar el
+// historial) entre cuentas que YA se registraron antes en este navegador.
+function cambiarCuentaActiva(valor){
+  if (valor === 'nueva'){ agregarNuevaCuenta(); return; }
+  const perfil = obtenerPerfilesGuardados()[Number(valor)];
+  if (!perfil) return;
+  localStorage.setItem('lj_chat_nombre', perfil.nombre);
+  localStorage.setItem('lj_chat_numero', perfil.numero || '');
+  renderMensajesEntrada();
+  actualizarBienvenida();
+  actualizarResumenSticky();
+}
+
+// Para registrar a una persona NUEVA en este mismo navegador sin perder
+// las cuentas que ya estaban guardadas (a diferencia de "Cambiar mi
+// nombre", que renombra/migra todo lo de la cuenta actual).
+function agregarNuevaCuenta(){
+  const nombre = (prompt('Nombre de la nueva cuenta:') || '').trim();
+  if (!nombre){ renderSelectorCuentas(); return; }
+  const numero = (prompt('Número de celular (opcional):') || '').trim();
+  guardarPerfilEnLista(nombre, numero);
+  localStorage.setItem('lj_chat_nombre', nombre);
+  localStorage.setItem('lj_chat_numero', numero);
+  renderMensajesEntrada();
+  actualizarBienvenida();
+  actualizarResumenSticky();
+}
+
 function registrarMensajesIdentidad(){
   const nombre = document.getElementById('mensajesNombreInput').value.trim();
   const numero = document.getElementById('mensajesNumeroInput').value.trim();
   if (!nombre){ alert('Escribe tu nombre primero 👆'); return; }
+  guardarPerfilEnLista(nombre, numero);
   localStorage.setItem('lj_chat_nombre', nombre);
   localStorage.setItem('lj_chat_numero', numero);
   renderMensajesEntrada();
@@ -1925,8 +1987,11 @@ async function cambiarMensajesIdentidad(){
         body: JSON.stringify({ nombreAnterior: actual.nombre, nombreNuevo: nombreNuevo })
       });
     } catch (e) {}
+    const perfiles = obtenerPerfilesGuardados().filter(p => p.nombre !== actual.nombre);
+    localStorage.setItem(LS_PERFILES_KEY, JSON.stringify(perfiles));
   }
 
+  guardarPerfilEnLista(nombreNuevo, numeroNuevo);
   localStorage.setItem('lj_chat_nombre', nombreNuevo);
   localStorage.setItem('lj_chat_numero', numeroNuevo);
   renderMensajesEntrada();
@@ -1957,6 +2022,7 @@ function renderMensajesEntrada(){
   } else {
     registro.style.display = 'none';
     app.style.display = 'block';
+    renderSelectorCuentas();
     cargarMensajes();
   }
 }
