@@ -2356,10 +2356,31 @@ function renderMensajesLista(mensajes){
       const contenido = m.contenido || '';
       const preview = escaparHtml(contenido.slice(0, 70).replace(/\n/g, ' '));
       const completada = !!m.completado;
+      // Una "libreta" suele traer pegados varios números a la vez. En vez de
+      // adivinar a ojo si ya se contactó a todos, contamos cuántos de esos
+      // números ya están en el historial (de cualquier celular del equipo)
+      // y mostramos cuántos faltan; si ya no falta ninguno, se marca
+      // "completada" sola, sin tener que picarle a mano.
+      const numerosLibreta = [...new Set(extraerNumeros(contenido).map(x => x.numero))];
+      const historialNums = new Set(getHistorial().map(h => h.numero));
+      const totalLib = numerosLibreta.length;
+      const contactadosLib = numerosLibreta.filter(n => historialNums.has(n)).length;
+      const faltanLib = totalLib - contactadosLib;
+      const contadorLibHtml = totalLib > 0
+        ? `<div style="font-size:11px;font-weight:700;color:${faltanLib === 0 ? '#27ae60' : '#e0a526'};margin:4px 0">${faltanLib === 0 ? '✅ Ya contactaste a los ' + totalLib : '📒 Contactados ' + contactadosLib + ' de ' + totalLib + ' · faltan ' + faltanLib}</div>`
+        : '';
+      if (totalLib > 0 && faltanLib === 0 && !completada){
+        window.__autoCompletadosLibreta = window.__autoCompletadosLibreta || new Set();
+        if (!window.__autoCompletadosLibreta.has(m.id)){
+          window.__autoCompletadosLibreta.add(m.id);
+          toggleMensajeCompletado(m.id, false);
+        }
+      }
       html += `
         <div class="lead-card ${completada ? 'done' : ''}" style="border-left:4px solid ${completada ? '#27ae60' : '#e0a526'}">
           <div style="font-size:12px;font-weight:700">📋 ${quien} <span style="font-weight:400;color:#999">· ${hora}</span> ${completada ? '<span class="badge-completada">✅ Completada</span>' : ''}</div>
           <div style="font-size:12px;color:#999;margin:4px 0">${preview}${contenido.length > 70 ? '…' : ''} <span style="font-weight:700">(${contenido.length} caracteres)</span></div>
+          ${contadorLibHtml}
           <div class="lead-actions">
             <button class="btn-done" onclick="copiarMensaje(${m.id}, this)">📋 Copiar mensaje completo</button>
             <button class="btn-completar${completada ? ' activo' : ''}" title="${completada ? 'Esta lista ya quedó marcada como completada para todo el equipo, en cualquier celular. Pícale para desmarcarla.' : 'Márcala cuando ya hayas mandado el mensaje a toda esta lista — se reflejará para todo el equipo, en cualquier celular o navegador.'}" onclick="toggleMensajeCompletado(${m.id}, ${completada}, this)"><span class="check">${completada ? '✓' : ''}</span>${completada ? 'Completada' : 'Marcar completada'}</button>
