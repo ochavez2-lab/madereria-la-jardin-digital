@@ -241,6 +241,21 @@ app.post('/api/renombrar-autor', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Borra una cuenta de raíz: le quita el nombre a todos sus contactos pasados
+// (quedan "sin registrar", no se borran los leads) y la saca del directorio
+// compartido de cuentas. Para limpiar nombres duplicados/viejos del ranking
+// (ej. cuando un dispositivo se reinstaló con un nombre genérico distinto).
+app.post('/api/eliminar-autor', async (req, res) => {
+  const { nombre } = req.body || {};
+  if (!nombre) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    const r1 = await pool.query('UPDATE leads_historial SET autor_nombre=NULL WHERE autor_nombre=$1', [nombre]);
+    const r2 = await pool.query('UPDATE mensajes_equipo SET autor_nombre=NULL WHERE autor_nombre=$1', [nombre]);
+    await pool.query('DELETE FROM cuentas_conocidas WHERE nombre=$1', [nombre]);
+    res.json({ ok: true, historial: r1.rowCount, mensajes: r2.rowCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/eliminar', async (req, res) => {
   const { numero, fecha_contacto } = req.body || {};
   if (!numero || !fecha_contacto) return res.status(400).json({ error: 'faltan datos' });
@@ -403,9 +418,27 @@ app.post('/api/publicaciones/eliminar', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// El directorio "cuentas_conocidas" solo se llena hacia adelante (cuando
+// alguien registra/edita una cuenta DESPUÉS de que existe esta tabla), así
+// que de entrada está vacío aunque ya haya cuentas usándose desde antes —
+// esas ya quedaron guardadas como autor_nombre en leads_historial y
+// mensajes_equipo. Por eso esta lista junta las dos fuentes: lo que ya se
+// sincronizó al directorio Y todo nombre que alguna vez contactó un lead o
+// envió un mensaje, para que "Ver cuentas de otros Chrome" sí las muestre.
 app.get('/api/cuentas', async (req, res) => {
   try {
-    const r = await pool.query('SELECT nombre, numero, tipo FROM cuentas_conocidas ORDER BY nombre');
+    const r = await pool.query(`
+      SELECT nombre, MAX(numero) AS numero, MAX(tipo) AS tipo FROM (
+        SELECT nombre, numero, tipo FROM cuentas_conocidas
+        UNION ALL
+        SELECT DISTINCT autor_nombre AS nombre, NULL AS numero, NULL AS tipo
+          FROM leads_historial WHERE autor_nombre IS NOT NULL AND autor_nombre <> ''
+        UNION ALL
+        SELECT DISTINCT autor_nombre AS nombre, autor_numero AS numero, NULL AS tipo
+          FROM mensajes_equipo WHERE autor_nombre IS NOT NULL AND autor_nombre <> ''
+      ) t
+      GROUP BY nombre ORDER BY nombre
+    `);
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
