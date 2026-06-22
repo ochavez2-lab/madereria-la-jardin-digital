@@ -917,18 +917,18 @@ function dividirEnBloques(texto){
 
 function borrarTexto(){
   document.getElementById('raw').value = '';
-  document.getElementById('raw').focus();
 }
 
 // Algunos celulares/emuladores (ej. BlueStacks) traen problemas con el
 // Ctrl+V o el menú "Pegar" normal del teclado, así que este botón usa el
-// portapapeles directo del navegador como alternativa.
+// portapapeles directo del navegador como alternativa. No se hace foco en
+// el cuadro de texto después: en celular eso abre el teclado solo, lo cual
+// estorba porque uno ya viene de cambiar de app pa' copiar el texto.
 async function pegarTexto(id){
   const el = document.getElementById(id);
   try {
     const texto = await navigator.clipboard.readText();
     el.value = texto;
-    el.focus();
   } catch (e){
     alert('No se pudo pegar automático (el navegador no dio permiso). Mantén presionado el cuadro de texto y elige "Pegar" manualmente.');
   }
@@ -2540,9 +2540,16 @@ function renderHistorialList(){
       porCat[cat].total++;
     });
     const catsOrdenadas = Object.keys(porCat).sort((a,b) => porCat[b].total - porCat[a].total);
+    // La tasa de respuesta NO debe incluir a los "pendientes" (los que ni
+    // siquiera se sabe si contestaron) — si se cuentan ahí, la tasa sale
+    // artificialmente bajísima nomás porque hay muchos leads recientes que
+    // aún no se les ha dado seguimiento, no porque el mensaje no funcione.
+    // Por eso la tasa se calcula solo sobre los "resueltos" (total menos
+    // pendientes), y los pendientes se muestran aparte, no mezclados en el %.
     const filasCat = catsOrdenadas.map(cat => {
       const c = porCat[cat];
-      const tasa = c.total ? Math.round((c.respondio + c.compro + c.no_interesa + c.compro_otro) / c.total * 100) : 0;
+      const resueltos = c.total - c.pendiente;
+      const tasa = resueltos ? Math.round((c.respondio + c.compro + c.no_interesa + c.compro_otro) / resueltos * 100) : 0;
       return `
         <tr>
           <td>${CATEGORIA_LABEL[cat] || cat}</td>
@@ -2558,17 +2565,18 @@ function renderHistorialList(){
     }).join('');
 
     // Comparativa: ¿de verdad sirve hablarles por su nombre/oficio detectado?
-    const conDatoDetectado = { total: 0, resp: 0 };
-    const sinDatoDetectado = { total: 0, resp: 0 };
+    const conDatoDetectado = { total: 0, pendiente: 0, resp: 0 };
+    const sinDatoDetectado = { total: 0, pendiente: 0, resp: 0 };
     todos.forEach(h => {
       const tieneNombre = !!extraerNombre(h.contexto || '');
       const tieneOficio = !!(h.categoria && h.categoria !== 'otro');
       const bucket = (tieneNombre || tieneOficio) ? conDatoDetectado : sinDatoDetectado;
       bucket.total++;
+      if ((h.seguimiento || 'pendiente') === 'pendiente') bucket.pendiente++;
       if (fueRespondido(h.seguimiento)) bucket.resp++;
     });
-    const tasaCon = conDatoDetectado.total ? Math.round(conDatoDetectado.resp / conDatoDetectado.total * 100) : 0;
-    const tasaSin = sinDatoDetectado.total ? Math.round(sinDatoDetectado.resp / sinDatoDetectado.total * 100) : 0;
+    const tasaCon = (conDatoDetectado.total - conDatoDetectado.pendiente) ? Math.round(conDatoDetectado.resp / (conDatoDetectado.total - conDatoDetectado.pendiente) * 100) : 0;
+    const tasaSin = (sinDatoDetectado.total - sinDatoDetectado.pendiente) ? Math.round(sinDatoDetectado.resp / (sinDatoDetectado.total - sinDatoDetectado.pendiente) * 100) : 0;
     const comparativaHtml = `
       <div class="tablero-wrap" style="margin-top:10px">
         <table class="tablero-table">
@@ -2579,7 +2587,7 @@ function renderHistorialList(){
           </tbody>
         </table>
       </div>
-      <div style="font-size:11px;color:#999;margin-top:4px">📈 Esto demuestra si vale la pena personalizar el mensaje con nombre u oficio detectado.</div>
+      <div style="font-size:11px;color:#999;margin-top:4px">📈 Esto demuestra si vale la pena personalizar el mensaje con nombre u oficio detectado. La tasa no cuenta los pendientes, solo los que ya se resolvieron de algún modo.</div>
     `;
     const porUbic = {};
     todos.forEach(h => {
@@ -2590,8 +2598,12 @@ function renderHistorialList(){
     const ubicsOrdenadas = Object.keys(porUbic).sort((a,b) => porUbic[b] - porUbic[a]);
     const filasUbic = ubicsOrdenadas.map(u => `<tr><td>${u}</td><td>${porUbic[u]}</td></tr>`).join('');
 
-    const tasaTotal = todos.length ? Math.round((conteos.respondio + conteos.compro + conteos.no_interesa + conteos.compro_otro) / todos.length * 100) : 0;
+    const resueltosTotal = todos.length - conteos.pendiente;
+    const tasaTotal = resueltosTotal ? Math.round((conteos.respondio + conteos.compro + conteos.no_interesa + conteos.compro_otro) / resueltosTotal * 100) : 0;
     resumenBox.innerHTML = `
+      <div style="background:#fff8e1;border:1px solid #e6d28a;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:12px;color:#8a6d1a">
+        📦 <b>${conteos.pendiente} pendientes</b> aparte — todavía no se sabe si contestaron, así que NO se cuentan en la tasa de abajo (si se metieran, la tasa saldría bajísima nomás por leads recientes, no porque el mensaje no sirva).
+      </div>
       <div class="tablero-wrap">
         <table class="tablero-table">
           <thead>
