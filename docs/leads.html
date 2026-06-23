@@ -1022,7 +1022,14 @@ function extraerGrupo(texto){
   // pegado al separador) o que esté seguida de una línea que es solo "·".
   // Limitamos la búsqueda a las primeras líneas para no confundirnos con
   // texto de comentarios más abajo.
-  const lineas = (texto || '').split('\n').map(l => l.trim()).filter(l => l && l !== 'Facebook');
+  // Cuando hay comentarios con links, Facebook a veces amontona varias
+  // líneas sueltas que solo dicen "Facebook" (con o sin el punto separador,
+  // ej. "Facebook ·") justo después de "Publicación de...", como nombre
+  // genérico del sitio en la vista previa del link. Si no las filtramos
+  // completas, "Facebook ·" se confunde con el verdadero encabezado del
+  // grupo y termina detectado como si "Facebook" fuera el nombre del grupo.
+  const esLineaFacebook = l => /^facebook\s*·*\s*$/i.test(l);
+  const lineas = (texto || '').split('\n').map(l => l.trim()).filter(l => l && !esLineaFacebook(l));
   const esSeparador = l => /^·+$/.test(l);
   const MAX_SCAN = 6;
   let revisadas = 0;
