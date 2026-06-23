@@ -2609,17 +2609,20 @@ function renderListaPublicaciones(pubs){
     const esMia = p.dispositivo_id === miDispositivo;
     const btnBorrar = esMia ? `<button class="btn-sinwa" onclick="eliminarPublicacion(${p.id})">🗑️ Borrar</button>` : '';
     const propiaBadge = p.propia ? `<span class="badge-completada">🎭 Propia (anzuelo)</span>` : '';
+    const comentariosBadge = p.propia && p.comentarios != null ? `<span class="badge-completada">💬 ${p.comentarios} comentarios</span>` : '';
     const datosPropia = p.propia
       ? `<div style="font-size:12px;color:#666;margin:2px 0">${p.cuenta_fb ? '👤 Cuenta: ' + escaparHtml(p.cuenta_fb) : ''}${p.cuenta_fb && p.grupo ? ' · ' : ''}${p.grupo ? '👥 Grupo: ' + escaparHtml(p.grupo) : ''}</div>`
       : '';
+    const btnComentarios = p.propia ? `<button class="btn-sinwa" onclick="actualizarComentariosPublicacion(${p.id})">💬 Actualizar comentarios</button>` : '';
     html += `
       <div class="lead-card">
-        <div style="font-size:12px;font-weight:700">📌 ${quien}<span style="font-weight:400;color:#999">${hora}</span> ${catBadge} ${propiaBadge}</div>
+        <div style="font-size:12px;font-weight:700">📌 ${quien}<span style="font-weight:400;color:#999">${hora}</span> ${catBadge} ${propiaBadge} ${comentariosBadge}</div>
         <div style="font-size:13px;margin:4px 0">${linkHtml}</div>
         ${datosPropia}
         ${p.nota ? `<div style="font-size:12px;color:#666;margin:2px 0">📝 ${escaparHtml(p.nota)}</div>` : ''}
         <div class="lead-actions">
           <button class="btn-done" onclick="copiarLinkPublicacion('${escaparAtributo(p.url)}', this)">📋 Copiar link</button>
+          ${btnComentarios}
           ${btnBorrar}
         </div>
       </div>`;
@@ -2646,12 +2649,26 @@ async function copiarLinkPublicacion(url, btn){
 // celular donde se usa (no se sincroniza con el equipo), porque normalmente
 // lo maneja una sola cuenta señuelo.
 const LS_TEMAS_KEY = 'lj_temas_publicar';
+// Varias variantes de texto por categoría, para poder rotar entre grupos
+// sin pegar exactamente el mismo texto en todos — eso es lo que hace que un
+// post se vea como spam repetido y aumenta el riesgo de que Facebook
+// restrinja la cuenta.
 const TEMAS_SEMILLA = [
   { categoria: 'Techos de madera', texto: 'Buenas tardes, una pregunta. ¿Quién hace techos de madera (vigas, polín, lámina o teja) aquí en Tijuana? Tengo un patio que quiero techar, como de 30 metros. ¿Cómo cobran y qué traen incluido? Manden número o precio aproximado, gracias.' },
+  { categoria: 'Techos de madera', texto: 'Hola buenas, ¿alguien sabe quién hace techos de madera por aquí en Tijuana? Necesito cubrir una cochera de unos 25 metros, con vigas y lámina. Si tienen fotos de trabajos anteriores y su número, se los agradezco.' },
+  { categoria: 'Techos de madera', texto: 'Qué tal, busco un maestro que haga techumbre de madera (estilo rústico) para un patio de unos 35 metros. ¿Cómo manejan el precio, por metro o por trabajo completo? Manden info y número de contacto porfa.' },
   { categoria: 'Casas de madera', texto: 'Hola, ando viendo opciones para construir una casa de madera (tipo cabaña) de un piso, como de 60 metros. ¿Quién se dedica a esto en Tijuana? ¿Cuánto cobran por metro y qué tiempo tardan? Manden info por favor.' },
+  { categoria: 'Casas de madera', texto: 'Buenas, estoy cotizando una casa de madera tipo cabaña, un solo piso, como 70 metros, para un terreno aquí en Tijuana. ¿Quién la hace y cuánto andaría costando? Manden número y si tienen fotos de proyectos anteriores.' },
+  { categoria: 'Casas de madera', texto: 'Qué onda, ¿alguien conoce quién construya casas de madera aquí en la zona? Es para un proyecto chico, como de 50 metros, un piso. Manden precio aproximado y contacto, gracias.' },
   { categoria: 'Losas de cemento', texto: 'Qué onda maestros, una pregunta. ¿Dónde están consiguiendo ahorita el triplay de 3/4 o el cimbraplay a buen precio aquí en Tijuana? Traigo un jale mediano y ocupo surtirme de madererías. También ocupo un chavalón o maestro que le sepa bien al colado y armado de losas aquí por el Centro. Son como 80 metros de losa a norma completo. Manden los que sepan el dato y precio aproximado.' },
+  { categoria: 'Losas de cemento', texto: 'Buenas, necesito sacar precio de una losa de cemento de unos 60 metros, con todo y cimbra. ¿Quién anda disponible por aquí en Tijuana? Manden el precio por metro y su número.' },
+  { categoria: 'Losas de cemento', texto: 'Hola, ¿alguien recomienda un maestro para colar una losa de 45 metros? Ocupo que incluya cimbra y armado. Manden precio y contacto porfa.' },
   { categoria: 'Cimbra y colado', texto: 'Buenas, necesito cuadrilla para cimbra y colado de una losa de 100 metros, con trabes de cerramiento. ¿Quién anda disponible y a cómo cobra el metro? Manden precio y número porfa.' },
-  { categoria: 'Carpintería en general', texto: 'Hola, ¿alguien me recomienda un carpintero bueno en Tijuana? Necesito unos closets y una cocina integral a la medida. Manden su número y si tienen fotos de trabajos anteriores, se los agradezco.' }
+  { categoria: 'Cimbra y colado', texto: 'Qué tal, ando buscando quién haga cimbra y colado para una losa de 90 metros con trabes. ¿Cómo manejan el precio? Manden número para platicar detalles.' },
+  { categoria: 'Cimbra y colado', texto: 'Hola, necesito a alguien que sepa de cimbra y colado, trabajo de unos 70 metros. ¿Algún número para cotizar?' },
+  { categoria: 'Carpintería en general', texto: 'Hola, ¿alguien me recomienda un carpintero bueno en Tijuana? Necesito unos closets y una cocina integral a la medida. Manden su número y si tienen fotos de trabajos anteriores, se los agradezco.' },
+  { categoria: 'Carpintería en general', texto: 'Buenas tardes, busco un carpintero para hacer unos muebles a la medida (closets y una isla de cocina). ¿Quién se dedica a esto aquí en Tijuana? Manden precio aproximado y número.' },
+  { categoria: 'Carpintería en general', texto: 'Qué onda, ¿conocen algún carpintero confiable por aquí? Necesito unos muebles para una recámara, a la medida. Manden su contacto porfa.' }
 ];
 
 function inicializarTemas(){
@@ -2660,7 +2677,18 @@ function inicializarTemas(){
   if (!Array.isArray(temas)){
     temas = TEMAS_SEMILLA.map((t, i) => ({ id: 'tema_semilla_' + i, categoria: t.categoria, texto: t.texto, ultimoUsado: null }));
     localStorage.setItem(LS_TEMAS_KEY, JSON.stringify(temas));
+    return temas;
   }
+  const idsExistentes = new Set(temas.map(t => t.id));
+  let cambiaron = false;
+  TEMAS_SEMILLA.forEach((t, i) => {
+    const id = 'tema_semilla_' + i;
+    if (!idsExistentes.has(id)){
+      temas.push({ id, categoria: t.categoria, texto: t.texto, ultimoUsado: null });
+      cambiaron = true;
+    }
+  });
+  if (cambiaron) guardarTemas(temas);
   return temas;
 }
 function guardarTemas(arr){ localStorage.setItem(LS_TEMAS_KEY, JSON.stringify(arr)); }
@@ -2712,6 +2740,7 @@ function renderTemas(){
           <input type="text" id="regCuenta_${t.id}" placeholder="Cuenta de Facebook con la que publicaste (ej. VioletHummingbird2842)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
           <input type="text" id="regGrupo_${t.id}" placeholder="Grupo donde lo publicaste (ej. Carpinteros en Tijuana)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
           <input type="url" id="regLink_${t.id}" placeholder="Link de la publicación (https://...)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+          <input type="number" min="0" id="regComentarios_${t.id}" placeholder="¿Cuántos comentarios lleva? (opcional, puedes actualizarlo luego)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
           <button class="btn-main" onclick="registrarPublicacionTema('${t.id}')">📌 Guardar registro</button>
         </div>
       </div>`;
@@ -2736,6 +2765,8 @@ async function registrarPublicacionTema(id){
   const cuenta = document.getElementById('regCuenta_' + id).value.trim();
   const grupo = document.getElementById('regGrupo_' + id).value.trim();
   const url = document.getElementById('regLink_' + id).value.trim();
+  const comentariosVal = document.getElementById('regComentarios_' + id).value.trim();
+  const comentarios = comentariosVal !== '' ? parseInt(comentariosVal, 10) : null;
   if (!url){ alert('Pega el link de la publicación primero 👆'); return; }
   if (!esLinkSeguro(url)){ alert('El link debe empezar con http:// o https://'); return; }
   const idEquipo = obtenerMensajesIdentidad();
@@ -2747,6 +2778,7 @@ async function registrarPublicacionTema(id){
         autor_nombre: idEquipo.nombre || null,
         url: url, categoria: t.categoria, nota: null,
         propia: true, cuenta_fb: cuenta || null, grupo: grupo || null,
+        comentarios: comentarios,
         fecha: new Date().toISOString()
       })
     });
@@ -2756,6 +2788,7 @@ async function registrarPublicacionTema(id){
     document.getElementById('regCuenta_' + id).value = '';
     document.getElementById('regGrupo_' + id).value = '';
     document.getElementById('regLink_' + id).value = '';
+    document.getElementById('regComentarios_' + id).value = '';
     toggleRegistroTema(id);
     renderTemas();
     alert('✅ Quedó registrada en la pestaña 7 (Publicaciones).');
@@ -2814,6 +2847,26 @@ async function eliminarPublicacion(id){
     cargarPublicaciones();
   } catch (e){
     alert('No se pudo borrar, revisa tu conexión.');
+  }
+}
+
+// Los comentarios siguen llegando después de publicar, así que el número
+// se puede actualizar varias veces (no solo al registrar la publicación),
+// para comparar qué horario/grupo/texto rinde más.
+async function actualizarComentariosPublicacion(id){
+  const valor = prompt('¿Cuántos comentarios lleva esta publicación ahora?');
+  if (valor === null) return;
+  const comentarios = parseInt(valor.trim(), 10);
+  if (isNaN(comentarios) || comentarios < 0){ alert('Ingresa un número válido.'); return; }
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/publicaciones/comentarios', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, comentarios: comentarios })
+    });
+    if (!r.ok) throw new Error('E' + r.status);
+    cargarPublicaciones();
+  } catch (e){
+    alert('No se pudo actualizar, revisa tu conexión.');
   }
 }
 
