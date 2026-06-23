@@ -108,6 +108,9 @@ pool.query(`
 pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS propia BOOLEAN DEFAULT false`).catch(console.error);
 pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS cuenta_fb TEXT`).catch(console.error);
 pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS grupo TEXT`).catch(console.error);
+// Cuántos comentarios lleva la publicación, para medir qué horario/grupo/texto
+// rinde más en vez de adivinar.
+pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS comentarios INTEGER`).catch(console.error);
 
 // Las cuentas (nombre/número/tipo de WhatsApp) viven solo en el localStorage
 // de cada navegador, así que si alguien registra una cuenta en un Chrome no
@@ -397,20 +400,20 @@ app.post('/api/mensajes/completar', async (req, res) => {
 app.get('/api/publicaciones', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo FROM publicaciones ORDER BY fecha DESC LIMIT 300'
+      'SELECT id, dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo, comentarios FROM publicaciones ORDER BY fecha DESC LIMIT 300'
     );
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/publicaciones', async (req, res) => {
-  const { dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo } = req.body || {};
+  const { dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo, comentarios } = req.body || {};
   if (!dispositivo_id || !url || !fecha) return res.status(400).json({ error: 'faltan datos' });
   try {
     const r = await pool.query(
-      `INSERT INTO publicaciones (dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-      [dispositivo_id, autor_nombre || null, url, categoria || null, nota || null, fecha, !!propia, cuenta_fb || null, grupo || null]
+      `INSERT INTO publicaciones (dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo, comentarios)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      [dispositivo_id, autor_nombre || null, url, categoria || null, nota || null, fecha, !!propia, cuenta_fb || null, grupo || null, comentarios != null ? comentarios : null]
     );
     res.json({ ok: true, id: r.rows[0].id });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -421,6 +424,15 @@ app.post('/api/publicaciones/eliminar', async (req, res) => {
   if (!id || !dispositivo_id) return res.status(400).json({ error: 'faltan datos' });
   try {
     await pool.query('DELETE FROM publicaciones WHERE id=$1 AND dispositivo_id=$2', [id, dispositivo_id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/publicaciones/comentarios', async (req, res) => {
+  const { id, comentarios } = req.body || {};
+  if (!id || comentarios == null) return res.status(400).json({ error: 'faltan datos' });
+  try {
+    await pool.query('UPDATE publicaciones SET comentarios=$1 WHERE id=$2', [comentarios, id]);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
