@@ -101,6 +101,13 @@ pool.query(`
     fecha TEXT NOT NULL
   )
 `).catch(console.error);
+// Cuando la publicación es un "anzuelo" que uno mismo sube (pestaña 8:
+// Temas para publicar, haciéndose pasar por alguien que busca un maestro),
+// se registra con estos datos extra: con qué cuenta de Facebook se publicó
+// y en qué grupo, para llevar control de cuáles cuentas/grupos ya se usaron.
+pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS propia BOOLEAN DEFAULT false`).catch(console.error);
+pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS cuenta_fb TEXT`).catch(console.error);
+pool.query(`ALTER TABLE publicaciones ADD COLUMN IF NOT EXISTS grupo TEXT`).catch(console.error);
 
 // Las cuentas (nombre/número/tipo de WhatsApp) viven solo en el localStorage
 // de cada navegador, así que si alguien registra una cuenta en un Chrome no
@@ -390,20 +397,20 @@ app.post('/api/mensajes/completar', async (req, res) => {
 app.get('/api/publicaciones', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, dispositivo_id, autor_nombre, url, categoria, nota, fecha FROM publicaciones ORDER BY fecha DESC LIMIT 300'
+      'SELECT id, dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo FROM publicaciones ORDER BY fecha DESC LIMIT 300'
     );
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/publicaciones', async (req, res) => {
-  const { dispositivo_id, autor_nombre, url, categoria, nota, fecha } = req.body || {};
+  const { dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo } = req.body || {};
   if (!dispositivo_id || !url || !fecha) return res.status(400).json({ error: 'faltan datos' });
   try {
     const r = await pool.query(
-      `INSERT INTO publicaciones (dispositivo_id, autor_nombre, url, categoria, nota, fecha)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-      [dispositivo_id, autor_nombre || null, url, categoria || null, nota || null, fecha]
+      `INSERT INTO publicaciones (dispositivo_id, autor_nombre, url, categoria, nota, fecha, propia, cuenta_fb, grupo)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      [dispositivo_id, autor_nombre || null, url, categoria || null, nota || null, fecha, !!propia, cuenta_fb || null, grupo || null]
     );
     res.json({ ok: true, id: r.rows[0].id });
   } catch (e) { res.status(500).json({ error: e.message }); }

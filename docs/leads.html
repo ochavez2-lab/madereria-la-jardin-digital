@@ -2608,10 +2608,15 @@ function renderListaPublicaciones(pubs){
       : `<span style="word-break:break-all;color:#999">${escaparHtml(p.url)}</span>`;
     const esMia = p.dispositivo_id === miDispositivo;
     const btnBorrar = esMia ? `<button class="btn-sinwa" onclick="eliminarPublicacion(${p.id})">🗑️ Borrar</button>` : '';
+    const propiaBadge = p.propia ? `<span class="badge-completada">🎭 Propia (anzuelo)</span>` : '';
+    const datosPropia = p.propia
+      ? `<div style="font-size:12px;color:#666;margin:2px 0">${p.cuenta_fb ? '👤 Cuenta: ' + escaparHtml(p.cuenta_fb) : ''}${p.cuenta_fb && p.grupo ? ' · ' : ''}${p.grupo ? '👥 Grupo: ' + escaparHtml(p.grupo) : ''}</div>`
+      : '';
     html += `
       <div class="lead-card">
-        <div style="font-size:12px;font-weight:700">📌 ${quien}<span style="font-weight:400;color:#999">${hora}</span> ${catBadge}</div>
+        <div style="font-size:12px;font-weight:700">📌 ${quien}<span style="font-weight:400;color:#999">${hora}</span> ${catBadge} ${propiaBadge}</div>
         <div style="font-size:13px;margin:4px 0">${linkHtml}</div>
+        ${datosPropia}
         ${p.nota ? `<div style="font-size:12px;color:#666;margin:2px 0">📝 ${escaparHtml(p.nota)}</div>` : ''}
         <div class="lead-actions">
           <button class="btn-done" onclick="copiarLinkPublicacion('${escaparAtributo(p.url)}', this)">📋 Copiar link</button>
@@ -2702,8 +2707,61 @@ function renderTemas(){
           <button class="btn-done" onclick="copiarTema('${t.id}', this)">📋 Copiar y marcar publicado</button>
           <button class="btn-sinwa" onclick="eliminarTema('${t.id}')">🗑️ Borrar</button>
         </div>
+        <div class="historial-toggle" onclick="toggleRegistroTema('${t.id}')">📌 Ya lo publiqué, registrar la publicación</div>
+        <div id="regForm_${t.id}" style="display:none;margin-top:8px">
+          <input type="text" id="regCuenta_${t.id}" placeholder="Cuenta de Facebook con la que publicaste (ej. VioletHummingbird2842)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+          <input type="text" id="regGrupo_${t.id}" placeholder="Grupo donde lo publicaste (ej. Carpinteros en Tijuana)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+          <input type="url" id="regLink_${t.id}" placeholder="Link de la publicación (https://...)" style="width:100%;padding:10px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+          <button class="btn-main" onclick="registrarPublicacionTema('${t.id}')">📌 Guardar registro</button>
+        </div>
       </div>`;
   }).join('');
+}
+
+function toggleRegistroTema(id){
+  const form = document.getElementById('regForm_' + id);
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+// Cada vez que se publica un tema-anzuelo de verdad, se registra junto con
+// los demás de la pestaña 7 (mismo lugar donde se guardan las publicaciones
+// AJENAS), marcado como "propia" y con la cuenta/grupo usados — así no se
+// pierde el control de qué cuenta señuelo y qué grupo ya se usaron, ni hay
+// que ir a buscar el post otra vez para revisar los comentarios.
+async function registrarPublicacionTema(id){
+  const temas = inicializarTemas();
+  const t = temas.find(x => x.id === id);
+  if (!t) return;
+  const cuenta = document.getElementById('regCuenta_' + id).value.trim();
+  const grupo = document.getElementById('regGrupo_' + id).value.trim();
+  const url = document.getElementById('regLink_' + id).value.trim();
+  if (!url){ alert('Pega el link de la publicación primero 👆'); return; }
+  if (!esLinkSeguro(url)){ alert('El link debe empezar con http:// o https://'); return; }
+  const idEquipo = obtenerMensajesIdentidad();
+  try {
+    const r = await fetch(RAILWAY_URL + '/api/publicaciones', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dispositivo_id: obtenerDispositivoId(),
+        autor_nombre: idEquipo.nombre || null,
+        url: url, categoria: t.categoria, nota: null,
+        propia: true, cuenta_fb: cuenta || null, grupo: grupo || null,
+        fecha: new Date().toISOString()
+      })
+    });
+    if (!r.ok) throw new Error('E' + r.status);
+    t.ultimoUsado = new Date().toISOString();
+    guardarTemas(temas);
+    document.getElementById('regCuenta_' + id).value = '';
+    document.getElementById('regGrupo_' + id).value = '';
+    document.getElementById('regLink_' + id).value = '';
+    toggleRegistroTema(id);
+    renderTemas();
+    alert('✅ Quedó registrada en la pestaña 7 (Publicaciones).');
+  } catch (e){
+    alert('No se pudo guardar, revisa tu conexión e intenta de nuevo 🙏');
+  }
 }
 
 async function copiarTema(id, btn){
