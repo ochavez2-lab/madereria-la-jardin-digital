@@ -185,6 +185,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <button class="stage-tab" id="tabStage5" onclick="mostrarStage(5)">5. Mensajes</button>
     <button class="stage-tab" id="tabStage6" onclick="mostrarStage(6)">6. Avisos y reglas</button>
     <button class="stage-tab" id="tabStage7" onclick="mostrarStage(7)">7. Publicaciones</button>
+    <button class="stage-tab" id="tabStage8" onclick="mostrarStage(8)">8. Temas para publicar</button>
   </div>
 
   <div id="stage3" style="display:none">
@@ -375,6 +376,7 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
         <li><b>5. Mensajes:</b> tablero compartido del equipo para avisos y listas, sincronizado en tiempo real en todos los celulares.</li>
         <li><b>6. Notificaciones y reglas:</b> esta pantalla — activa las notificaciones y consulta las reglas del grupo cuando lo necesites.</li>
         <li><b>7. Publicaciones:</b> guarda el link de la publicación de Facebook de donde sacaste los números, para tenerla a la mano todo el día sin tener que buscarla otra vez.</li>
+        <li><b>8. Temas para publicar:</b> textos listos para copiar y publicar TÚ (haciéndote pasar por alguien que busca un maestro) en grupos de Facebook, para que comenten los que hacen techos, casas de madera, losas de cemento, etc. — luego esos comentarios se pegan en la pestaña 1 igual que cualquier otra publicación.</li>
       </ol>
     </div>
 
@@ -394,6 +396,25 @@ body[data-theme="corporativo"] .theme-dot{border-radius:4px}
     <div class="historial-toggle" onclick="cargarPublicaciones()">🔄 Actualizar publicaciones</div>
     <div id="publicacionesFiltro" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
     <div id="publicacionesLista"></div>
+
+  </div>
+
+  <div id="stage8" style="display:none">
+
+    <div class="section acc-blue">
+      <h2>📝 Temas para publicar</h2>
+      <p style="font-size:12px;color:#999;margin:-4px 0 10px;line-height:1.4">Cópialos y publícalos TÚ en grupos de Facebook de albañiles/construcción, haciéndote pasar por alguien que busca un maestro de ese tema. Cuando lleguen comentarios, los copias y los pegas en la pestaña 1 igual que cualquier otra publicación.</p>
+    </div>
+
+    <div id="temasFiltro" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+    <div id="temasLista"></div>
+
+    <div class="section acc-green" style="margin-top:14px">
+      <h2>➕ Agregar tema</h2>
+      <input type="text" id="temaCategoriaInput" placeholder="Categoría (ej. Techos de madera)" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+      <textarea id="temaTextoInput" placeholder="Texto del tema, listo para copiar y pegar en Facebook..." style="width:100%;min-height:90px;padding:10px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;font-family:inherit"></textarea>
+      <button class="btn-main" onclick="agregarTema()">➕ Agregar tema</button>
+    </div>
 
   </div>
 
@@ -1769,6 +1790,7 @@ function mostrarStage(n){
   document.getElementById('stage5').style.display = n === 5 ? 'block' : 'none';
   document.getElementById('stage6').style.display = n === 6 ? 'block' : 'none';
   document.getElementById('stage7').style.display = n === 7 ? 'block' : 'none';
+  document.getElementById('stage8').style.display = n === 8 ? 'block' : 'none';
   document.getElementById('tabStage1').classList.toggle('activo', n === 1);
   document.getElementById('tabStage2').classList.toggle('activo', n === 2);
   document.getElementById('tabStage3').classList.toggle('activo', n === 3);
@@ -1776,6 +1798,7 @@ function mostrarStage(n){
   document.getElementById('tabStage5').classList.toggle('activo', n === 5);
   document.getElementById('tabStage6').classList.toggle('activo', n === 6);
   document.getElementById('tabStage7').classList.toggle('activo', n === 7);
+  document.getElementById('tabStage8').classList.toggle('activo', n === 8);
   if (n === 2){
     renderTareas();
     // Jalamos lo más nuevo de los demás celulares/empleados de una vez,
@@ -1790,6 +1813,7 @@ function mostrarStage(n){
   }
   if (n === 6) actualizarEstadoPush();
   if (n === 7) cargarPublicaciones();
+  if (n === 8){ renderTemasFiltro(); renderTemas(); }
 }
 
 // Pestaña 4: solo CHECA si los números de un texto ya están en el historial
@@ -2607,6 +2631,119 @@ async function copiarLinkPublicacion(url, btn){
   } catch (e){
     alert('No se pudo copiar automático, selecciona y copia el link manualmente.');
   }
+}
+
+// Pestaña 8: en vez de esperar a que alguien más publique y comentar para
+// sacar números, aquí TÚ publicas el "anzuelo" (haciéndote pasar por alguien
+// que busca un maestro de ese tema) en grupos de Facebook, para que te
+// comenten los que se dedican a eso. Los comentarios que lleguen se pegan
+// después en la pestaña 1 igual que cualquier otra publicación. Es solo del
+// celular donde se usa (no se sincroniza con el equipo), porque normalmente
+// lo maneja una sola cuenta señuelo.
+const LS_TEMAS_KEY = 'lj_temas_publicar';
+const TEMAS_SEMILLA = [
+  { categoria: 'Techos de madera', texto: 'Buenas tardes, una pregunta. ¿Quién hace techos de madera (vigas, polín, lámina o teja) aquí en Tijuana? Tengo un patio que quiero techar, como de 30 metros. ¿Cómo cobran y qué traen incluido? Manden número o precio aproximado, gracias.' },
+  { categoria: 'Casas de madera', texto: 'Hola, ando viendo opciones para construir una casa de madera (tipo cabaña) de un piso, como de 60 metros. ¿Quién se dedica a esto en Tijuana? ¿Cuánto cobran por metro y qué tiempo tardan? Manden info por favor.' },
+  { categoria: 'Losas de cemento', texto: 'Qué onda maestros, una pregunta. ¿Dónde están consiguiendo ahorita el triplay de 3/4 o el cimbraplay a buen precio aquí en Tijuana? Traigo un jale mediano y ocupo surtirme de madererías. También ocupo un chavalón o maestro que le sepa bien al colado y armado de losas aquí por el Centro. Son como 80 metros de losa a norma completo. Manden los que sepan el dato y precio aproximado.' },
+  { categoria: 'Cimbra y colado', texto: 'Buenas, necesito cuadrilla para cimbra y colado de una losa de 100 metros, con trabes de cerramiento. ¿Quién anda disponible y a cómo cobra el metro? Manden precio y número porfa.' },
+  { categoria: 'Carpintería en general', texto: 'Hola, ¿alguien me recomienda un carpintero bueno en Tijuana? Necesito unos closets y una cocina integral a la medida. Manden su número y si tienen fotos de trabajos anteriores, se los agradezco.' }
+];
+
+function inicializarTemas(){
+  let temas;
+  try { temas = JSON.parse(localStorage.getItem(LS_TEMAS_KEY)); } catch(e){ temas = null; }
+  if (!Array.isArray(temas)){
+    temas = TEMAS_SEMILLA.map((t, i) => ({ id: 'tema_semilla_' + i, categoria: t.categoria, texto: t.texto, ultimoUsado: null }));
+    localStorage.setItem(LS_TEMAS_KEY, JSON.stringify(temas));
+  }
+  return temas;
+}
+function guardarTemas(arr){ localStorage.setItem(LS_TEMAS_KEY, JSON.stringify(arr)); }
+
+let temasFiltroActivo = 'todas';
+
+function renderTemasFiltro(){
+  const box = document.getElementById('temasFiltro');
+  if (!box) return;
+  const temas = inicializarTemas();
+  const categorias = [...new Set(temas.map(t => t.categoria))];
+  const chip = (valor, label) => {
+    const activo = temasFiltroActivo === valor;
+    return `<button onclick="filtrarTemas('${valor.replace(/'/g, "\\'")}')" style="font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid #ccc;cursor:pointer;background:${activo ? '#1a1410' : '#fff'};color:${activo ? '#fff' : '#333'}">${label}</button>`;
+  };
+  box.innerHTML = chip('todas', '📋 Todas') + categorias.map(c => chip(c, escaparHtml(c))).join('');
+}
+
+function filtrarTemas(cat){
+  temasFiltroActivo = cat;
+  renderTemasFiltro();
+  renderTemas();
+}
+
+function renderTemas(){
+  const lista = document.getElementById('temasLista');
+  if (!lista) return;
+  let temas = inicializarTemas();
+  if (temasFiltroActivo !== 'todas') temas = temas.filter(t => t.categoria === temasFiltroActivo);
+  if (temas.length === 0){
+    lista.innerHTML = '<div class="empty">No hay temas en esta categoría 🤷</div>';
+    return;
+  }
+  lista.innerHTML = temas.map(t => {
+    const usado = t.ultimoUsado
+      ? `<div style="font-size:11px;color:#999;margin:2px 0">🕓 Publicado por última vez: ${new Date(t.ultimoUsado).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>`
+      : '<div style="font-size:11px;color:#999;margin:2px 0">Todavía no lo has usado</div>';
+    return `
+      <div class="lead-card">
+        <div style="font-size:12px;font-weight:700">📝 ${escaparHtml(t.categoria)}</div>
+        <div style="font-size:13px;margin:4px 0;white-space:pre-wrap">${escaparHtml(t.texto)}</div>
+        ${usado}
+        <div class="lead-actions">
+          <button class="btn-done" onclick="copiarTema('${t.id}', this)">📋 Copiar y marcar publicado</button>
+          <button class="btn-sinwa" onclick="eliminarTema('${t.id}')">🗑️ Borrar</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function copiarTema(id, btn){
+  const temas = inicializarTemas();
+  const t = temas.find(x => x.id === id);
+  if (!t) return;
+  try {
+    await navigator.clipboard.writeText(t.texto);
+    const original = btn.textContent;
+    btn.textContent = '✅ ¡Copiado!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (e){
+    alert('No se pudo copiar automático, selecciona y copia el texto manualmente.');
+  }
+  t.ultimoUsado = new Date().toISOString();
+  guardarTemas(temas);
+  renderTemas();
+}
+
+function agregarTema(){
+  const categoriaInput = document.getElementById('temaCategoriaInput');
+  const textoInput = document.getElementById('temaTextoInput');
+  const categoria = categoriaInput.value.trim();
+  const texto = textoInput.value.trim();
+  if (!categoria || !texto){ alert('Llena la categoría y el texto del tema 👆'); return; }
+  const temas = inicializarTemas();
+  temas.push({ id: 'tema_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), categoria, texto, ultimoUsado: null });
+  guardarTemas(temas);
+  categoriaInput.value = '';
+  textoInput.value = '';
+  renderTemasFiltro();
+  renderTemas();
+}
+
+function eliminarTema(id){
+  if (!confirm('¿Borrar este tema?')) return;
+  const temas = inicializarTemas().filter(t => t.id !== id);
+  guardarTemas(temas);
+  renderTemasFiltro();
+  renderTemas();
 }
 
 async function eliminarPublicacion(id){
